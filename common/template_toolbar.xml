@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+
+<!--
+	'Fantasy Grounds' is a trademark of SmiteWorks USA, LLC. 'Fantasy Grounds' is Copyright 2004-2014 SmiteWorks USA LLC.
+	The CoreRPG ruleset and all included files are copyright 2004-2013, Smiteworks USA LLC.
+-->
+
+<root>
+    <icon name="tool_clear_saves_30" file="graphics/toolbar/tool_clear_saves_30.png" />
+    <icon name="tool_clear_wounds_30" file="graphics/toolbar/tool_clear_wounds_30.png" />
+	<template name="image_toolbar_clear_wounds">
+		<buttoncontrol>	
+			<anchored to="toolbar_anchor" width="34" height="34">	
+				<top />	
+				<right anchor="left" relation="relative" />	
+			</anchored>	
+			<state icon="tool_clear_wounds_30" />	
+			<frame name="toolbar_30" />	
+			<tooltip textres="tooltip_wounds_clear_toolbar" />	
+			<invisible/>	
+			<script>	
+				function onButtonPress()	
+					for _,v in pairs(CombatManager.getCombatantNodes()) do	
+						TokenManager3.setDeathOverlay(v,0, true); 	
+					end	
+				end	
+					
+				function updateDisplay()	
+				end	
+			</script>	
+		</buttoncontrol>
+	</template>
+	<template name="image_toolbar_clear_saves">
+		<buttoncontrol>	
+			<anchored to="toolbar_anchor" width="34" height="34">	
+				<top />	
+				<right anchor="left" relation="relative" />	
+			</anchored>	
+			<state icon="tool_clear_saves_30" />	
+			<frame name="toolbar_30" />	
+			<tooltip textres="tooltip_saves_clear_toolbar" />	
+			<invisible/>	
+			<script>	
+				function onButtonPress()	
+					for _,v in pairs(CombatManager.getCombatantNodes()) do	
+						TokenManager3.setSaveOverlay(v,0, true); 	
+					end	
+				end	
+					
+				function updateDisplay()	
+				end	
+			</script>	
+		</buttoncontrol>
+	</template>
+</root>

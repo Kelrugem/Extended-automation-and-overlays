@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+
+<!-- 
+  Please see the license.html file included with this distribution for 
+  attribution and copyright information.
+-->
+
+<root>
+	<windowclass name="charsheetmini_main" merge="join">
+		<minisheet />
+		<sheetdata>
+			<number_dropadd name="nonlethal" source="hp.nonlethal" merge="replace">
+				<anchored to="hptemp" position="right" offset="10,0" width="30" />
+				<hideonvalue>0</hideonvalue>
+				<description textres="char_tooltip_nonlethal" />
+				<script>
+					function onValueChanged()
+						window.onHealthChanged();
+					end
+					function onInit()
+						if super.super.onInit then
+							super.super.onInit();
+						end
+
+						OptionsManager.registerCallback("WNDC", onValueChanged);
+						onValueChanged();
+					end
+					function onClose()
+						OptionsManager.unregisterCallback("WNDC", onValueChanged);
+					end
+					function onDrop(x, y, draginfo)
+						if draginfo.getType() == "number" then
+							local rActor = ActorManager.resolveActor(window.getDatabaseNode());
+							local rRoll = {};
+							rRoll.bSecret = false;
+							rRoll.sType = "number";
+							rRoll.sDesc = draginfo.getDescription() .. " [TYPE: nonlethal]";
+							rRoll.nMod = draginfo.getNumberData();
+							rRoll.aDice = {nil, {result = 0}};
+							ActionDamage.onDamage(nil, rActor, rRoll);
+						end
+
+						return true;
+					end
+				</script>
+			</number_dropadd>
+		</sheetdata>
+	</windowclass>
+</root>

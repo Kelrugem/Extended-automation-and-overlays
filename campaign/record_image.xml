@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+
+<!--
+	'Fantasy Grounds' is a trademark of SmiteWorks USA, LLC. 'Fantasy Grounds' is Copyright 2004-2014 SmiteWorks USA LLC.
+	The CoreRPG ruleset and all included files are copyright 2004-2013, Smiteworks USA LLC.
+-->
+
+<root>
+	<windowclass name="imagewindow_toolbar" version="&gt;=4">
+		<frame>toolbar_back</frame>
+		<script file="campaign/scripts/imagewindow_toolbar.lua" />
+		<sheetdata>
+			<image_toolbar_anchor />
+			
+			<image_toolbar_toggle_lock name="locked" />
+			<image_toolbar_separator name="h5" />
+			
+			<image_toolbar_toggle_preview name="toggle_preview" />
+			<image_toolbar_toggle_tokenlock name="toggle_tokenlock" />
+			<image_toolbar_toggle_shortcut name="toggle_shortcut" />
+			<image_toolbar_separator name="h4" />
+
+			<image_toolbar_targeting name="toolbar_targeting" />
+			<image_toolbar_mode_targetselect name="toggle_targetselect" />
+			<image_toolbar_separator name="h3" />
+
+			<image_toolbar_mode_select name="toggle_select" />
+			<image_toolbar_separator name="h2" />
+			<!-- KEL -->
+			<image_toolbar_clear_wounds name="toolbar_clear_wounds" />
+			<image_toolbar_clear_saves name="toolbar_clear_saves" />
+			<image_toolbar_separator name="h0" />
+			<!-- END -->
+			<image_toolbar_draw name="toolbar_draw" />
+			<image_toolbar_mode_unmask name="toggle_unmask" />
+			<image_toolbar_separator name="h1" />
+
+			<image_toolbar_button_zoomtofit name="zoom_to_fit" />
+		</sheetdata>
+	</windowclass>
+	<windowclass name="imagewindow_toolbar" version="&lt;4">
+		<frame>toolbar_back</frame>
+		<script file="campaign/scripts/imagewindow_toolbar.lua" />
+		<sheetdata>
+			<image_toolbar_anchor />
+			
+			<image_toolbar_targeting name="toolbar_targeting" />
+			<image_toolbar_mode_targetselect name="toggle_targetselect" />
+			<image_toolbar_separator name="h3" />
+
+			<image_toolbar_mode_select name="toggle_select" />
+			<image_toolbar_separator name="h2" />
+			<!-- KEL -->
+			<image_toolbar_clear_wounds name="toolbar_clear_wounds" />
+			<image_toolbar_clear_saves name="toolbar_clear_saves" />
+			<image_toolbar_separator name="h0" />
+			<!-- END -->
+			<image_toolbar_grid name="toolbar_grid" />
+			<image_toolbar_toggle_grid name="toggle_grid" />
+			<image_toolbar_separator name="h1" />
+
+			<image_toolbar_draw name="toolbar_draw" />
+		</sheetdata>
+	</windowclass>
+</root>

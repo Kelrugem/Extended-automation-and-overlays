@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+
+<root>	
+	<icon name="spell_fail" file="graphics/icons/spell_fail.png" />
+	<icon name="overlay_save_success" file="graphics/token/save_success.png" />
+	<icon name="overlay_save_failure" file="graphics/token/save_fail.png" />
+	<icon name="overlay_save_partial" file="graphics/token/save_partial.png" />
+	<icon name="overlay_death" file="graphics/token/rip_skull.png" />
+	<icon name="overlay_dying" file="graphics/token/Dying.png" />
+	<icon name="overlay_critical" file="graphics/token/overlay_critical.png" />
+	<icon name="overlay_heavy" file="graphics/token/overlay_heavy.png" />
+	<icon name="overlay_moderate" file="graphics/token/overlay_moderate.png" />
+	<icon name="overlay_wounded" file="graphics/token/overlay_wounded.png" />
+	<icon name="overlay_ko" file="graphics/token/overlay_ko.png" />
+	<icon name="overlay_disabled" file="graphics/token/overlay_disabled.png" />
+	<icon name="overlay_dying_stable" file="graphics/token/Dying_stable.png" />
+	<icon name="overlay_staggered" file="graphics/token/overlay_staggered.png" />
+</root>

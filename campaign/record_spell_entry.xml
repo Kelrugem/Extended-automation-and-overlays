@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+
+<!-- 
+  Please see the license.html file included with this distribution for 
+  attribution and copyright information.
+-->
+
+<root>
+	<!-- KEL Skill Buttons and making saveview a bit bigger and making the saveview a bit bigger -->
+	<template name="spell_action_saveview">
+		<string_spellactionview name="saveview">
+			<anchored to="saveviewlabel" position="righthigh" offset="7,0" width="77" />
+			<subroll>save</subroll>
+		</string_spellactionview>
+	</template>
+	<!-- KEL commented out until automated -->
+	<!-- <template name="spell_action_skillbutton"> -->
+		<!-- <button_spellaction name="skillbutton"> -->
+			<!-- <anchored to="saveview" position="righthigh" offset="15,0" /> -->
+			<!-- <subroll>skill</subroll> -->
+		<!-- </button_spellaction> -->
+	<!-- </template> -->
+	<!-- <template name="spell_action_skillviewlabel"> -->
+		<!-- <label name="skillviewlabel"> -->
+			<!-- <anchored to="skillbutton" position="righthigh" offset="3,0" /> -->
+			<!-- <static textres="skill" /> -->
+		<!-- </label> -->
+	<!-- </template> -->
+	<!-- <template name="spell_action_skillview"> -->
+		<!-- <string_spellactionview name="skillview"> -->
+			<!-- <anchored to="skillviewlabel" position="righthigh" offset="7,0" width="60" /> -->
+			<!-- <subroll>skill</subroll> -->
+		<!-- </string_spellactionview> -->
+	<!-- </template> -->
+	<!-- Also commented out, its script has to be overwritten for the skill functions -->
+	<!-- <windowclass name="spell_action"> -->
+		<!-- <margins control="0,0,0,5" /> -->
+		<!-- <script file="campaign/scripts/spell_action.lua" /> -->
+		<!-- <sheetdata> -->
+			<!-- <button_idelete name="idelete"> -->
+				<!-- <bounds>-22,3,20,20</bounds> -->
+			<!-- </button_idelete> -->
+		<!-- </sheetdata> -->
+	<!-- </windowclass> -->
+	<!-- END -->
+</root>

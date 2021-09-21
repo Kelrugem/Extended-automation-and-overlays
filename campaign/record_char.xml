@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+
+<!-- 
+  Please see the license.html file included with this distribution for 
+  attribution and copyright information.
+-->
+
+<root>
+	<windowclass name="charsheet" merge="join">
+		<script file="campaign/scripts/char.lua" />
+	</windowclass>
+
+	<windowclass name="charsheetmini" merge="join">
+		<script file="campaign/scripts/char.lua" />
+	</windowclass>
+</root>

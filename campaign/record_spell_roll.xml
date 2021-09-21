@@ -1,0 +1,640 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+
+<!-- 
+  Please see the license.html file included with this distribution for 
+  attribution and copyright information.
+-->
+
+<root>
+	<windowclass name="power_cast_editor_main" merge="delete"> </windowclass>
+	<windowclass name="power_cast_editor_main" >
+		<script file="campaign/scripts/replace_dc.lua" />
+		<sheetdata>
+			<anchor_column name="columnanchor" />
+			
+			<label_column name="name_label">
+				<static textres="power_label_name" />
+			</label_column>
+			<simplestringc name="name">
+				<anchored>
+					<top parent="columnanchor" anchor="bottom" relation="relative" offset="7" />
+					<left offset="97" />
+					<right offset="-5" />
+				</anchored>
+				<multilinespacing>20</multilinespacing>
+				<readonly />
+			</simplestringc>
+			
+			<header_column name="header_attack">
+				<static textres="power_header_cast_attack" />
+				<center />
+			</header_column>
+			<button_stringcycler name="atktype">
+				<anchored width="70" height="20">
+					<top parent="columnanchor" anchor="bottom" relation="relative" offset="7" />
+					<left offset="5" />
+				</anchored>
+				<parameters>
+					<defaultlabelres>power_label_atktypenone</defaultlabelres>
+					<labelsres>power_label_atktypemelee|power_label_atktyperanged|power_label_atktypemtouch|power_label_atktypertouch|power_label_atktypegrapple</labelsres>
+					<values>melee|ranged|mtouch|rtouch|cm</values>
+				</parameters>
+			</button_stringcycler>
+			<label name="atkplus">
+				<anchored to="atktype" position="righthigh" offset="5,0" width="10" />
+				<static>+</static>
+				<center />
+			</label>
+			<basicnumber name="atkmod">
+				<anchored to="atkplus" position="righthigh" offset="5,0" width="25" height="20" />
+				<hideonvalue value="0" />
+			</basicnumber>
+			
+			<header_column name="header_clc">
+				<static textres="power_header_cast_clc" />
+				<center />
+			</header_column>
+			<label name="clcplus">
+				<anchored width="10">
+					<top parent="columnanchor" anchor="bottom" relation="relative" offset="7" />
+					<left offset="5" />
+				</anchored>
+				<static>+</static>
+				<center />
+			</label>
+			<basicnumber name="clcmod">
+				<anchored to="clcplus" position="right" offset="5,0" width="25" />
+				<hideonvalue value="0" />
+			</basicnumber>
+			<label name="srnotallowedlabel">
+				<anchored>
+					<top parent="clcmod" />
+					<right offset="-30" />
+				</anchored>
+				<static textres="power_label_srnotallowed" />
+			</label>
+			<button_checkbox name="srnotallowed">
+				<anchored to="srnotallowedlabel" position="right" offset="5,0" width="20" />
+			</button_checkbox>
+
+			<header_column name="header_save">
+				<static textres="power_header_cast_save" />
+				<center />
+			</header_column>
+			<button_stringcycler name="savetype">
+				<anchored width="50">
+					<top parent="columnanchor" anchor="bottom" relation="relative" offset="7" />
+					<left offset="5" />
+				</anchored>
+				<parameters>
+					<defaultlabelres>power_label_savetypenone</defaultlabelres>
+					<labelsres>power_label_savetypefort|power_label_savetyperef|power_label_savetypewill</labelsres>
+					<values>fortitude|reflex|will</values>
+				</parameters>
+			</button_stringcycler>
+			<label name="savedclabel">
+				<anchored to="savetype" position="righthigh" offset="10,0" width="15" />
+				<static textres="dc" />
+			</label>
+			<button_stringcycler name="savedctype">
+				<anchored to="savedclabel" position="righthigh" offset="10,0" width="70" height="20" />
+				<parameters>
+					<defaultlabelres>power_label_savedctype_ability</defaultlabelres>
+					<labelsres>power_label_savedctype_casterlevel|power_label_savedctype_fixed</labelsres>
+					<values>casterlevel|fixed</values>
+				</parameters>
+			</button_stringcycler>
+			<basicnumber name="savedcmod">
+				<anchored to="savedctype" position="righthigh" offset="10,0" width="30" height="20" />
+				<hideonvalue value="0" />
+			</basicnumber>
+			<!-- KEL replacing DC, therefore also script with update handlers -->
+			<label name="replacedcstat_label">
+				<anchored width="40">
+					<top parent="columnanchor" anchor="bottom" relation="relative" offset="7" />
+					<left offset="5" />
+					<!-- <bottom parent="onmissdamage" anchor="above" relation="relative" /> -->
+				</anchored>
+				<static textres="replace_dc" />
+			</label>
+			<cycler_ability name="replacedcstat">
+				<anchored to="replacedcstat_label" position="righthigh" offset="10,0" width="50" height="20" />
+				<source>
+					<name>replacedc.ability</name>
+				</source>
+				<script>
+					function onValueChanged()
+						window.onStatUpdate();
+					end
+				</script>
+			</cycler_ability>
+			<label name="replacedcstatmod_label">
+				<anchored to="replacedcstat" position="righthigh" offset="20,0" width="30" height="20" />
+				<static textres="replacestat" />
+			</label>
+			<number name="replacedcstatmod" source="replacedc.abilitymod">
+				<anchored to="replacedcstatmod_label" position="righthigh" offset="10,0" width="20" height="20" />
+				<font>sheetnumber</font>
+				<readonly />
+				<displaysign />
+				<disabled />
+			</number>
+			<!-- END -->
+			<header_column name="header_onmiss">
+				<static textres="power_header_cast_onmiss" />
+				<center />
+			</header_column>
+			<button_stringcycler name="onmissdamage">
+				<anchored width="100" height="20">
+					<top parent="columnanchor" anchor="bottom" relation="relative" offset="20" />
+					<left offset="5" />
+				</anchored>
+				<parameters>
+					<defaultlabelres>dash</defaultlabelres>
+					<labelsres>power_label_onmissdamage_half</labelsres>
+					<values>half</values>
+				</parameters>
+			</button_stringcycler>
+			<label_fieldtop>
+				<anchored to="onmissdamage" />
+				<static textres="power_label_onmissdamage" />
+			</label_fieldtop>
+			<!-- Save versus Tags boxes etc -->
+			<button_stringcycler name="school">
+				<anchored to="onmissdamage" position="righthigh" offset="20" width="100" height="20" />
+				<parameters>
+					<defaultlabelres>power_label_schoolnone</defaultlabelres>
+					<labelsres>power_label_schoolabjuration|power_label_schoolconjuration|power_label_schooldivination|power_label_schoolenchantment|power_label_schoolevocation|power_label_schoolillusion|power_label_schoolnecromancy|power_label_schooltransmutation|power_label_schooluniversal</labelsres>
+					<values>abjuration|conjuration|divination|enchantment|evocation|illusion|necromancy|transmutation|universal</values>
+				</parameters>
+			</button_stringcycler>
+			<label_fieldtop>
+				<anchored to="school" />
+				<static textres="power_label_school" />
+			</label_fieldtop>
+			
+			<button_stringcycler name="stype">
+				<anchored to="school" position="righthigh" offset="20" width="60" height="20" />
+				<parameters>
+					<defaultlabelres>dash</defaultlabelres>
+					<labelsres>power_label_typespell|power_label_typespelllike</labelsres>
+					<values>spell|spelllike|none</values>
+				</parameters>
+			</button_stringcycler>
+			<label_fieldtop>
+				<anchored to="stype" />
+				<static textres="power_label_type" />
+			</label_fieldtop>
+			
+			<header_column name="header_othertags">
+				<static textres="power_label_othertags" />
+				<center />
+			</header_column>
+			<string_column_full name="othertags" />
+			
+			<!-- END: Save versus Tags boxes -->
+			
+			<!-- KEL Skills, commented out until automated -->
+			<!-- <header_column name="header_skill"> -->
+				<!-- <static textres="power_header_cast_skill" /> -->
+				<!-- <center /> -->
+			<!-- </header_column> -->
+			<!-- <label_column> -->
+				<!-- <static textres="skill" /> -->
+			<!-- </label_column> -->
+			<!-- <string_column name="skilltype" /> -->
+				<!-- <anchored width="50"> -->
+					<!-- <top parent="columnanchor" anchor="bottom" relation="relative" offset="7" /> -->
+					<!-- <left offset="5" /> -->
+				<!-- </anchored> -->
+			<!-- <label_column> -->
+				<!-- <static textres="vs_skill" /> -->
+			<!-- </label_column> -->
+			<!-- <string_column name="vsskilltype" /> -->
+			<!-- <label name="skilldclabel"> -->
+				<!-- <anchored width="15"> -->
+					<!-- <top parent="columnanchor" anchor="bottom" relation="relative" offset="7" /> -->
+					<!-- <left offset="0" /> -->
+				<!-- </anchored> -->
+				<!-- <static textres="dc" /> -->
+			<!-- </label> -->
+			<!-- <button_stringcycler name="skilldctype"> -->
+				<!-- <anchored to="skilldclabel" position="righthigh" offset="10,0" width="85" height="20" /> -->
+				<!-- <parameters> -->
+					<!-- <defaultlabelres>power_label_savedctype_ability</defaultlabelres> -->
+					<!-- <labelsres>power_label_savedctype_casterlevel|power_label_savedctype_fixed|power_label_savedctype_roll</labelsres> -->
+					<!-- <values>casterlevel|fixed|vsroll</values> -->
+				<!-- </parameters> -->
+			<!-- </button_stringcycler> -->
+			<!-- <basicnumber name="skilldcmod"> -->
+				<!-- <anchored to="skilldctype" position="righthigh" offset="10,0" width="30" height="20" /> -->
+				<!-- <hideonvalue value="0" /> -->
+			<!-- </basicnumber> -->
+			<!-- END -->
+			
+			<!-- NOM NOM! -->
+			<header_column name="header_usereset">
+				<static textres="nom" />
+				<center />
+			</header_column>
+			<label name="resetlabel">
+				<anchored width="70">
+					<top parent="columnanchor" anchor="bottom" relation="relative" offset="7" />
+					<left offset="0" />
+				</anchored>
+				<static textres="reset" />
+			</label>
+			<button_stringcycler name="usereset">
+				<anchored to="resetlabel" position="righthigh" offset="10,0" width="200" height="20" />
+				<parameters>
+					<defaultlabelres>long</defaultlabelres>
+					<labelsres>short|nomnom</labelsres>
+					<values>shortrest|consumable</values>
+				</parameters>
+			</button_stringcycler>
+			
+		</sheetdata>
+	</windowclass>
+	
+	<windowclass name="power_damage_entry" merge="delete"> </windowclass>
+	<windowclass name="power_damage_entry">
+		<margins control="0,0,0,5" />
+		<sheetdata>
+			<genericcontrol name="rightanchor">
+				<anchored width="0" height="0">
+					<top offset="2" />
+					<right />
+				</anchored>
+				<invisible />
+			</genericcontrol>
+			<button_idelete name="idelete">
+				<anchored to="rightanchor">
+					<top />
+					<right anchor="left" relation="relative" offset="-5" />
+				</anchored>
+			</button_idelete>
+
+			<basicdice name="dice">
+				<anchored position="insidetopleft" offset="5,2" width="60" height="20" />
+			</basicdice>
+			<label name="label_dicestatx">
+				<anchored to="dice" position="righthigh" offset="5,0" width="10" />
+				<static>x</static>
+				<center />
+			</label>
+			<button_stringcycler name="dicestat">
+				<anchored to="label_dicestatx" position="righthigh" offset="5,0" width="60" />
+				<parameters>
+					<defaultlabelres>dash</defaultlabelres>
+					<labelsres>cl|evencl|oddcl|thirdcl</labelsres>
+					<values>cl|halfcl|oddcl|thirdcl</values>
+				</parameters>
+			</button_stringcycler>
+			<label name="dicestatmaxparen">
+				<anchored to="dicestat" position="righthigh" offset="5,0" />
+				<static>(</static>
+			</label>
+			<basicnumber name="dicestatmax">
+				<anchored to="dicestatmaxparen" position="righthigh" offset="5,0" width="20" height="20" />
+				<hideonvalue value="0" />
+				<tooltip textres="power_tooltip_dicemax" />
+			</basicnumber>
+			<label name="dicestatmaxparen2">
+				<anchored to="dicestatmax" position="righthigh" offset="5,0" />
+				<static>)</static>
+			</label>
+			<label name="label_plus">
+				<anchored to="dicestatmaxparen2" position="righthigh" offset="2,0" width="10" />
+				<static>+</static>
+			</label>
+			<basicnumber name="statmult">
+				<anchored to="label_plus" position="righthigh" offset="3,0" width="20" height="20" />
+				<default>1</default>
+				<min>0.5</min>
+				<wheel>0.5</wheel>
+				<hideonvalue>1</hideonvalue>
+				<tooltip textres="power_tooltip_statmult" />
+			</basicnumber>
+			<label name="label_statmultx">
+				<anchored to="statmult" position="righthigh" offset="5,0" width="10" />
+				<static>x</static>
+				<center />
+			</label>
+			<cycler_ability name="stat">
+				<anchored to="label_statmultx" position="righthigh" offset="5,0" width="60" />
+				<parameters>
+					<defaultlabelres>dash</defaultlabelres>
+					<labelsres>cl|evencl|oddcl|thirdcl|str|dex|con|int|wis|cha</labelsres>
+					<values>cl|halfcl|oddcl|thirdcl|strength|dexterity|constitution|intelligence|wisdom|charisma</values>
+				</parameters>
+			</cycler_ability>
+			<label name="statmaxparen">
+				<anchored to="stat" position="righthigh" offset="5,0" />
+				<static>(</static>
+			</label>
+			<basicnumber name="statmax">
+				<anchored to="statmaxparen" position="righthigh" offset="5,0" width="20" height="20" />
+				<hideonvalue value="0" />
+				<tooltip textres="power_tooltip_statmax" />
+			</basicnumber>
+			<label name="statmaxparen2">
+				<anchored to="statmax" position="righthigh" offset="5,0" />
+				<static>)</static>
+			</label>
+			<label name="label_plus2">
+				<anchored to="statmaxparen2" position="righthigh" offset="2,0" width="10" />
+				<static>+</static>
+			</label>
+			<basicnumber name="bonus">
+				<anchored to="label_plus2" position="righthigh" offset="2,0" width="30" height="20" />
+				<hideonvalue>0</hideonvalue>
+			</basicnumber>
+			
+			<label name="label_type">
+				<anchored position="insidetopleft" offset="20,25" />
+				<static textres="power_label_dmgtype" />
+			</label>
+			<stringu name="type">
+				<anchored to="label_type" position="righthigh" offset="10,0">
+					<right parent="" offset="-5" />
+				</anchored>
+				<multilinespacing>20</multilinespacing>
+			</stringu>
+		</sheetdata>
+	</windowclass>
+	
+	<windowclass name="power_heal_entry" merge="delete"> </windowclass>
+	<windowclass name="power_heal_entry">
+		<margins control="0,0,0,5" />
+		<sheetdata>
+			<genericcontrol name="rightanchor">
+				<anchored width="0" height="0">
+					<top offset="2" />
+					<right />
+				</anchored>
+				<invisible />
+			</genericcontrol>
+			<button_idelete name="idelete">
+				<anchored to="rightanchor">
+					<top />
+					<right anchor="left" relation="relative" offset="-5" />
+				</anchored>
+			</button_idelete>
+
+			<basicdice name="dice">
+				<anchored position="insidetopleft" offset="5,2" width="60" height="20" />
+			</basicdice>
+			<label name="label_dicestatx">
+				<anchored to="dice" position="righthigh" offset="5,0" width="10" />
+				<static>x</static>
+				<center />
+			</label>
+			<button_stringcycler name="dicestat">
+				<anchored to="label_dicestatx" position="righthigh" offset="5,0" width="60" />
+				<parameters>
+					<defaultlabelres>dash</defaultlabelres>
+					<labelsres>cl|evencl|oddcl|thirdcl</labelsres>
+					<values>cl|halfcl|oddcl|thirdcl</values>
+				</parameters>
+			</button_stringcycler>
+			<label name="dicestatmaxparen">
+				<anchored to="dicestat" position="righthigh" offset="5,0" />
+				<static>(</static>
+			</label>
+			<basicnumber name="dicestatmax">
+				<anchored to="dicestatmaxparen" position="righthigh" offset="5,0" width="20" height="20" />
+				<hideonvalue value="0" />
+				<tooltip textres="power_tooltip_dicemax" />
+			</basicnumber>
+			<label name="dicestatmaxparen2">
+				<anchored to="dicestatmax" position="righthigh" offset="5,0" />
+				<static>)</static>
+			</label>
+			<label name="label_plus">
+				<anchored to="dicestatmaxparen2" position="righthigh" offset="2,0" width="10" />
+				<static>+</static>
+			</label>
+			<basicnumber name="statmult">
+				<anchored to="label_plus" position="righthigh" offset="3,0" width="20" height="20" />
+				<default>1</default>
+				<min>0.5</min>
+				<wheel>0.5</wheel>
+				<hideonvalue>1</hideonvalue>
+				<tooltip textres="power_tooltip_statmult" />
+			</basicnumber>
+			<label name="label_statmultx">
+				<anchored to="statmult" position="righthigh" offset="5,0" width="10" />
+				<static>x</static>
+				<center />
+			</label>
+			<cycler_ability name="stat">
+				<anchored to="label_statmultx" position="righthigh" offset="5,0" width="60" />
+				<parameters>
+					<defaultlabelres>dash</defaultlabelres>
+					<labelsres>cl|evencl|oddcl|thirdcl|str|dex|con|int|wis|cha</labelsres>
+					<values>cl|halfcl|oddcl|thirdcl|strength|dexterity|constitution|intelligence|wisdom|charisma</values>
+				</parameters>
+			</cycler_ability>
+			<label name="statmaxparen">
+				<anchored to="stat" position="righthigh" offset="5,0" />
+				<static>(</static>
+			</label>
+			<basicnumber name="statmax">
+				<anchored to="statmaxparen" position="righthigh" offset="5,0" width="20" height="20" />
+				<hideonvalue value="0" />
+				<tooltip textres="power_tooltip_statmax" />
+			</basicnumber>
+			<label name="statmaxparen2">
+				<anchored to="statmax" position="righthigh" offset="5,0" />
+				<static>)</static>
+			</label>
+			<label name="label_plus2">
+				<anchored to="statmaxparen2" position="righthigh" offset="2,0" width="10" />
+				<static>+</static>
+			</label>
+			<basicnumber name="bonus">
+				<anchored to="label_plus2" position="righthigh" offset="2,0" width="30" height="20" />
+				<hideonvalue>0</hideonvalue>
+			</basicnumber>
+		</sheetdata>
+	</windowclass>
+	
+	<windowclass name="power_effect_editor_main" merge="delete"> </windowclass>
+	<windowclass name="power_effect_editor_main">
+		<sheetdata>
+			<anchor_column name="columnanchor" />
+			
+			<label_column name="name_label">
+				<static textres="power_label_name" />
+			</label_column>
+			<simplestringc name="name">
+				<anchored>
+					<top parent="columnanchor" anchor="bottom" relation="relative" offset="7" />
+					<left offset="97" />
+					<right offset="-5" />
+				</anchored>
+				<multilinespacing>20</multilinespacing>
+				<readonly />
+			</simplestringc>
+
+			<header_column name="header_label">
+				<static textres="power_header_effect" />
+				<center />
+			</header_column>
+			<string_column_full name="label" />
+			
+			<header_column name="header_duration">
+				<static textres="power_header_effect_duration" />
+				<center />
+			</header_column>
+
+			<basicdice name="durdice">
+				<anchored width="60" height="20">
+					<top parent="columnanchor" anchor="bottom" relation="relative" offset="22" />
+					<left offset="5" />
+				</anchored>
+			</basicdice>
+			<label_fieldtop>
+				<anchored to="durdice" />
+				<static textres="power_label_effect_durdice" />
+			</label_fieldtop>
+			<label name="label_durdicestatx">
+				<anchored to="durdice" position="righthigh" offset="5,0" width="10" />
+				<static>x</static>
+				<center />
+			</label>
+			<button_stringcycler name="durdicestat">
+				<anchored to="label_durdicestatx" position="righthigh" offset="5,0" width="60" />
+				<parameters>
+					<defaultlabelres>dash</defaultlabelres>
+					<labelsres>cl|evencl|oddcl|thirdcl</labelsres>
+					<values>cl|halfcl|oddcl|thirdcl</values>
+				</parameters>
+			</button_stringcycler>
+			<label name="durdicestatmaxparen">
+				<anchored to="durdicestat" position="righthigh" offset="5,0" />
+				<static>(</static>
+			</label>
+			<basicnumber name="durdicestatmax">
+				<anchored to="durdicestatmaxparen" position="righthigh" offset="5,0" width="20" height="20" />
+				<hideonvalue value="0" />
+				<tooltip textres="power_tooltip_dicemax" />
+			</basicnumber>
+			<label name="durdicestatmaxparen2">
+				<anchored to="durdicestatmax" position="righthigh" offset="5,0" />
+				<static>)</static>
+			</label>
+			<label_fieldtop>
+				<anchored to="durdicestat">
+					<right parent="durdicestatmaxparen2" />
+				</anchored>
+				<static textres="power_label_effect_durdicemult" />
+			</label_fieldtop>
+			<label name="label_durplus">
+				<anchored to="durdicestatmaxparen2" position="righthigh" offset="2,0" width="10" />
+				<static>+</static>
+			</label>
+			<basicnumber name="durmult">
+				<anchored to="label_durplus" position="righthigh" offset="3,0" width="20" height="20" />
+				<default>1</default>
+				<min>1</min>
+				<hideonvalue>1</hideonvalue>
+				<tooltip textres="power_tooltip_statmult" />
+			</basicnumber>
+			<label name="label_durstatmultx">
+				<anchored to="durmult" position="righthigh" offset="5,0" width="10" />
+				<static>x</static>
+				<center />
+			</label>
+			<cycler_ability name="durstat">
+				<anchored to="label_durstatmultx" position="righthigh" offset="5,0" width="60" />
+				<parameters>
+					<defaultlabelres>dash</defaultlabelres>
+					<labelsres>cl|evencl|oddcl|thirdcl|str|dex|con|int|wis|cha</labelsres>
+					<values>cl|halfcl|oddcl|thirdcl|strength|dexterity|constitution|intelligence|wisdom|charisma</values>
+				</parameters>
+			</cycler_ability>
+			<label name="durstatmaxparen">
+				<anchored to="durstat" position="righthigh" offset="5,0" />
+				<static>(</static>
+			</label>
+			<basicnumber name="dmaxstat">
+				<anchored to="durstatmaxparen" position="righthigh" offset="5,0" width="20" height="20" />
+				<hideonvalue value="0" />
+				<tooltip textres="power_tooltip_statmax" />
+			</basicnumber>
+			<label name="durstatmaxparen2">
+				<anchored to="dmaxstat" position="righthigh" offset="5,0" />
+				<static>)</static>
+			</label>
+			<label_fieldtop>
+				<anchored to="durmult">
+					<right parent="durstatmaxparen2" />
+				</anchored>
+				<static textres="power_label_effect_durstat" />
+			</label_fieldtop>
+			<label name="label_durplus2">
+				<anchored to="durstatmaxparen2" position="righthigh" offset="2,0" width="10" />
+				<static>+</static>
+			</label>
+			<basicnumber name="durmod">
+				<anchored to="label_durplus2" position="righthigh" offset="2,0" width="20" height="20" />
+				<hideonvalue>0</hideonvalue>
+			</basicnumber>
+			<label_fieldtop>
+				<anchored to="durmod" />
+				<static textres="power_label_effect_durmod" />
+			</label_fieldtop>
+			
+			<label_column>
+				<static textres="power_label_effect_durunit" />
+			</label_column>
+			<cycler_ability name="durunit">
+				<anchored width="40" height="20">
+					<top parent="columnanchor" anchor="bottom" relation="relative" offset="7" />
+					<left offset="97" />
+				</anchored>
+				<parameters>
+					<defaultlabelres>effect_label_durunitrnd</defaultlabelres>
+					<labelsres>effect_label_durunitmin|effect_label_durunithr|effect_label_durunitday</labelsres>
+					<values>minute|hour|day</values>
+				</parameters>
+			</cycler_ability>
+
+			<header_column name="header_other">
+				<static textres="power_header_effect_other" />
+				<center />
+			</header_column>
+			
+			<label_column name="targeting_label">
+				<static textres="power_label_targeting" />
+			</label_column>
+			<button_stringcycler name="targeting">
+				<anchored width="60" height="20">
+					<top parent="columnanchor" anchor="bottom" relation="relative" offset="7" />
+					<left offset="97" />
+				</anchored>
+				<parameters>
+					<defaultlabelres>power_label_targetnormal</defaultlabelres>
+					<labelsres>power_label_targetself</labelsres>
+					<values>self</values>
+				</parameters>
+			</button_stringcycler>
+			
+			<label_column name="apply_label">
+				<static textres="power_label_effect_apply" />
+			</label_column>
+			<button_stringcycler name="apply">
+				<anchored width="120" height="20">
+					<top parent="columnanchor" anchor="bottom" relation="relative" offset="7" />
+					<left offset="97" />
+				</anchored>
+				<parameters>
+					<defaultlabelres>power_label_effect_applyall</defaultlabelres>
+					<labelsres>power_label_effect_applyaction|power_label_effect_applyroll|power_label_effect_applysingle</labelsres>
+					<values>action|roll|single</values>
+				</parameters>
+			</button_stringcycler>
+		</sheetdata>
+	</windowclass>
+</root>
