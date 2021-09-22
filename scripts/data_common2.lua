@@ -32,6 +32,41 @@ iftagcomp = {
 	"mind-affecting",
 	"mindaffecting"
 }
+tconstructtraits = {
+	"mindaffecting",
+	"death",
+	"necromancy",
+	"paralysis",
+	"poison",
+	"sleep"	
+}
+tdragontraits = {
+	"sleep",
+	"paralysis"
+}
+toozetraits = {
+	"poison",
+	"sleep",
+	"paralysis",
+	"polymorph"
+}
+tplanttraits = {
+	"mindaffecting",
+	"paralysis",
+	"poison",
+	"sleep"
+}
+tundeadtraits = {
+	"mindaffecting",
+	"death",
+	"disease",
+	"paralysis",
+	"poison",
+	"sleep"
+}
+tvermintraits = {
+	"mindaffecting"
+}
 -- END
 
 function onInit()
