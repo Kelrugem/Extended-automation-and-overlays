@@ -51,6 +51,8 @@ function onInit()
 	table.insert(DataCommon.specialdmgtypes, "immunebypass");
 	table.insert(DataCommon.dmgtypes, "resistbypass");
 	table.insert(DataCommon.specialdmgtypes, "resistbypass");
+	table.insert(DataCommon.dmgtypes, "resisthalved");
+	table.insert(DataCommon.specialdmgtypes, "resisthalved");
 	table.insert(DataCommon.dmgtypes, "drbypass");
 	table.insert(DataCommon.specialdmgtypes, "drbypass");
 	table.insert(DataCommon.energytypes, "drbypass");
