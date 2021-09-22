@@ -44,6 +44,11 @@ tdragontraits = {
 	"sleep",
 	"paralysis"
 }
+telementaltraits = {
+	"poison",
+	"sleep",
+	"paralysis"
+}
 toozetraits = {
 	"poison",
 	"sleep",

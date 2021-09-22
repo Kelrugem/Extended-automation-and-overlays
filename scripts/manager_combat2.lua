@@ -447,6 +447,8 @@ function addNPC(sClass, nodeNPC, sName)
 						tableConcat(sIftagcomp, DataCommon2.tconstructtraits)
 					elseif StringManager.isWord(aSQWords[i+1], "dragon") then
 						tableConcat(sIftagcomp, DataCommon2.tdragontraits)
+					elseif StringManager.isWord(aSQWords[i+1], "elemental") then
+						tableConcat(sIftagcomp, DataCommon2.telementaltraits)
 					elseif StringManager.isWord(aSQWords[i+1], "ooze") then
 						tableConcat(sIftagcomp, DataCommon2.toozetraits)
 					elseif StringManager.isWord(aSQWords[i+1], "plant") then
@@ -499,6 +501,8 @@ function addNPC(sClass, nodeNPC, sName)
 						tableConcat(sIftagcomp, DataCommon2.tconstructtraits)
 					elseif StringManager.isWord(aSQWords[i+1], "dragon") then
 						tableConcat(sIftagcomp, DataCommon2.tdragontraits)
+					elseif StringManager.isWord(aSQWords[i+1], "elemental") then
+						tableConcat(sIftagcomp, DataCommon2.telementaltraits)
 					elseif StringManager.isWord(aSQWords[i+1], "ooze") then
 						tableConcat(sIftagcomp, DataCommon2.toozetraits)
 					elseif StringManager.isWord(aSQWords[i+1], "plant") then
