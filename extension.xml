@@ -3,7 +3,7 @@
   <properties>
     <name>Feature: Extended automation and overlays</name>
     <version>3.3.15.1</version>
-    <author>mr900rr (FFOS), darrenan (keen), phixation (bypass), tahl_liadon (some icons), bmos (TQ), DCrumb (max tag) and Kelrugem (rest)</author>
+    <author>mr900rr (FFOS), darrenan (keen), phixation (bypass), tahl_liadon (some icons), bmos (TQ and more), DCrumb (max tag), RabidPaladin (better NPC parsing and resisthalved) and Kelrugem (rest)</author>
     <description>Deekin ist super! (Will ever someone read that strange description?)</description>
     <ruleset>
       <name>3.5E</name>
