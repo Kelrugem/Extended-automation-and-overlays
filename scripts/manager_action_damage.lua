@@ -1169,6 +1169,7 @@ function getDamageAdjust(rSource, rTarget, nDamage, rDamageOutput, bImmune, bFor
 		-- KEL bypass stuff
 		local bypass = false; 
 		local drbypass = false;
+		local resisthalved = false;
 		-- GET THE INDIVIDUAL DAMAGE TYPES FOR THIS ENTRY (EXCLUDING UNTYPED DAMAGE TYPE)
 		local aSrcDmgClauseTypes = {};
 		local bHasEnergyType = false;
@@ -1193,7 +1194,6 @@ function getDamageAdjust(rSource, rTarget, nDamage, rDamageOutput, bImmune, bFor
 			
 			local nSpecialDmgTypes = 0;
 			local nSpecialDmgTypeMatchesHResist = 0;
-			
 			for _,sDmgType in pairs(aSrcDmgClauseTypes) do
 				if StringManager.contains(DataCommon.basicdmgtypes, sDmgType) then
 					if aHResist[sDmgType] then nBasicDmgTypeMatchesHResist = nBasicDmgTypeMatchesHResist + 1; end
@@ -1208,6 +1208,13 @@ function getDamageAdjust(rSource, rTarget, nDamage, rDamageOutput, bImmune, bFor
 					bypass = true;
 				elseif (sDmgType == "drbypass") then
 					drbypass = true;
+				elseif (sDmgType == "resisthalved") then
+					resisthalved = true;
+				end
+			end
+			if resisthalved then
+				for _,sResist in pairs(aResist) do
+					sResist.mod = math.floor(sResist.mod / 2);
 				end
 			end
 			local bHResist = false;
@@ -1407,7 +1414,6 @@ function getDamageAdjust(rSource, rTarget, nDamage, rDamageOutput, bImmune, bFor
 				end
 			end
 		end
-		
 		-- KEL going back to the initial if clause
 		if #aSrcDmgClauseTypes > 0 then
 			if not bImmune[k] and not bFortif[k] then

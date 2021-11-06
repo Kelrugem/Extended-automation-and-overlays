@@ -75,6 +75,14 @@ function getNPCSpaceReach(nodeNPC)
 	return nSpace, nReach;
 end
 
+function tableConcat(origTable, addTable)
+	for _,v in pairs(addTable) do
+		if not(StringManager.contains(origTable, v)) then
+			table.insert(origTable, v)
+		end
+	end
+end
+
 function addNPC(sClass, nodeNPC, sName)
 	local nodeEntry, nodeLastMatch = CombatManager.addNPCHelper(nodeNPC, sName);
 
@@ -209,15 +217,24 @@ function addNPC(sClass, nodeNPC, sName)
 		if StringManager.contains(aTypes, "construct") then
 			table.insert(aEffects, "Construct traits");
 			bImmuneNonlethal = true;
+			tableConcat(sIftagcomp, DataCommon2.tconstructtraits);
 		elseif StringManager.contains(aTypes, "elemental") then
 			bElemental = true;
+		elseif StringManager.contains(aTypes, "dragon") then
+			tableConcat(sIftagcomp, DataCommon2.tdragontraits);
 		elseif StringManager.contains(aTypes, "ooze") then
 			table.insert(aEffects, "Ooze traits");
 			bImmuneCritical = true;
 			bImmunePrecision = true;
+			tableConcat(sIftagcomp, DataCommon2.toozetraits);
+		elseif StringManager.contains(aTypes, "plant") then
+			tableConcat(sIftagcomp, DataCommon2.tplanttraits);
 		elseif StringManager.contains(aTypes, "undead") then
 			table.insert(aEffects, "Undead traits");
 			bImmuneNonlethal = true;
+			tableConcat(sIftagcomp, DataCommon2.tundeadtraits);
+		elseif StringManager.contains(aTypes, "vermin") then
+			tableConcat(sIftagcomp, DataCommon2.tvermintraits);
 		end
 		
 		if StringManager.contains(aSubTypes, "aeon") then
@@ -239,6 +256,7 @@ function addNPC(sClass, nodeNPC, sName)
 			table.insert(aEffects, "Elemental traits");
 			bImmuneCritical = true;
 			bImmunePrecision = true;
+			tableConcat(sIftagcomp, DataCommon2.telementaltraits);
 		end
 	else -- KEL Adding precision immunity (if immune to crit then also to precision)
 		if StringManager.contains(aTypes, "construct") then
@@ -246,23 +264,32 @@ function addNPC(sClass, nodeNPC, sName)
 			bImmuneNonlethal = true;
 			bImmuneCritical = true;
 			bImmunePrecision = true;
+			tableConcat(sIftagcomp, DataCommon2.tconstructtraits);
+		elseif StringManager.contains(aTypes, "dragon") then
+			tableConcat(sIftagcomp, DataCommon2.tdragontraits);
 		elseif StringManager.contains(aTypes, "elemental") then
 			table.insert(aEffects, "Elemental traits");
 			bImmuneCritical = true;
 			bImmunePrecision = true;
+			tableConcat(sIftagcomp, DataCommon2.telementaltraits);
 		elseif StringManager.contains(aTypes, "ooze") then
 			table.insert(aEffects, "Ooze traits");
 			bImmuneCritical = true;
 			bImmunePrecision = true;
+			tableConcat(sIftagcomp, DataCommon2.toozetraits);
 		elseif StringManager.contains(aTypes, "plant") then
 			table.insert(aEffects, "Plant traits");
 			bImmuneCritical = true;
 			bImmunePrecision = true;
+			tableConcat(sIftagcomp, DataCommon2.tplanttraits);
+		elseif StringManager.contains(aTypes, "vermin") then
+			tableConcat(sIftagcomp, DataCommon2.tvermintraits);
 		elseif StringManager.contains(aTypes, "undead") then
 			table.insert(aEffects, "Undead traits");
 			bImmuneNonlethal = true;
 			bImmuneCritical = true;
 			bImmunePrecision = true;
+			tableConcat(sIftagcomp, DataCommon2.tundeadtraits);
 		end
 		if StringManager.contains(aSubTypes, "swarm") then
 			table.insert(aEffects, "Swarm traits");
@@ -437,6 +464,21 @@ function addNPC(sClass, nodeNPC, sName)
 				if StringManager.isWord(aSQWords[i+1], "and") then
 					-- SKIP
 				elseif StringManager.isWord(aSQWords[i+2], "traits") then
+					if StringManager.isWord(aSQWords[i+1], "construct") then
+						tableConcat(sIftagcomp, DataCommon2.tconstructtraits)
+					elseif StringManager.isWord(aSQWords[i+1], "dragon") then
+						tableConcat(sIftagcomp, DataCommon2.tdragontraits)
+					elseif StringManager.isWord(aSQWords[i+1], "elemental") then
+						tableConcat(sIftagcomp, DataCommon2.telementaltraits)
+					elseif StringManager.isWord(aSQWords[i+1], "ooze") then
+						tableConcat(sIftagcomp, DataCommon2.toozetraits)
+					elseif StringManager.isWord(aSQWords[i+1], "plant") then
+						tableConcat(sIftagcomp, DataCommon2.tplanttraits)
+					elseif StringManager.isWord(aSQWords[i+1], "undead") then
+						tableConcat(sIftagcomp, DataCommon2.tundeadtraits)
+					elseif StringManager.isWord(aSQWords[i+1], "vermin") then
+						tableConcat(sIftagcomp, DataCommon2.tvermintraits)
+					end
 					-- SKIP+
 					i = i + 1;
 				-- Add exception for "magic immunity", which is also a damage type
@@ -476,6 +518,21 @@ function addNPC(sClass, nodeNPC, sName)
 				if StringManager.isWord(aSQWords[i+1], "and") then
 					--SKIP
 				elseif StringManager.isWord(aSQWords[i+2], "traits") then
+					if StringManager.isWord(aSQWords[i+1], "construct") then
+						tableConcat(sIftagcomp, DataCommon2.tconstructtraits)
+					elseif StringManager.isWord(aSQWords[i+1], "dragon") then
+						tableConcat(sIftagcomp, DataCommon2.tdragontraits)
+					elseif StringManager.isWord(aSQWords[i+1], "elemental") then
+						tableConcat(sIftagcomp, DataCommon2.telementaltraits)
+					elseif StringManager.isWord(aSQWords[i+1], "ooze") then
+						tableConcat(sIftagcomp, DataCommon2.toozetraits)
+					elseif StringManager.isWord(aSQWords[i+1], "plant") then
+						tableConcat(sIftagcomp, DataCommon2.tplanttraits)
+					elseif StringManager.isWord(aSQWords[i+1], "undead") then
+						tableConcat(sIftagcomp, DataCommon2.tundeadtraits)
+					elseif StringManager.isWord(aSQWords[i+1], "vermin") then
+						tableConcat(sIftagcomp, DataCommon2.tvermintraits)
+					end
 					-- SKIP+
 					i = i + 1;
 				-- Add exception for "magic immunity", which is also a damage type
