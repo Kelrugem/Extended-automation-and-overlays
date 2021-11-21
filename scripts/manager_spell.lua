@@ -1073,8 +1073,9 @@ function onSpellAction(draginfo, nodeAction, sSubRoll)
 		if OthernodeAction then
 			for k, v in pairs(OthernodeAction) do
 				if DB.getValue(v, "type") == "cast" then
-					local semicolon = "; ";
-					tag = DB.getValue(v, "school", "").. semicolon .. DB.getValue(v, "stype", "") .. semicolon .. DB.getValue(v, "othertags", "");
+					-- local semicolon = "; ";
+					-- tag = DB.getValue(v, "school", "").. semicolon .. DB.getValue(v, "stype", "") .. semicolon .. DB.getValue(v, "othertags", "");
+					tag = SpellManager.getTagsFromAction(v);
 					break;
 				end
 			end
@@ -1104,7 +1105,7 @@ function onSpellAction(draginfo, nodeAction, sSubRoll)
 	local rCustom = nil;
 	if rAction.type == "cast" then
 		-- KEL Use Cast-specific tags (?)
-		local tagsSpec = getTagsFromAction(rAction);
+		local tagsSpec = SpellManager.getTagsFromAction(rAction);
 		if not rAction.subtype then
 			table.insert(rRolls, ActionSpell.getSpellCastRoll(rActor, rAction));
 		end
@@ -1112,7 +1113,7 @@ function onSpellAction(draginfo, nodeAction, sSubRoll)
 		if not rAction.subtype or rAction.subtype == "atk" then
 			if rAction.range then
 				-- KEL add tag in getRoll itself, since that is need for IFTAG-KEEN; similar for following getRoll
-				local rRoll = ActionAttack.getRoll(rActor, rAction);
+				local rRoll = ActionAttack.getRoll(rActor, rAction, tagsSpec);
 				-- if tag then
 					-- rRoll.tags = tag;
 				-- end
@@ -1141,9 +1142,9 @@ function onSpellAction(draginfo, nodeAction, sSubRoll)
 		
 	elseif rAction.type == "damage" then
 		local rRoll = ActionDamage.getRoll(rActor, rAction);
-		if tag then
-			rRoll.tags = tag;
-		end
+		-- if tag then
+		rRoll.tags = tag;
+		-- end
 		if rAction.bSpellDamage then
 			rRoll.sType = "spdamage";
 		else

@@ -830,10 +830,10 @@ end
 function hasEffectCondition(rActor, sEffect, rEffectSpell)
 	return hasEffect(rActor, sEffect, nil, false, true, rEffectSpell);
 end
-
+-- KEL add counter to hasEffect needed for dis/adv
 function hasEffect(rActor, sEffect, rTarget, bTargetedOnly, bIgnoreEffectTargets, rEffectSpell)
 	if not sEffect or not rActor then
-		return false;
+		return false, 0;
 	end
 	local sLowerEffect = sEffect:lower();
 	
@@ -929,9 +929,9 @@ function hasEffect(rActor, sEffect, rTarget, bTargetedOnly, bIgnoreEffectTargets
 	end
 	
 	if #aMatch > 0 then
-		return true;
+		return true, #aMatch;
 	end
-	return false;
+	return false, 0;
 end
 
 function checkConditional(rActor, nodeEffect, aConditions, rTarget, aIgnore)

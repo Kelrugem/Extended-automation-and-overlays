@@ -23,18 +23,6 @@ function onInit()
 	ActionsManager.registerResultHandler("critconfirm", onAttack);
 	ActionsManager.registerResultHandler("misschance", onMissChance);
 	ActionsManager.registerResultHandler("grapple", onGrapple);
-	-- KEL Compatibilities with other extensions
-	-- if MirrorImageHandler then
-		-- ActionsManager.registerResultHandler("mirrorimage", MirrorImageHandler.onMirrorImage);
-	-- end
-	-- if SpellFailure then
-		-- ActionsManager.registerResultHandler("spellfailure", SpellFailure.spellFailureMessage);
-	-- end
-	-- if DiseaseTracker then
-		-- ActionsManager.registerResultHandler("disease", ActionDiseaseSave.onRoll);
-		-- ActionsManager.registerResultHandler("diseasetimeroll", ActionDiseaseTimeRoll.onRoll);
-	-- end
-	-- END
 end
 
 function handleApplyAttack(msgOOB)
@@ -117,8 +105,8 @@ function performRoll(draginfo, rActor, rAction)
 	
 	ActionsManager.performAction(draginfo, rActor, rRoll);
 end
-
-function getRoll(rActor, rAction)
+-- KEL add tag argument
+function getRoll(rActor, rAction, tag)
 	local rRoll = {};
 	if rAction.cm then
 		rRoll.sType = "grapple";
@@ -156,19 +144,11 @@ function getRoll(rActor, rAction)
 	end
 	
 	-- Add other modifiers
-	-- KEL compatibility with KEEN and iftag stuff
-	rRoll.tags = SpellManager.getTagsFromAction(rAction);
-	local rActionCrit = rAction.crit;
-    if EffectManager35E.hasEffect(rActor, "KEEN", nil, false, false, rRoll.tags) then
-        if rActionCrit then
-            rActionCrit = 20 - ((20 - rActionCrit + 1) * 2) + 1;
-        else
-            rActionCrit = 19;
-        end
-    end
-	if rActionCrit and rActionCrit < 20 then
-		rRoll.sDesc = rRoll.sDesc .. " [CRIT " .. rActionCrit .. "]";
-	end
+	-- KEL compatibility with KEEN and iftag stuff; EDIT: Moving KEEN stuff such that it is targetable. Hence, saving crit value
+	rRoll.tags = tag;
+	rRoll.crit = rAction.crit;
+	-- END
+	
 	if rAction.touch then
 		rRoll.sDesc = rRoll.sDesc .. " [TOUCH]";
 	end
@@ -324,6 +304,16 @@ function modAttack(rSource, rTarget, rRoll)
 		end
 		
 		-- Get attack effect modifiers
+		-- KEL New KEEN code for allowing several new configurations
+		local rActionCrit = tonumber(rRoll.crit) or 20;
+		local aKEEN = EffectManager35E.getEffectsByType(rSource, "KEEN", aAttackFilter, rTarget, false, rRoll.tags);
+		if (#aKEEN > 0) or EffectManager35E.hasEffect(rSource, "KEEN", rTarget, false, false, rRoll.tags) then
+			rActionCrit = 20 - ((20 - rActionCrit + 1) * 2) + 1;
+		end
+		if rActionCrit < 20 then
+			table.insert(aAddDesc, "[CRIT " .. rActionCrit .. "]");
+		end
+		-- END
 		-- KEL add tags
 		local bEffects = false;
 		local nEffectCount;
@@ -331,6 +321,18 @@ function modAttack(rSource, rTarget, rRoll)
 		if (nEffectCount > 0) then
 			bEffects = true;
 		end
+		-- KEL (DIS)ADV; also add total amount of all dis/adv effects which are then compared with kel(dis)advantage numbers
+		local aADVATK = EffectManager35E.getEffectsByType(rSource, "ADVATK", aAttackFilter, rTarget, false, rRoll.tags);
+		local aDISATK = EffectManager35E.getEffectsByType(rSource, "DISATK", aAttackFilter, rTarget, false, rRoll.tags);
+		local aGRANTADVATK = EffectManager35E.getEffectsByType(rTarget, "GRANTADVATK", aAttackFilter, rSource, false, rRoll.tags);
+		local aGRANTDISATK = EffectManager35E.getEffectsByType(rTarget, "GRANTDISATK", aAttackFilter, rSource, false, rRoll.tags);
+		local _, nADVATK = EffectManager35E.hasEffect(rSource, "ADVATK", rTarget, false, false, rRoll.tags);
+		local _, nDISATK = EffectManager35E.hasEffect(rSource, "DISATK", rTarget, false, false, rRoll.tags);
+		local _, nGRANTADVATK = EffectManager35E.hasEffect(rTarget, "GRANTADVATK", rSource, false, false, rRoll.tags);
+		local _, nGRANTDISATK = EffectManager35E.hasEffect(rTarget, "GRANTDISATK", rSource, false, false, rRoll.tags);
+		
+		rRoll.adv = #aADVATK + #aGRANTADVATK + nADVATK + nGRANTADVATK - (#aDISATK + #aGRANTDISATK + nDISATK + nGRANTDISATK);
+		-- END
 		if rRoll.sType == "grapple" then
 			local aPFDice, nPFMod, nPFCount = EffectManager35E.getEffectsBonus(rSource, {"CMB"}, false, aAttackFilter, rTarget, false, rRoll.tags);
 			if nPFCount > 0 then
