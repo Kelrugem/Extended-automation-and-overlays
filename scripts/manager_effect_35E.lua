@@ -124,7 +124,7 @@ function onEffectActorStartTurn(nodeActor, nodeEffect)
 			end
 		
 		-- Ongoing damage, fast healing and regeneration
-		elseif rEffectComp.type == "DMGO" or rEffectComp.type == "FHEAL" or rEffectComp.type == "REGEN" then
+		elseif rEffectComp.type == "TEMPO" or rEffectComp.type == "DMGO" or rEffectComp.type == "FHEAL" or rEffectComp.type == "REGEN" then
 			local nActive = DB.getValue(nodeEffect, "isactive", 0);
 			if nActive == 2 then
 				DB.setValue(nodeEffect, "isactive", "number", 1);
@@ -290,6 +290,14 @@ function applyOngoingDamageAdjustment(nodeActor, nodeEffect, rEffectComp)
 		end
 		
 		table.insert(aResults, "[FHEAL] Fast Heal");
+
+	elseif rEffectComp.type == "TEMPO" then
+		local sStatus = ActorHealthManager.getHealthStatus(rTarget);
+		if sStatus == ActorHealthManager.STATUS_DEAD then
+			return;
+		end
+		
+		table.insert(aResults, "[HEAL] [TEMP] Temporary Hitpoints");
 
 	elseif rEffectComp.type == "REGEN" then
 		local bPFMode = DataCommon.isPFRPG();
