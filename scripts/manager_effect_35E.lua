@@ -21,16 +21,6 @@ end
 -- EFFECT MANAGER OVERRIDES
 --
 
--- KEL compatibility with rmilmine
--- function isAEOk(rActor, v)
-	-- if StringManager.contains(Extension.getExtensions(), "Advanced Effects for 3.5E and Pathfinder") then
-		-- return EffectManagerAE.isValidCheckEffect(rActor,v);
-	-- else
-		-- return true;
-	-- end
--- end
--- END
-
 function onEffectAddStart(rEffect)
 	rEffect.nDuration = rEffect.nDuration or 1;
 	if rEffect.sUnits == "minute" then
@@ -231,7 +221,7 @@ function parseEffectComp(s)
 		end
 	end
 
-	return  {
+	return {
 		type = sType or "", 
 		mod = nMod, 
 		dice = aDice, 
@@ -258,6 +248,7 @@ function rebuildParsedEffectComp(rComp)
 	end
 	return table.concat(aComp, " ");
 end
+
 -- KEL ROLLON
 function applyRollon(rEffectComp)
 	local nNumberPrefix = "";
@@ -448,6 +439,7 @@ function evalEffect(rActor, s, nodeSpellClass)
 	
 	return sOutput;
 end
+
 -- KEL add tags
 function getEffectsByType(rActor, sEffectType, aFilter, rFilterActor, bTargetedOnly, rEffectSpell)
 	if not rActor then
@@ -655,11 +647,12 @@ function getEffectsByType(rActor, sEffectType, aFilter, rFilterActor, bTargetedO
 					end
 				end
 			end -- END TARGET CHECK
-		end  -- END ACTIVE CHECK
-	end  -- END EFFECT LOOP
+		end -- END ACTIVE CHECK
+	end -- END EFFECT LOOP
 	
 	return results;
 end
+
 -- KEL add tags
 function getEffectsBonusByType(rActor, aEffectType, bAddEmptyBonus, aFilter, rFilterActor, bTargetedOnly, rEffectSpell)
 	if not rActor or not aEffectType then
@@ -762,6 +755,7 @@ function getEffectsBonusByType(rActor, aEffectType, bAddEmptyBonus, aFilter, rFi
 
 	return results, nEffectCount;
 end
+
 -- KEL add tags
 function getEffectsBonus(rActor, aEffectType, bModOnly, aFilter, rFilterActor, bTargetedOnly, rEffectSpell)
 	if not rActor or not aEffectType then
@@ -826,6 +820,7 @@ function getEffectsBonus(rActor, aEffectType, bModOnly, aFilter, rFilterActor, b
 	end
 	return aTotalDice, nTotalMod, nEffectCount;
 end
+
 -- KEL Adding tags and IFTAG to hasEffect
 function hasEffectCondition(rActor, sEffect, rEffectSpell)
 	return hasEffect(rActor, sEffect, nil, false, true, rEffectSpell);
@@ -1095,6 +1090,7 @@ function checkConditionalHelper(rActor, sEffect, rTarget, aIgnore)
 	
 	return false;
 end
+
 -- KEL TAG
 function checkTagConditional(rActor, nodeEffect, aConditions, rEffectSpell)
 	if rEffectSpell then
