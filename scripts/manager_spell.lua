@@ -1114,9 +1114,6 @@ function onSpellAction(draginfo, nodeAction, sSubRoll)
 			if rAction.range then
 				-- KEL add tag in getRoll itself, since that is need for IFTAG-KEEN; similar for following getRoll
 				local rRoll = ActionAttack.getRoll(rActor, rAction, tagsSpec);
-				-- if tag then
-					-- rRoll.tags = tag;
-				-- end
 				table.insert(rRolls, rRoll);
 			end
 		end

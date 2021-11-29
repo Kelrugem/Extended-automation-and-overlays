@@ -1214,3 +1214,53 @@ function removeStableEffect(rActor)
 	local _,_,_ = getWoundPercent(rActor);
 	-- END
 end
+
+-- BMOS's feat search etc., adjusted a bit using already-existing functions
+function hasSpecialAbility(rActor, sSearchString, bFeat, bTrait, bSpecialAbility)
+	if not rActor or not sSearchString then
+		return false;
+	end
+	local nodeActor = rActor.sCreatureNode;
+
+	local sSearchString = string.lower(sSearchString);
+	local sSearchString = string.gsub(sSearchString, '%-', '%%%-');
+	if ActorManager.isPC(nodeActor) then
+		if bFeat then
+			for _,vNode in pairs(DB.getChildren(nodeActor .. '.featlist')) do
+				local sFeatName = StringManager.trim(DB.getValue(vNode, 'name', ''):lower());
+				if sFeatName and string.match(sFeatName, sSearchString .. ' %d*') then
+					return true;
+				end
+			end
+		end
+		if bTrait then
+			for _,vNode in pairs(DB.getChildren(nodeActor .. '.traitlist')) do
+				local sTraitName = StringManager.trim(DB.getValue(vNode, 'name', ''):lower());
+				if sTraitName and string.match(sTraitName, sSearchString .. ' %d*') then
+					return true;
+				end
+			end
+		end
+		if bSpecialAbility then
+			for _,vNode in pairs(DB.getChildren(nodeActor .. '.specialabilitylist')) do
+				local sSpecialAbilityName = StringManager.trim(DB.getValue(vNode, 'name', ''):lower());
+				if sSpecialAbilityName and string.match(sSpecialAbilityName, sSearchString .. ' %d*') then
+					return true;
+				end
+			end
+		end
+	else
+		local sSpecialQualities = string.lower(DB.getValue(nodeActor .. '.specialqualities', ''));
+		local sSpecAtks = string.lower(DB.getValue(nodeActor .. '.specialattacks', ''));
+		local sFeats = string.lower(DB.getValue(nodeActor .. '.feats', ''));
+
+		if bFeat and string.find(sFeats, sSearchString) then
+			return true;
+		elseif bSpecialAbility and (string.find(sSpecAtks, sSearchString) or string.find(sSpecialQualities, sSearchString)) then
+			return true;
+		end
+	end
+	
+	return false;
+end
+-- END

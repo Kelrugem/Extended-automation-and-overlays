@@ -249,7 +249,8 @@ function modAttack(rSource, rTarget, rRoll)
 			table.insert(aAddDesc, "[TOUCH]");
 		end
 	end
-	if bFlatFooted then
+	-- KEL adding uncanny dodge
+	if bFlatFooted and not ActorManager35E.hasSpecialAbility(rTarget, "Uncanny Dodge", false, false, true) and not ActorManager35E.hasSpecialAbility(rTarget, "Improved Uncanny Dodge", false, false, true) then
 		table.insert(aAddDesc, "[FF]");
 	end
 	if bSuperiorCover then
@@ -303,21 +304,47 @@ function modAttack(rSource, rTarget, rRoll)
 			table.insert(aAttackFilter, "opportunity");
 		end
 		
+		-- Get condition modifiers; KEL moved it here for nodex automation later (not yet done) such that following effects can profit from it; similar for bEffects; adding ethereal
+		local bEffects = false;
+		if EffectManager35E.hasEffect(rSource, "Ethereal", nil, false, false, rRoll.tags) then
+			bEffects = true;
+			nAddMod = nAddMod + 2;
+			if not ActorManager35E.hasSpecialAbility(rTarget, "Uncanny Dodge", false, false, true) and not ActorManager35E.hasSpecialAbility(rTarget, "Improved Uncanny Dodge", false, false, true) then
+				table.insert(aAddDesc, "[CA]");
+			end
+		elseif EffectManager35E.hasEffect(rSource, "Invisible", nil, false, false, rRoll.tags) then
+			-- KEL blind fight, skipping checking effects for now (for performance and to avoid problems with On Skip etc.)
+			local bBlindFight = ActorManager35E.hasSpecialAbility(rTarget, "Blind-Fight", true, false, false);
+			if sAttackType == "R" or not bBlindFight then
+				bEffects = true;
+				nAddMod = nAddMod + 2;
+				if not bBlindFight and not ActorManager35E.hasSpecialAbility(rTarget, "Uncanny Dodge", false, false, true) and not ActorManager35E.hasSpecialAbility(rTarget, "Improved Uncanny Dodge", false, false, true) then
+					table.insert(aAddDesc, "[CA]");
+				end
+			end
+			-- END
+		elseif EffectManager35E.hasEffect(rSource, "CA", nil, false, false, rRoll.tags) then
+			bEffects = true;
+			table.insert(aAddDesc, "[CA]");
+		end
+		-- END
 		-- Get attack effect modifiers
 		-- KEL New KEEN code for allowing several new configurations
 		local rActionCrit = tonumber(rRoll.crit) or 20;
 		local aKEEN = EffectManager35E.getEffectsByType(rSource, "KEEN", aAttackFilter, rTarget, false, rRoll.tags);
 		if (#aKEEN > 0) or EffectManager35E.hasEffect(rSource, "KEEN", rTarget, false, false, rRoll.tags) then
 			rActionCrit = 20 - ((20 - rActionCrit + 1) * 2) + 1;
+			bEffects = true;
 		end
 		if rActionCrit < 20 then
 			table.insert(aAddDesc, "[CRIT " .. rActionCrit .. "]");
 		end
 		-- END
-		-- KEL add tags
-		local bEffects = false;
+		-- KEL add tags, and relabel nAddMod to nAddModi to avoid overwriting the previous nAddMod
 		local nEffectCount;
-		aAddDice, nAddMod, nEffectCount = EffectManager35E.getEffectsBonus(rSource, {"ATK"}, false, aAttackFilter, rTarget, false, rRoll.tags);
+		aAddDice, nAddModi, nEffectCount = EffectManager35E.getEffectsBonus(rSource, {"ATK"}, false, aAttackFilter, rTarget, false, rRoll.tags);
+		nAddMod = nAddMod + nAddModi;
+		-- END
 		if (nEffectCount > 0) then
 			bEffects = true;
 		end
@@ -344,15 +371,6 @@ function modAttack(rSource, rTarget, rRoll)
 			end
 		end
 		
-		-- Get condition modifiers
-		if EffectManager35E.hasEffect(rSource, "Invisible", nil, false, false, rRoll.tags) then
-			bEffects = true;
-			nAddMod = nAddMod + 2;
-			table.insert(aAddDesc, "[CA]");
-		elseif EffectManager35E.hasEffect(rSource, "CA", nil, false, false, rRoll.tags) then
-			bEffects = true;
-			table.insert(aAddDesc, "[CA]");
-		end
 		if EffectManager35E.hasEffect(rSource, "Blinded", nil, false, false, rRoll.tags) then
 			bEffects = true;
 			table.insert(aAddDesc, "[BLINDED]");
@@ -492,6 +510,9 @@ function onAttack(rSource, rTarget, rRoll)
 			rMessage.text = string.gsub(rMessage.text, sAtkEffectsClear, "");
 		end
 	else
+		-- KEL blind fight, skipping checking effects for now (for performance and to avoid problems with On Skip etc.)
+		local bBlindFight = ActorManager35E.hasSpecialAbility(rSource, "Blind-Fight", true, false, false, false, rRoll.tags);
+		-- END
 		nDefenseVal, nAtkEffectsBonus, nDefEffectsBonus, nMissChance, nAdditionalDefenseForCC = ActorManager35E.getDefenseValue(rSource, rTarget, rRoll);
 		-- KEL CONC on Attacker
 		-- DETERMINE ATTACK TYPE AND DEFENSE
