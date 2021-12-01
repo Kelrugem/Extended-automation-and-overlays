@@ -6,26 +6,27 @@
 -- NOTE: Effect damage dice are not multiplied on critical, though numerical modifiers are multiplied
 -- https://rpg.stackexchange.com/questions/4465/is-smite-evil-damage-multiplied-by-a-critical-hit
 
-OOB_MSGTYPE_APPLYDMG = "applydmg";
-OOB_MSGTYPE_APPLYDMGSTATE = "applydmgstate";
 -- Kel
 OOB_MSGTYPE_APPLYTDMG = "applytdmg";
 -- END
 
 function onInit()
-	OOBManager.registerOOBMsgHandler(OOB_MSGTYPE_APPLYDMG, handleApplyDamage);
-	OOBManager.registerOOBMsgHandler(OOB_MSGTYPE_APPLYDMGSTATE, handleApplyDamageState);
+	ActionDamage.handleApplyDamage = handleApplyDamage
+	OOBManager.registerOOBMsgHandler(ActionDamage.OOB_MSGTYPE_APPLYDMG, handleApplyDamage)
 
-	ActionsManager.registerModHandler("damage", modDamage);
-	ActionsManager.registerModHandler("spdamage", modDamage);
-	ActionsManager.registerModHandler("stabilization", modStabilization);
+	ActionDamage.notifyApplyDamage = notifyApplyDamage
 
-	ActionsManager.registerPostRollHandler("damage", onDamageRoll);
-	ActionsManager.registerPostRollHandler("spdamage", onDamageRoll);
-	
-	ActionsManager.registerResultHandler("damage", onDamage);
-	ActionsManager.registerResultHandler("spdamage", onDamage);
-	ActionsManager.registerResultHandler("stabilization", onStabilization);
+	ActionDamage.onDamage = onDamage
+	ActionsManager.registerResultHandler("damage", onDamage)
+	ActionsManager.registerResultHandler("spdamage", onDamage)
+
+	ActionDamage.applyDmgEffectsToModRoll = applyDmgEffectsToModRoll
+	ActionDamage.applyConditionsToModRoll = applyConditionsToModRoll
+	ActionDamage.applyDmgTypeEffectsToModRoll = applyDmgTypeEffectsToModRoll
+
+	ActionDamage.getDamageAdjust = getDamageAdjust
+
+	ActionDamage.applyDamage = applyDamage
 	
 	--KEL Fortif roll etc.
 	ActionsManager.registerResultHandler("fortification", onFortification);
@@ -34,6 +35,7 @@ function onInit()
 end
 
 function handleApplyDamage(msgOOB)
+	Debug.chat("Kel's handleApplyDamage")
 	local rSource = ActorManager.resolveActor(msgOOB.sSourceNode);
 	local rTarget = ActorManager.resolveActor(msgOOB.sTargetNode);
 	local bImmune = {};
@@ -55,7 +57,7 @@ function handleApplyDamage(msgOOB)
 	local bPFMode = DataCommon.isPFRPG();
 
 	-- if string.match(rMessage.text, "%[DAMAGE") then
-	local rDamageOutput = decodeDamageText(nTotal, msgOOB.sDamage);
+	local rDamageOutput = ActionDamage.decodeDamageText(nTotal, msgOOB.sDamage);
 	if rTarget and rDamageOutput.aDamageTypes then
 		local aImmune = EffectManager35E.getEffectsBonusByType(rTarget, "IMMUNE", false, {}, rSource, false, msgOOB.tags);
 		local aFortif = EffectManager35E.getEffectsBonusByType(rTarget, "FORTIF", false, {}, rSource, false, msgOOB.tags);
@@ -171,7 +173,7 @@ function handleApplyDamage(msgOOB)
 		applyDamage(rSource, rTarget, (tonumber(msgOOB.nSecret) == 1), msgOOB.sRollType, msgOOB.sDamage, nTotal, bSImmune, bSFortif, msgOOB.tags);
 	else
 		local aRollFortif = { sType = "fortification", aDice = bDice, nMod = 0, aType = msgOOB.sRollType, aMessagetext = msgOOB.sDamage, aTotal = nTotal, aTags = msgOOB.tags};
-		local rDamageOutput = decodeDamageText(nTotal, msgOOB.sDamage);
+		local rDamageOutput = ActionDamage.decodeDamageText(nTotal, msgOOB.sDamage);
 		if tonumber(msgOOB.nSecret) == 1 then
 			aRollFortif.bTower = "true";
 		else
@@ -226,14 +228,16 @@ function handleApplyDamage(msgOOB)
 	end
 	-- END
 end
+
 -- KEL add attackfilter etc
 function notifyApplyDamage(rSource, rTarget, bSecret, sRollType, sDesc, nTotal, sAttackFilter, tag)
+	Debug.chat("Kel's notifyApplyDamage")
 	if not rTarget then
 		return;
 	end
 
 	local msgOOB = {};
-	msgOOB.type = OOB_MSGTYPE_APPLYDMG;
+	msgOOB.type = ActionDamage.OOB_MSGTYPE_APPLYDMG;
 	-- KEL tdmg and tags
 	msgOOB.sFilter = sAttackFilter;
 	msgOOB.tags = tag;
@@ -255,154 +259,31 @@ function notifyApplyDamage(rSource, rTarget, bSecret, sRollType, sDesc, nTotal, 
 	Comm.deliverOOBMessage(msgOOB, "");
 end
 
-function performStabilizationRoll(rActor)
-	local rRoll = GameSystem.getStabilizationRoll(rActor);
+-- function modDamage(rSource, rTarget, rRoll)
+-- 	Debug.chat("Kel's  modDamage")
+-- 	ActionDamage.setupModRoll(rRoll, rSource, rTarget);
 
-	ActionsManager.performAction(nil, rActor, rRoll);
-end
+-- 	if rSource then
+-- 		ActionDamage.applyAbilityEffectsToModRoll(rRoll, rSource, rTarget);
+-- 	end
 
-function getRoll(rActor, rAction)
-	local rRoll = {};
-	rRoll.sType = "damage";
-	rRoll.aDice = {};
-	rRoll.nMod = 0;
-	
-	rRoll.sDesc = "[DAMAGE";
-	if rAction.order and rAction.order > 1 then
-		rRoll.sDesc = rRoll.sDesc .. " #" .. rAction.order;
-	end
-	if rAction.range then
-		rRoll.sDesc = rRoll.sDesc .. " (" .. rAction.range ..")";
-		rRoll.range = rAction.range;
-	end
-	rRoll.sDesc = rRoll.sDesc .. "] " .. rAction.label;
-	
-	-- Save the damage clauses in the roll structure
-	rRoll.clauses = rAction.clauses;
-	
-	-- Add the dice and modifiers
-	for _,vClause in pairs(rRoll.clauses) do
-		for _,vDie in ipairs(vClause.dice) do
-			table.insert(rRoll.aDice, vDie);
-		end
-		rRoll.nMod = rRoll.nMod + vClause.modifier;
-	end
-	
-	-- Encode the damage types
-	encodeDamageTypes(rRoll);
+-- 	if rRoll.bCritical then
+-- 		ActionDamage.applyCriticalToModRoll(rRoll, rSource, rTarget);
+-- 	end
 
-	-- Encode meta tags
-	if rAction.meta then
-		if rAction.meta == "empower" then
-			rRoll.sDesc = rRoll.sDesc .. " [EMPOWER]";
-		elseif rAction.meta == "maximize" then
-			rRoll.sDesc = rRoll.sDesc .. " [MAXIMIZE]";
-		end
-	end
-	
-	return rRoll;
-end
+-- 	if rSource then
+-- 		ActionDamage.applyDmgEffectsToModRoll(rRoll, rSource, rTarget);
+-- 		ActionDamage.applyConditionsToModRoll(rRoll, rSource, rTarget);
+-- 		ActionDamage.applyEffectModNotificationToModRoll(rRoll);
 
-function performRoll(draginfo, rActor, rAction)
-	local rRoll = getRoll(rActor, rAction);
-	
-	ActionsManager.performAction(draginfo, rActor, rRoll);
-end
+-- 		ActionDamage.applyDmgTypeEffectsToModRoll(rRoll, rSource, rTarget);
+-- 	end
 
-function modStabilization(rSource, rTarget, rRoll)
-	GameSystem.modStabilization(rSource, rTarget, rRoll);
-end
+-- 	ActionDamage.applyModifierKeysToModRoll(rRoll, rSource, rTarget);
 
-function modDamage(rSource, rTarget, rRoll)
-	ActionDamage.setupModRoll(rRoll, rSource, rTarget);
+-- 	ActionDamage.finalizeModRoll(rRoll);
+-- end
 
-	if rSource then
-		ActionDamage.applyAbilityEffectsToModRoll(rRoll, rSource, rTarget);
-	end
-
-	if rRoll.bCritical then
-		ActionDamage.applyCriticalToModRoll(rRoll, rSource, rTarget);
-	end
-
-	if rSource then
-		ActionDamage.applyDmgEffectsToModRoll(rRoll, rSource, rTarget);
-		ActionDamage.applyConditionsToModRoll(rRoll, rSource, rTarget);
-		ActionDamage.applyEffectModNotificationToModRoll(rRoll);
-
-		ActionDamage.applyDmgTypeEffectsToModRoll(rRoll, rSource, rTarget);
-	end
-
-	ActionDamage.applyModifierKeysToModRoll(rRoll, rSource, rTarget);
-
-	ActionDamage.finalizeModRoll(rRoll);
-end
-
-function onDamageRoll(rSource, rRoll)
-	-- Set up for meta damage processing
-	local bMaximize = rRoll.sDesc:match(" %[MAXIMIZE%]");
-	local bEmpower = rRoll.sDesc:match(" %[EMPOWER%]");
-	
-	-- Apply maximize meta damage
-	if bMaximize then
-		for _, v in ipairs(rRoll.aDice) do
-			local nDieSides = tonumber(v.type:match("[dgpr](%d+)")) or 0;
-			if nDieSides > 0 then
-				v.result = nDieSides;
-				v.value = nil;
-			end
-		end
-	end
-	
-	-- Decode damage types
-	decodeDamageTypes(rRoll, true);
-
-	-- Apply empower meta damage
-	if bEmpower then
-		local nEmpowerTotalMod = 0;
-		
-		for _,vClause in pairs(rRoll.clauses) do
-			local nEmpowerMod = math.floor(vClause.nTotal / 2);
-			
-			nEmpowerTotalMod = nEmpowerTotalMod + nEmpowerMod;
-			vClause.modifier = vClause.modifier + nEmpowerMod;
-			vClause.nTotal = vClause.nTotal + nEmpowerMod;
-			rRoll.nMod = rRoll.nMod + nEmpowerMod;
-		end
-
-		local sReplace = string.format(" [EMPOWER %+d]", nEmpowerTotalMod);
-		rRoll.sDesc = rRoll.sDesc:gsub(" %[EMPOWER%]", sReplace);
-	end
-	
-	-- Handle minimum damage
-	local nTotal = ActionsManager.total(rRoll);
-	if nTotal <= 0 and rRoll.aDice and #rRoll.aDice > 0 then
-		rRoll.sDesc = rRoll.sDesc .. " [MIN DAMAGE]";
-		local nMinMod = 1 - nTotal;
-		rRoll.nMod = rRoll.nMod + nMinMod;
-		
-		local bLethal = true;
-		local aDamageTypes = {};
-		for _,vClause in pairs(rRoll.clauses) do
-			local aSplit = StringManager.split(vClause.dmgtype, ",", true);
-			for _,vSplit in ipairs(aSplit) do
-				if vSplit ~= "" and not StringManager.contains(aDamageTypes, vSplit) then
-					table.insert(aDamageTypes, vSplit);
-					if vSplit == "nonlethal" then
-						bLethal = false;
-					end
-				end
-			end
-		end
-		local bPFMode = DataCommon.isPFRPG();
-		if bPFMode and bLethal then
-			table.insert(aDamageTypes, "nonlethal");
-		end
-		rRoll.clauses = { { dmgtype = table.concat(aDamageTypes, ","), dice = {}, modifier = 1, nTotal = 1 } };
-	end
-	
-	-- Encode the damage results for damage application and readability
-	encodeDamageText(rRoll);
-end
 -- KEL TDMG
 function notifyTDMGRollOnClient(msgOOB)
 	local rSource = ActorManager.resolveActor(msgOOB.sSourceNode);
@@ -479,7 +360,9 @@ function getTargetDamageRoll(rTarget, rSource, aAttackFilter, tags)
 	end
 end
 -- END
+
 function onDamage(rSource, rTarget, rRoll)
+	Debug.chat("Kel's onDamage")
 	local rMessage = ActionsManager.createActionMessage(rSource, rRoll);
 	rMessage.text = string.gsub(rMessage.text, " %[MOD:[^]]*%]", "");
 	rMessage.text = string.gsub(rMessage.text, " %[MULT:[^]]*%]", "");
@@ -512,143 +395,12 @@ function onDamage(rSource, rTarget, rRoll)
 	-- END
 end
 
-function onStabilization(rSource, rTarget, rRoll)
-	local rMessage = ActionsManager.createActionMessage(rSource, rRoll);
-
-	local bSuccess = GameSystem.getStabilizationResult(rRoll);
-	if bSuccess then
-		rMessage.text = rMessage.text .. " [SUCCESS]";
-	else
-		rMessage.text = rMessage.text .. " [FAILURE]";
-	end
-	
-	Comm.deliverChatMessage(rMessage);
-
-	if bSuccess then
-		ActorManager35E.applyStableEffect(rSource);
-	else
-		applyFailedStabilization(rSource);
-	end
-end
-
 --
 -- MOD ROLL HELPERS
 --
 
-function setupModRoll(rRoll, rSource, rTarget)
-	ActionDamage.decodeDamageTypes(rRoll);
-	CombatManager2.addRightClickDiceToClauses(rRoll);
-
-	rRoll.tNotifications = {};
-	
-	rRoll.bCritical = rRoll.bCritical or ModifierStack.getModifierKey("DMG_CRIT") or Input.isShiftPressed();
-	if ActionAttack.isCrit(rSource, rTarget) then
-		rRoll.bCritical = true;
-	end
-	rRoll.tAttackFilter = {};
-	if rRoll.range == "R" then
-		table.insert(rRoll.tAttackFilter, "ranged");
-	elseif rRoll.range == "M" then
-		table.insert(rRoll.tAttackFilter, "melee");
-	end
-
-	rRoll.bEffects = false;
-	rRoll.tEffectDice = {};
-	rRoll.nEffectMod = 0;
-end
-
-function applyAbilityEffectsToModRoll(rRoll, rSource, rTarget)
-	for _,vClause in ipairs(rRoll.clauses) do
-		-- Get original stat modifier
-		local nStatMod = ActorManager35E.getAbilityBonus(rSource, vClause.stat);
-		
-		-- Get any stat effects bonus
-		local nAbilityEffectMod, nAbilityEffects = ActorManager35E.getAbilityEffectsBonus(rSource, vClause.stat);
-		if nAbilityEffects > 0 then
-			rRoll.bEffects = true;
-			
-			-- Calc total stat mod
-			local nTotalStatMod = nStatMod + nAbilityEffectMod;
-			
-			-- Handle maximum stat mod setting
-			-- WORKAROUND: If max limited, then assume no penalty allowed (i.e. bows)
-			local nStatModMax = vClause.statmax or 0;
-			if nStatModMax > 0 then
-				nStatMod = math.max(math.min(nStatMod, nStatModMax), 0);
-				nTotalStatMod = math.max(math.min(nTotalStatMod, nStatModMax), 0);
-			end
-
-			-- Handle multipliers correctly
-			-- NOTE: Negative values are not multiplied, but positive values are.
-			local nMult = vClause.statmult or 1;
-			local nMultOrigStatMod, nMultNewStatMod;
-			if nStatMod <= 0 then
-				nMultOrigStatMod = nStatMod;
-			else
-				nMultOrigStatMod = math.floor(nStatMod * nMult);
-			end
-			if nTotalStatMod <= 0 then
-				nMultNewStatMod = nTotalStatMod;
-			else
-				nMultNewStatMod = math.floor(nTotalStatMod * nMult);
-			end
-			
-			-- Calculate bonus difference
-			local nMultDiffStatMod = nMultNewStatMod - nMultOrigStatMod;
-			
-			-- Apply bonus difference
-			rRoll.nEffectMod = rRoll.nEffectMod + nMultDiffStatMod;
-			vClause.modifier = vClause.modifier + nMultDiffStatMod;
-			rRoll.nMod = rRoll.nMod + nMultDiffStatMod;
-		end
-	end
-end
-
-function applyCriticalToModRoll(rRoll, rSource, rTarget)
-	table.insert(rRoll.tNotifications, "[CRITICAL]");
-
-	local nDieIndex = 1;
-	local aNewClauses = {};
-	for _,vClause in ipairs(rRoll.clauses) do
-		nDieIndex = nDieIndex + #(vClause.dice);
-		
-		table.insert(aNewClauses, vClause);
-		
-		local nMult = vClause.mult or 2;
-		if nMult > 1 then
-			local rNewClause = UtilityManager.copyDeep(vClause);
-			rNewClause.dice = {};
-			rNewClause.modifier = 0;
-			if rNewClause.dmgtype == "" then
-				rNewClause.dmgtype = "critical";
-			else
-				rNewClause.dmgtype = rNewClause.dmgtype .. ",critical";
-			end
-			
-			local nDice = #(vClause.dice);
-			local nMod = vClause.modifier or 0;
-			
-			for i = 2, nMult do
-				for j = 1, nDice do
-					if vClause.dice[j]:sub(1,1) == "-" then
-						table.insert(rRoll.aDice, nDieIndex, "-g" .. vClause.dice[j]:sub(3));
-					else
-						table.insert(rRoll.aDice, nDieIndex, "g" .. vClause.dice[j]:sub(2));
-					end
-					nDieIndex = nDieIndex + 1;
-					table.insert(rNewClause.dice, vClause.dice[j]);
-				end
-				rRoll.nMod = rRoll.nMod + nMod;
-				rNewClause.modifier = rNewClause.modifier + nMod;
-			end
-			
-			table.insert(aNewClauses, rNewClause);
-		end
-	end
-	rRoll.clauses = aNewClauses;
-end
-
 function applyDmgEffectsToModRoll(rRoll, rSource, rTarget)
+	Debug.chat("Kel's  applyDmgEffectsToModRoll")
 	local tEffects, nEffectCount;
 	if rRoll.sType == "spdamage" then
 		tEffects, nEffectCount = EffectManager35E.getEffectsBonusByType(rSource, "DMGS", true, rRoll.tAttackFilter, rTarget, false, rRoll.tags);
@@ -737,6 +489,7 @@ function applyDmgEffectsToModRoll(rRoll, rSource, rTarget)
 end
 
 function applyConditionsToModRoll(rRoll, rSource, rTarget)
+	Debug.chat("Kel's applyConditionsToModRoll")
 	if rRoll.sType ~= "spdamage" then
 		if EffectManager35E.hasEffectCondition(rSource, "Sickened", rRoll.tags) then
 			rRoll.nMod = rRoll.nMod - 2;
@@ -751,20 +504,8 @@ function applyConditionsToModRoll(rRoll, rSource, rTarget)
 	end
 end
 
-function applyEffectModNotificationToModRoll(rRoll)
-	if rRoll.bEffects then
-		local sEffects;
-		local sMod = StringManager.convertDiceToString(rRoll.tEffectDice, rRoll.nEffectMod, true);
-		if sMod ~= "" then
-			sEffects = "[" .. Interface.getString("effects_tag") .. " " .. sMod .. "]";
-		else
-			sEffects = "[" .. Interface.getString("effects_tag") .. "]";
-		end
-		table.insert(rRoll.tNotifications, sEffects);
-	end
-end
-
 function applyDmgTypeEffectsToModRoll(rRoll, rSource, rTarget)
+	Debug.chat("Kel's applyDmgTypeEffectsToModRoll")
 	local tAddDmgTypes = {};
 	local tDmgTypeEffects;
 	if rRoll.sType == "spdamage" then
@@ -798,283 +539,13 @@ function applyDmgTypeEffectsToModRoll(rRoll, rSource, rTarget)
 	end
 end
 
-function applyModifierKeysToModRoll(rRoll, rSource, rTarget)
-	if ModifierStack.getModifierKey("DMG_HALF") then
-		table.insert(rRoll.tNotifications, "[HALF]");
-	end
-end
-
-function finalizeModRoll(rRoll)
-	if #(rRoll.tNotifications) > 0 then
-		rRoll.sDesc = rRoll.sDesc .. " " .. table.concat(rRoll.tNotifications, " ");
-	end
-
-	rRoll.tNotifications = nil;
-	rRoll.tAttackFilter = nil;
-
-	rRoll.bEffects = nil;
-	rRoll.tEffectDice = nil;
-	rRoll.nEffectMod = nil;
-
-	ActionDamage.encodeDamageTypes(rRoll);
-end
-
---
--- UTILITY FUNCTIONS
---
-
-function encodeDamageTypes(rRoll)
-	for _,vClause in ipairs(rRoll.clauses) do
-		local sDice = StringManager.convertDiceToString(vClause.dice, vClause.modifier);
-		rRoll.sDesc = rRoll.sDesc .. string.format(" [TYPE: %s (%s) (%s) (%s) (%s) (%s)]", vClause.dmgtype, sDice, vClause.mult or 2, vClause.stat or "", vClause.statmax or 0, vClause.statmult or 1);
-	end
-end
-
-function decodeDamageTypes(rRoll, bFinal)
-	-- Process each type clause in the damage description as encoded previously
-	local nMainDieIndex = 0;
-	rRoll.clauses = {};
-	for sDmgType, sDmgDice, sDmgMult, sDmgStat, sDmgStatMax, sDmgStatMult in string.gmatch(rRoll.sDesc, "%[TYPE: ([^(]*) %(([^)]*)%) %(([^)]*)%) %(([^)]*)%) %(([^)]*)%) %(([^)]*)%)%]") do
-		local rClause = {};
-		rClause.dmgtype = StringManager.trim(sDmgType);
-		rClause.dice, rClause.modifier = StringManager.convertStringToDice(sDmgDice);
-		rClause.mult = tonumber(sDmgMult) or 2;
-		rClause.stat = sDmgStat;
-		rClause.statmax = tonumber(sDmgStatMax) or 0;
-		rClause.statmult = tonumber(sDmgStatMult) or 1;
-		
-		rClause.nTotal = rClause.modifier;
-		for _,vDie in ipairs(rClause.dice) do
-			nMainDieIndex = nMainDieIndex + 1;
-			rClause.nTotal = rClause.nTotal + (rRoll.aDice[nMainDieIndex].result or 0);
-		end
-		
-		table.insert(rRoll.clauses, rClause);
-	end
-	
-	-- Handle rolls that went straight to roll without going through whole system (i.e. ongoing damage, regen, fast heal, etc.)
-	local nClauses = #(rRoll.clauses);
-	if nClauses == 0 then
-		for sDamageType in rRoll.sDesc:gmatch("%[TYPE: ([^%]]+)%]") do
-			local sDmgType = StringManager.trim(sDamageType:match("^([^(%]]+)"));
-			local sDmgDice, sTotal = sDamageType:match("%(([%d%+%-Dd]+)%=(%d+)%)");
-			if not sDmgDice then
-				sTotal = sDamageType:match("%((%d+)%)")
-			end
-			
-			local rClause = {};
-			rClause.dmgtype = StringManager.trim(sDmgType);
-			rClause.dice = {};
-			rClause.modifier = tonumber(sTotal) or ActionsManager.total(rRoll);
-			rClause.mult = 2;
-			rClause.stat = "";
-			rClause.statmax = 0;
-			rClause.statmult = 1;
-			
-			rClause.nTotal = rClause.modifier;
-			
-			table.insert(rRoll.clauses, rClause);
-		end
-	end
-	
-	-- Handle drag results that are halved or doubled
-	if #(rRoll.aDice) == 0 then
-		local nResultTotal = 0;
-		for i = nClauses + 1, #(rRoll.clauses) do
-			nResultTotal = rRoll.clauses[i].nTotal;
-		end
-		if nResultTotal > 0 and nResultTotal ~= rRoll.nMod then
-			if math.floor(nResultTotal / 2) == rRoll.nMod then
-				for _,vClause in ipairs(rRoll.clauses) do
-					vClause.modifier = math.floor(vClause.modifier / 2);
-					vClause.nTotal = math.floor(vClause.nTotal / 2);
-				end
-			elseif nResultTotal * 2 == rRoll.nMod then
-				for _,vClause in ipairs(rRoll.clauses) do
-					vClause.modifier = 2 * vClause.modifier;
-					vClause.nTotal = 2 * vClause.nTotal;
-				end
-			end
-		end
-	end
-	
-	-- Remove damage type information from roll description
-	rRoll.sDesc = string.gsub(rRoll.sDesc, " %[TYPE:[^]]*%]", "");
-	
-	if bFinal then
-		-- Capture any manual modifiers and adjust damage types accordingly
-		-- NOTE: Positive values are added to first damage clause, Negative values reduce damage clauses until none remain
-		local nFinalTotal = ActionsManager.total(rRoll);
-		local nClausesTotal = 0;
-		for _,vClause in ipairs(rRoll.clauses) do
-			nClausesTotal = nClausesTotal + vClause.nTotal;
-		end
-		if nFinalTotal ~= nClausesTotal then
-			local nRemainder = nFinalTotal - nClausesTotal;
-			if nRemainder > 0 then
-				if #(rRoll.clauses) == 0 then
-					table.insert(rRoll.clauses, { dmgtype = "", stat = "", dice = {}, modifier = nRemainder, nTotal = nRemainder})
-				else
-					rRoll.clauses[1].modifier = rRoll.clauses[1].modifier + nRemainder;
-					rRoll.clauses[1].nTotal = rRoll.clauses[1].nTotal + nRemainder;
-				end
-			else
-				for _,vClause in ipairs(rRoll.clauses) do
-					if vClause.nTotal >= -nRemainder then
-						vClause.modifier = vClause.modifier + nRemainder;
-						vClause.nTotal = vClause.nTotal + nRemainder;
-						break;
-					else
-						vClause.modifier = vClause.modifier - vClause.nTotal;
-						nRemainder = nRemainder + vClause.nTotal;
-						vClause.nTotal = 0;
-					end
-				end
-			end
-		end
-	end
-end
-
-function getDamageTypesFromString(sDamageTypes)
-	local sLower = string.lower(sDamageTypes);
-	local aSplit = StringManager.split(sLower, ",", true);
-	
-	local aDamageTypes = {};
-	for k, v in ipairs(aSplit) do
-		if StringManager.contains(DataCommon.dmgtypes, v) then
-			table.insert(aDamageTypes, v);
-		end
-	end
-	
-	return aDamageTypes;
-end
-
 --
 -- DAMAGE APPLICATION
 --
 
-function getParenDepth(sText, nIndex)
-	local nDepth = 0;
-	
-	local cStart = string.byte("(");
-	local cEnd = string.byte(")");
-	
-	for i = 1, nIndex do
-		local cText = string.byte(sText, i);
-		if cText == cStart then
-			nDepth = nDepth + 1;
-		elseif cText == cEnd then
-			nDepth = nDepth - 1;
-		end
-	end
-	
-	return nDepth;
-end
-
-function decodeAndOrClauses(sText)
-	local nIndexOR;
-	local nStartOR, nEndOR, nStartAND, nEndAND;
-	local nStartOR2, nEndOR2;
-	local nParen;
-	local sPhraseOR;
-
-	local aClausesOR = {};
-	local aSkipOR = {};
-	local nIndexOR = 1;
-	while nIndexOR < #sText do
-		local nTempIndex = nIndexOR;
-		repeat
-			nParen = 0;
-			nStartOR, nEndOR = string.find(sText, "%s+or%s+", nTempIndex);
-			nStartOR2, nEndOR2 = string.find(sText, "%s*;%s*", nTempIndex);
-			
-			if nStartOR2 and (not nStartOR or nStartOR > nStartOR2) then
-				nStartOR = nStartOR2;
-				nEndOR = nEndOR2;
-			end
-			
-			if nStartOR then
-				nParen = getParenDepth(sText, nStartOR);
-				if nParen ~= 0 then
-					nTempIndex = nEndOR + 1;
-				end
-			end
-		until not nStartOR or nParen == 0;
-		
-		if nStartOR then
-			sPhraseOR = string.sub(sText, nIndexOR, nStartOR - 1);
-		else
-			sPhraseOR = string.sub(sText, nIndexOR);
-		end
-
-		local aClausesAND = {};
-		local aSkipAND = {};
-		local nIndexAND = 1;
-		while nIndexAND < #sPhraseOR do
-			nTempIndex = nIndexAND;
-			repeat
-				nParen = 0;
-				nStartAND, nEndAND = string.find(sPhraseOR, "%s+and%s+", nTempIndex);
-				
-				if nStartAND then
-					nParen = getParenDepth(sText, nIndexOR + nStartAND);
-					if nParen ~= 0 then
-						nTempIndex = nEndAND + 1;
-					end
-				end
-			until not nStartAND or nParen == 0;
-			
-			if nStartAND then
-				table.insert(aClausesAND, string.sub(sPhraseOR, nIndexAND, nStartAND - 1));
-				nIndexAND = nEndAND + 1;
-				table.insert(aSkipAND, nEndAND - nStartAND + 1);
-			else
-				table.insert(aClausesAND, string.sub(sPhraseOR, nIndexAND));
-				nIndexAND = #sPhraseOR;
-				if nStartOR then
-					table.insert(aSkipAND, nEndOR - nStartOR + 1);
-				else
-					table.insert(aSkipAND, 0);
-				end
-			end
-		end
-		
-		if nStartOR then
-			nIndexOR = nEndOR + 1;
-		else
-			nIndexOR = #sText;
-		end
-
-		table.insert(aClausesOR, aClausesAND);
-		table.insert(aSkipOR, aSkipAND);
-	end
-	
-	return aClausesOR, aSkipOR;
-end
-
-function matchAndOrClauses(aClausesOR, aMatchWords)
-	for kClauseOR, aClausesAND in ipairs(aClausesOR) do
-		local bMatchAND = true;
-		local nMatchAND = 0;
-
-		for kClauseAND, sClause in ipairs(aClausesAND) do
-			nMatchAND = nMatchAND + 1;
-
-			if not StringManager.contains(aMatchWords, sClause) then
-				bMatchAND = false;
-				break;
-			end
-		end
-		
-		if bMatchAND and nMatchAND > 0 then
-			return true;
-		end
-	end
-		
-	return false;
-end
 -- KEL bImmune, bFortif
 function getDamageAdjust(rSource, rTarget, nDamage, rDamageOutput, bImmune, bFortif, tags)
+	Debug.chat("Kel's getDamageAdjust")
 	-- SETUP
 	local nDamageAdjust = 0;
 	local nNonlethal = 0;
@@ -1631,6 +1102,7 @@ function getDamageAdjust(rSource, rTarget, nDamage, rDamageOutput, bImmune, bFor
 	-- RESULTS
 	return nDamageAdjust, nNonlethal, bVulnerable, bResist;
 end
+
 -- KEL Too lazy to make strings manually to boolean variables :P
 function toboolean(sName)
 	local bName = false;
@@ -1642,7 +1114,7 @@ end
 
 -- KEL Fortification roll
 function onFortification(rSource, rTarget, rRoll)
-	local rDamageOutput = decodeDamageText(tonumber(rRoll.aTotal), rRoll.aMessagetext);
+	local rDamageOutput = ActionDamage.decodeDamageText(tonumber(rRoll.aTotal), rRoll.aMessagetext);
 	local FortifSuccess = {};
 	local m = 1;
 	local bImmune = {};
@@ -1756,151 +1228,11 @@ function onFortification(rSource, rTarget, rRoll)
 	applyDamage(rSource, rTarget, bSecrets, rRoll.aType, rRoll.aMessagetext, tonumber(rRoll.aTotal), bImmune, FortifSuccess, rRoll.aTags);
 end
 -- END
--- Collapse damage clauses by damage type (in the original order, if possible)
-function getDamageStrings(clauses)
-	local aOrderedTypes = {};
-	local aDmgTypes = {};
-	for _,vClause in ipairs(clauses) do
-		local rDmgType = aDmgTypes[vClause.dmgtype];
-		if not rDmgType then
-			rDmgType = {};
-			rDmgType.aDice = {};
-			rDmgType.nMod = 0;
-			rDmgType.nTotal = 0;
-			rDmgType.sType = vClause.dmgtype;
-			aDmgTypes[vClause.dmgtype] = rDmgType;
-			table.insert(aOrderedTypes, rDmgType);
-		end
 
-		for _,vDie in ipairs(vClause.dice) do
-			table.insert(rDmgType.aDice, vDie);
-		end
-		rDmgType.nMod = rDmgType.nMod + vClause.modifier;
-		rDmgType.nTotal = rDmgType.nTotal + (vClause.nTotal or 0);
-	end
-	
-	return aOrderedTypes;
-end
 
-function encodeDamageText(rRoll)
-	local aDamage = getDamageStrings(rRoll.clauses);
-	for _, rDamage in ipairs(aDamage) do
-		local sDmgTypeOutput = rDamage.sType;
-		if sDmgTypeOutput == "" then
-			sDmgTypeOutput = "untyped";
-		end
-		
-		if #rDamage.aDice == 0 then
-			rRoll.sDesc = rRoll.sDesc .. string.format(" [TYPE: %s (%d)]", sDmgTypeOutput, rDamage.nTotal);
-		else
-			local sDice = StringManager.convertDiceToString(rDamage.aDice, rDamage.nMod);
-			rRoll.sDesc = rRoll.sDesc .. string.format(" [TYPE: %s (%s=%d)]", sDmgTypeOutput, sDice, rDamage.nTotal);
-		end
-	end
-	
-	-- NOTE: Using damage type of the first damage clause for any targeted effect crit multiplier
-	if #(rRoll.clauses) > 0 then
-		local nEffectCritMult = rRoll.clauses[1].mult or 2;
-		if nEffectCritMult then
-			rRoll.sDesc = rRoll.sDesc .. string.format(" [MULT: %d]", nEffectCritMult);
-		end
-	end
-end
-
-function decodeDamageText(nDamage, sDamageDesc)
-	local rDamageOutput = {};
-	rDamageOutput.sOriginal = sDamageDesc;
-	
-	if string.match(sDamageDesc, "%[HEAL") then
-		if string.match(sDamageDesc, "%[TEMP%]") then
-			rDamageOutput.sType = "temphp";
-			rDamageOutput.sTypeOutput = "Temporary hit points";
-		else
-			rDamageOutput.sType = "heal";
-			rDamageOutput.sTypeOutput = "Heal";
-		end
-		rDamageOutput.sVal = string.format("%01d", nDamage);
-		rDamageOutput.nVal = nDamage;
-
-	elseif string.match(sDamageDesc, "%[FHEAL") then
-		rDamageOutput.sType = "fheal";
-		rDamageOutput.sTypeOutput = "Fast healing";
-		rDamageOutput.sVal = string.format("%01d", nDamage);
-		rDamageOutput.nVal = nDamage;
-
-	elseif string.match(sDamageDesc, "%[REGEN") then
-		local bPFMode = DataCommon.isPFRPG();
-		if bPFMode then
-			rDamageOutput.sType = "heal";
-			rDamageOutput.sTypeOutput = "Regeneration";
-		else
-			rDamageOutput.sType = "regen";
-			rDamageOutput.sTypeOutput = "Regeneration";
-		end
-		rDamageOutput.sVal = string.format("%01d", nDamage);
-		rDamageOutput.nVal = nDamage;
-
-	elseif nDamage < 0 then
-		rDamageOutput.sType = "heal";
-		rDamageOutput.sTypeOutput = "Heal";
-		rDamageOutput.sVal = string.format("%01d", (0 - nDamage));
-		rDamageOutput.nVal = 0 - nDamage;
-
-	else
-		rDamageOutput.sType = "damage";
-		rDamageOutput.sTypeOutput = "Damage";
-		rDamageOutput.sVal = string.format("%01d", nDamage);
-		rDamageOutput.nVal = nDamage;
-
-		-- Determine critical
-		rDamageOutput.bCritical = string.match(sDamageDesc, "%[CRITICAL%]");
-
-		-- Determine range
-		rDamageOutput.sRange = string.match(sDamageDesc, "%[DAMAGE %((%w)%)%]") or "";
-		rDamageOutput.aDamageFilter = {};
-		if rDamageOutput.sRange == "M" then
-			table.insert(rDamageOutput.aDamageFilter, "melee");
-		elseif rDamageOutput.sRange == "R" then
-			table.insert(rDamageOutput.aDamageFilter, "ranged");
-		end
-
-		-- Determine damage energy types
-		rDamageOutput.aDamageTypes = {};
-		local nDamageRemaining = nDamage;
-		for sDamageType in sDamageDesc:gmatch("%[TYPE: ([^%]]+)%]") do
-			local sDmgType = StringManager.trim(sDamageType:match("^([^(%]]+)"));
-			local sDice, sTotal = sDamageType:match("%(([%d%+%-Dd]+)%=(%d+)%)");
-			if not sDice then
-				sTotal = sDamageType:match("%((%d+)%)")
-			end
-			local nDmgTypeTotal = tonumber(sTotal) or nDamageRemaining;
-
-			if rDamageOutput.aDamageTypes[sDmgType] then
-				rDamageOutput.aDamageTypes[sDmgType] = rDamageOutput.aDamageTypes[sDmgType] + nDmgTypeTotal;
-			else
-				rDamageOutput.aDamageTypes[sDmgType] = nDmgTypeTotal;
-			end
-			if not rDamageOutput.sFirstDamageType then
-				rDamageOutput.sFirstDamageType = sDmgType;
-			end
-
-			nDamageRemaining = nDamageRemaining - nDmgTypeTotal;
-		end
-		if nDamageRemaining > 0 then
-			rDamageOutput.aDamageTypes[""] = nDamageRemaining;
-		elseif nDamageRemaining < 0 then
-			ChatManager.SystemMessage("Total mismatch in damage type totals");
-		end
-		
-		-- Determine effect damage multiple
-		local sMult = sDamageDesc:match("%[MULT: ([^%]]+)%]");
-		rDamageOutput.nFirstDamageMult = tonumber(sMult) or 2;
-	end
-	
-	return rDamageOutput;
-end
 -- KEL bImmune, bFortif, tags
 function applyDamage(rSource, rTarget, bSecret, sRollType, sDamage, nTotal, bImmune, bFortif, tags)
+	Debug.chat("Kel's applyDamage")
 	local nTotalHP = 0;
 	local nTempHP = 0;
 	local nNonLethal = 0;
@@ -1933,7 +1265,7 @@ function applyDamage(rSource, rTarget, bSecret, sRollType, sDamage, nTotal, bImm
 	local sOriginalStatus = ActorHealthManager.getHealthStatus(rTarget);
 
 	-- Decode damage/heal description
-	local rDamageOutput = decodeDamageText(nTotal, sDamage);
+	local rDamageOutput = ActionDamage.decodeDamageText(nTotal, sDamage);
 	local aRegenEffectsToDisable = {};
 
 	-- Healing
@@ -2039,7 +1371,7 @@ function applyDamage(rSource, rTarget, bSecret, sRollType, sDamage, nTotal, bImm
 		local isHalf = string.match(sDamage, "%[HALF%]");
 		local sAttack = string.match(sDamage, "%[DAMAGE[^]]*%] ([^[]+)");
 		if sAttack then
-			local sDamageState = getDamageState(rSource, rTarget, StringManager.trim(sAttack));
+			local sDamageState = ActionDamage.getDamageState(rSource, rTarget, StringManager.trim(sAttack));
 			if sDamageState == "none" then
 				isAvoided = true;
 				bRemoveTarget = true;
@@ -2232,193 +1564,10 @@ function applyDamage(rSource, rTarget, bSecret, sRollType, sDamage, nTotal, bImm
 	end
 	
 	-- Output results
-	messageDamage(rSource, rTarget, bSecret, rDamageOutput.sTypeOutput, sDamage, rDamageOutput.sVal, table.concat(aNotifications, " "));
+	ActionDamage.messageDamage(rSource, rTarget, bSecret, rDamageOutput.sTypeOutput, sDamage, rDamageOutput.sVal, table.concat(aNotifications, " "));
 
 	-- Remove target after applying damage
 	if bRemoveTarget and rSource and rTarget then
 		TargetingManager.removeTarget(ActorManager.getCTNodeName(rSource), ActorManager.getCTNodeName(rTarget));
 	end
-end
-
-function messageDamage(rSource, rTarget, bSecret, sDamageType, sDamageDesc, sTotal, sExtraResult)
-	if not (rTarget or sExtraResult ~= "") then
-		return;
-	end
-	
-	local msgShort = {font = "msgfont"};
-	local msgLong = {font = "msgfont"};
-
-	if sDamageType == "Heal" or sDamageType == "Temporary hit points" then
-		msgShort.icon = "roll_heal";
-		msgLong.icon = "roll_heal";
-	else
-		msgShort.icon = "roll_damage";
-		msgLong.icon = "roll_damage";
-	end
-
-	msgShort.text = sDamageType .. " ->";
-	msgLong.text = sDamageType .. " [" .. sTotal .. "] ->";
-	if rTarget then
-		msgShort.text = msgShort.text .. " [to " .. ActorManager.getDisplayName(rTarget) .. "]";
-		msgLong.text = msgLong.text .. " [to " .. ActorManager.getDisplayName(rTarget) .. "]";
-	end
-	
-	if sExtraResult and sExtraResult ~= "" then
-		msgLong.text = msgLong.text .. " " .. sExtraResult;
-	end
-	
-	ActionsManager.outputResult(bSecret, rSource, rTarget, msgLong, msgShort);
-end
-
-function applyFailedStabilization(rActor)
-	local sDamageTypeOutput = "Damage";
-	local sDamage = "[DAMAGE] Dying";
-	local nTotal = 1;
-	
-	local nTotalHP = 0;
-	local nTempHP = 0;
-	local nWounds = 0;
-
-	local aNotifications = {};
-	
-	-- Get health fields
-	local sNodeType, nodeActor = ActorManager.getTypeAndNode(rActor);
-	if not nodeActor then
-		return;
-	end
-	if sNodeType == "pc" then
-		nTotalHP = DB.getValue(nodeActor, "hp.total", 0);
-		nTempHP = DB.getValue(nodeActor, "hp.temporary", 0);
-		nWounds = DB.getValue(nodeActor, "hp.wounds", 0);
-	elseif sNodeType == "ct" then
-		nTotalHP = DB.getValue(nodeActor, "hp", 0);
-		nTempHP = DB.getValue(nodeActor, "hptemp", 0);
-		nWounds = DB.getValue(nodeActor, "wounds", 0);
-	else
-		return;
-	end
-	
-	-- Remember current health status
-	local sOriginalStatus = ActorHealthManager.getHealthStatus(rActor);
-
-	-- Track adjustments, if any
-	local nAdjustedDamage = nTotal;
-
-	-- Reduce damage by temporary hit points
-	if nTempHP > 0 and nAdjustedDamage > 0 then
-		if nAdjustedDamage > nTempHP then
-			nAdjustedDamage = nAdjustedDamage - nTempHP;
-			nTempHP = 0;
-			table.insert(aNotifications, "[PARTIALLY ABSORBED]");
-		else
-			nTempHP = nTempHP - nAdjustedDamage;
-			nAdjustedDamage = 0;
-			table.insert(aNotifications, "[ABSORBED]");
-		end
-	end
-
-	-- Apply remaining damage
-	if nAdjustedDamage > 0 then
-		nWounds = math.max(nWounds + nAdjustedDamage, 0);
-	end
-	
-	-- Set health fields
-	if sNodeType == "pc" then
-		DB.setValue(nodeActor, "hp.temporary", "number", nTempHP);
-		DB.setValue(nodeActor, "hp.wounds", "number", nWounds);
-	else
-		DB.setValue(nodeActor, "hptemp", "number", nTempHP);
-		DB.setValue(nodeActor, "wounds", "number", nWounds);
-	end
-
-	-- Check for status change
-	local sNewStatus = ActorHealthManager.getHealthStatus(rActor);
-	if sOriginalStatus ~= sNewStatus then
-		table.insert(aNotifications, "[Status: " .. sNewStatus:upper() .. "]");
-	end
-	
-	-- Update the damage output variable to reflect adjustments
-	local sDamageOutput;
-	if nAdjustedDamage > 0 then
-		sDamageOutput = string.format("%01d", nAdjustedDamage);
-	else
-		sDamageOutput = "0";
-	end
-
-	-- Output results
-	messageDamage(nil, rActor, false, sDamageTypeOutput, sDamage, sDamageOutput, table.concat(aNotifications, " "));
-end
-
---
--- TRACK DAMAGE STATE
---
-
-local aDamageState = {};
-
-function applyDamageState(rSource, rTarget, sAttack, sState)
-	local msgOOB = {};
-	msgOOB.type = OOB_MSGTYPE_APPLYDMGSTATE;
-	
-	msgOOB.sSourceNode = ActorManager.getCTNodeName(rSource);
-	msgOOB.sTargetNode = ActorManager.getCTNodeName(rTarget);
-	
-	msgOOB.sAttack = sAttack;
-	msgOOB.sState = sState;
-
-	Comm.deliverOOBMessage(msgOOB, "");
-end
-
-function handleApplyDamageState(msgOOB)
-	local rSource = ActorManager.resolveActor(msgOOB.sSourceNode);
-	local rTarget = ActorManager.resolveActor(msgOOB.sTargetNode);
-	
-	if Session.IsHost then
-		setDamageState(rSource, rTarget, msgOOB.sAttack, msgOOB.sState);
-	end
-end
-
-function setDamageState(rSource, rTarget, sAttack, sState)
-	if not Session.IsHost then
-		applyDamageState(rSource, rTarget, sAttack, sState);
-		return;
-	end
-	
-	local sSourceCT = ActorManager.getCTNodeName(rSource);
-	local sTargetCT = ActorManager.getCTNodeName(rTarget);
-	if sSourceCT == "" or sTargetCT == "" then
-		return;
-	end
-	
-	if not aDamageState[sSourceCT] then
-		aDamageState[sSourceCT] = {};
-	end
-	if not aDamageState[sSourceCT][sAttack] then
-		aDamageState[sSourceCT][sAttack] = {};
-	end
-	if not aDamageState[sSourceCT][sAttack][sTargetCT] then
-		aDamageState[sSourceCT][sAttack][sTargetCT] = {};
-	end
-	aDamageState[sSourceCT][sAttack][sTargetCT] = sState;
-end
-
-function getDamageState(rSource, rTarget, sAttack)
-	local sSourceCT = ActorManager.getCTNodeName(rSource);
-	local sTargetCT = ActorManager.getCTNodeName(rTarget);
-	if sSourceCT == "" or sTargetCT == "" then
-		return "";
-	end
-	
-	if not aDamageState[sSourceCT] then
-		return "";
-	end
-	if not aDamageState[sSourceCT][sAttack] then
-		return "";
-	end
-	if not aDamageState[sSourceCT][sAttack][sTargetCT] then
-		return "";
-	end
-	
-	local sState = aDamageState[sSourceCT][sAttack][sTargetCT];
-	aDamageState[sSourceCT][sAttack][sTargetCT] = nil;
-	return sState;
 end
