@@ -35,7 +35,6 @@ function onInit()
 end
 
 function handleApplyDamage(msgOOB)
-	Debug.chat("Kel's handleApplyDamage")
 	local rSource = ActorManager.resolveActor(msgOOB.sSourceNode);
 	local rTarget = ActorManager.resolveActor(msgOOB.sTargetNode);
 	local bImmune = {};
@@ -231,7 +230,6 @@ end
 
 -- KEL add attackfilter etc
 function notifyApplyDamage(rSource, rTarget, bSecret, sRollType, sDesc, nTotal, sAttackFilter, tag)
-	Debug.chat("Kel's notifyApplyDamage")
 	if not rTarget then
 		return;
 	end
@@ -258,31 +256,6 @@ function notifyApplyDamage(rSource, rTarget, bSecret, sRollType, sDesc, nTotal, 
 
 	Comm.deliverOOBMessage(msgOOB, "");
 end
-
--- function modDamage(rSource, rTarget, rRoll)
--- 	Debug.chat("Kel's  modDamage")
--- 	ActionDamage.setupModRoll(rRoll, rSource, rTarget);
-
--- 	if rSource then
--- 		ActionDamage.applyAbilityEffectsToModRoll(rRoll, rSource, rTarget);
--- 	end
-
--- 	if rRoll.bCritical then
--- 		ActionDamage.applyCriticalToModRoll(rRoll, rSource, rTarget);
--- 	end
-
--- 	if rSource then
--- 		ActionDamage.applyDmgEffectsToModRoll(rRoll, rSource, rTarget);
--- 		ActionDamage.applyConditionsToModRoll(rRoll, rSource, rTarget);
--- 		ActionDamage.applyEffectModNotificationToModRoll(rRoll);
-
--- 		ActionDamage.applyDmgTypeEffectsToModRoll(rRoll, rSource, rTarget);
--- 	end
-
--- 	ActionDamage.applyModifierKeysToModRoll(rRoll, rSource, rTarget);
-
--- 	ActionDamage.finalizeModRoll(rRoll);
--- end
 
 -- KEL TDMG
 function notifyTDMGRollOnClient(msgOOB)
@@ -362,7 +335,6 @@ end
 -- END
 
 function onDamage(rSource, rTarget, rRoll)
-	Debug.chat("Kel's onDamage")
 	local rMessage = ActionsManager.createActionMessage(rSource, rRoll);
 	rMessage.text = string.gsub(rMessage.text, " %[MOD:[^]]*%]", "");
 	rMessage.text = string.gsub(rMessage.text, " %[MULT:[^]]*%]", "");
@@ -400,7 +372,6 @@ end
 --
 
 function applyDmgEffectsToModRoll(rRoll, rSource, rTarget)
-	Debug.chat("Kel's  applyDmgEffectsToModRoll")
 	local tEffects, nEffectCount;
 	if rRoll.sType == "spdamage" then
 		tEffects, nEffectCount = EffectManager35E.getEffectsBonusByType(rSource, "DMGS", true, rRoll.tAttackFilter, rTarget, false, rRoll.tags);
@@ -489,7 +460,6 @@ function applyDmgEffectsToModRoll(rRoll, rSource, rTarget)
 end
 
 function applyConditionsToModRoll(rRoll, rSource, rTarget)
-	Debug.chat("Kel's applyConditionsToModRoll")
 	if rRoll.sType ~= "spdamage" then
 		if EffectManager35E.hasEffectCondition(rSource, "Sickened", rRoll.tags) then
 			rRoll.nMod = rRoll.nMod - 2;
@@ -505,7 +475,6 @@ function applyConditionsToModRoll(rRoll, rSource, rTarget)
 end
 
 function applyDmgTypeEffectsToModRoll(rRoll, rSource, rTarget)
-	Debug.chat("Kel's applyDmgTypeEffectsToModRoll")
 	local tAddDmgTypes = {};
 	local tDmgTypeEffects;
 	if rRoll.sType == "spdamage" then
@@ -545,7 +514,6 @@ end
 
 -- KEL bImmune, bFortif
 function getDamageAdjust(rSource, rTarget, nDamage, rDamageOutput, bImmune, bFortif, tags)
-	Debug.chat("Kel's getDamageAdjust")
 	-- SETUP
 	local nDamageAdjust = 0;
 	local nNonlethal = 0;
@@ -1232,7 +1200,6 @@ end
 
 -- KEL bImmune, bFortif, tags
 function applyDamage(rSource, rTarget, bSecret, sRollType, sDamage, nTotal, bImmune, bFortif, tags)
-	Debug.chat("Kel's applyDamage")
 	local nTotalHP = 0;
 	local nTempHP = 0;
 	local nNonLethal = 0;
