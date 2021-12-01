@@ -1,7 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <root version="3.3.15.1" release="1">
   <properties>
-    <name>Feature: Extended automation and overlays test</name>
+    <name>Feature: Extended automation and overlays</name>
     <version>3.3.15.1</version>
     <author>mr900rr (FFOS), darrenan (keen), phixation (bypass), tahl_liadon (some icons), bmos (TQ and more), DCrumb (max tag), RabidPaladin (better NPC parsing and resisthalved) and Kelrugem (rest)</author>
     <description>Deekin ist super! (Will ever someone read that strange description?)</description>
@@ -38,9 +38,9 @@
 	
     <!-- High-level scripts -->
 	<script name="ActionsManagerKel" file="scripts/manager_actions.lua" />
-    <script name="CombatManagerKel" file="scripts/manager_combat.lua" />
-    <script name="ActionDamageKel" file="scripts/manager_action_damage.lua" />
-    <script name="OptionsInit" file="scripts/data_options_init.lua" />
+	<script name="CombatManagerKel" file="scripts/manager_combat.lua" />
+	<script name="ActionDamageKel" file="scripts/manager_action_damage.lua" />
+	<script name="OptionsInit" file="scripts/data_options_init.lua" />
 	<script name="DataCommon2" file="scripts/data_common2.lua" />
 	<script name="GameSystem2" file="scripts/manager_gamesystem2.lua" />
 	<script name="CombatManager2" file="scripts/manager_combat2.lua" />
