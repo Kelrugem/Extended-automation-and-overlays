@@ -480,6 +480,24 @@ function onAttack(rSource, rTarget, rRoll)
 		rRoll.sType = "grapple";
 	end
 	
+	-- KEL We need the attack filter here 
+	-- DETERMINE ATTACK TYPE AND DEFENSE
+	local AttackType = "M";
+	if rRoll.sType == "attack" then
+		AttackType = string.match(rRoll.sDesc, "%[ATTACK.*%((%w+)%)%]");
+	end
+	local Opportunity = string.match(rRoll.sDesc, "%[OPPORTUNITY%]");
+	-- BUILD ATTACK FILTER 
+	local AttackFilter = {};
+	if AttackType == "M" then
+		table.insert(AttackFilter, "melee");
+	elseif AttackType == "R" then
+		table.insert(AttackFilter, "ranged");
+	end
+	if Opportunity then
+		table.insert(AttackFilter, "opportunity");
+	end
+	-- END
 	local rAction = {};
 	rAction.nTotal = ActionsManager.total(rRoll);
 	rAction.aMessages = {};
@@ -511,26 +529,8 @@ function onAttack(rSource, rTarget, rRoll)
 		end
 	else
 		-- KEL blind fight, skipping checking effects for now (for performance and to avoid problems with On Skip etc.)
-		local bBlindFight = ActorManager35E.hasSpecialAbility(rSource, "Blind-Fight", true, false, false, false, rRoll.tags);
-		-- END
 		nDefenseVal, nAtkEffectsBonus, nDefEffectsBonus, nMissChance, nAdditionalDefenseForCC = ActorManager35E.getDefenseValue(rSource, rTarget, rRoll);
 		-- KEL CONC on Attacker
-		-- DETERMINE ATTACK TYPE AND DEFENSE
-		local AttackType = "M";
-		if rRoll.sType == "attack" then
-			AttackType = string.match(rRoll.sDesc, "%[ATTACK.*%((%w+)%)%]");
-		end
-		local Opportunity = string.match(rRoll.sDesc, "%[OPPORTUNITY%]");
-		-- BUILD ATTACK FILTER 
-		local AttackFilter = {};
-		if AttackType == "M" then
-			table.insert(AttackFilter, "melee");
-		elseif AttackType == "R" then
-			table.insert(AttackFilter, "ranged");
-		end
-		if Opportunity then
-			table.insert(AttackFilter, "opportunity");
-		end
 		local aVConcealEffect, aVConcealCount = EffectManager35E.getEffectsBonusByType(rSource, "TVCONC", true, AttackFilter, rTarget, false, rRoll.tags);
 		
 		if aVConcealCount > 0 then
@@ -741,6 +741,11 @@ function onAttack(rSource, rTarget, rRoll)
 		sMissChanceText = string.gsub(rMessage.text, " %[CRIT %d+%]", "");
 		sMissChanceText = string.gsub(sMissChanceText, " %[CONFIRM%]", "");
 		local rMissChanceRoll = { sType = "misschance", sDesc = sMissChanceText .. " [MISS CHANCE " .. nMissChance .. "%]", aDice = aMissChanceDice, nMod = 0, fullattack = FullAttack, actionStuffForOverlay = ActionStuffForOverlay };
+		-- KEL Blind fight
+		if ActorManager35E.hasSpecialAbility(rSource, "Blind-Fight", true, false, false) and AttackType == "M" then
+			rMissChanceRoll.adv = ( rMissChanceRoll.adv or 0 ) + 1;
+		end
+		-- END
 		ActionsManager.roll(rSource, rTarget, rMissChanceRoll);
 	-- KEL compatibility test with mirror image handler
 	elseif MirrorImageHandler and bRollMissChance then
