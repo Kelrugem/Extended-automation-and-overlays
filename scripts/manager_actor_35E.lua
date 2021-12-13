@@ -670,14 +670,14 @@ function getDefenseValue(rAttacker, rDefender, rRoll)
 		-- KEL adding uncanny dodge, blind-fight and ethereal; also improving performance a little bit
 		if EffectManager35E.hasEffect(rAttacker, "Ethereal", rDefender, true, false, rRoll.tags) then
 			nBonusSituational = nBonusSituational - 2;
-			if not ActorManager35E.hasSpecialAbility(rDefender, "Uncanny Dodge", false, false, true) and not ActorManager35E.hasSpecialAbility(rDefender, "Improved Uncanny Dodge", false, false, true) then
+			if not ActorManager35E.hasSpecialAbility(rDefender, "Uncanny Dodge", false, false, true) then
 				bCombatAdvantage = true;
 			end
 		elseif EffectManager35E.hasEffect(rAttacker, "Invisible", rDefender, true, false, rRoll.tags) then
 			local bBlindFight = ActorManager35E.hasSpecialAbility(rDefender, "Blind-Fight", true, false, false);
 			if sAttackType == "R" or not bBlindFight then
 				nBonusSituational = nBonusSituational - 2;
-				if not bBlindFight and not ActorManager35E.hasSpecialAbility(rDefender, "Uncanny Dodge", false, false, true) and not ActorManager35E.hasSpecialAbility(rDefender, "Improved Uncanny Dodge", false, false, true) then
+				if not bBlindFight and not ActorManager35E.hasSpecialAbility(rDefender, "Uncanny Dodge", false, false, true) then
 					bCombatAdvantage = true;
 				end
 			end
@@ -1227,20 +1227,21 @@ function removeStableEffect(rActor)
 	-- END
 end
 
--- BMOS's feat search etc., adjusted a bit using already-existing functions
-function hasSpecialAbility(rActor, sSearchString, bFeat, bTrait, bSpecialAbility)
-	if not rActor or not sSearchString then
+-- BMOS's feat search etc., see also CharManager hasFeat and hasTrait
+function hasSpecialAbility(rActor, sSearchStringIni, bFeat, bTrait, bSpecialAbility)
+	if not rActor or not sSearchStringIni then
 		return false;
 	end
 	local nodeActor = rActor.sCreatureNode;
 
-	local sSearchString = string.lower(sSearchString);
+	local sSearchString = string.lower(sSearchStringIni);
 	local sSearchString = string.gsub(sSearchString, '%-', '%%%-');
+	-- local sSearchString = StringManager.trim(sSearchStringIni:lower());
 	if ActorManager.isPC(nodeActor) then
 		if bFeat then
 			for _,vNode in pairs(DB.getChildren(nodeActor .. '.featlist')) do
 				local sFeatName = StringManager.trim(DB.getValue(vNode, 'name', ''):lower());
-				if sFeatName and string.match(sFeatName, sSearchString .. ' %d*') then
+				if sFeatName and string.match(sFeatName, sSearchString) then
 					return true;
 				end
 			end
@@ -1248,7 +1249,7 @@ function hasSpecialAbility(rActor, sSearchString, bFeat, bTrait, bSpecialAbility
 		if bTrait then
 			for _,vNode in pairs(DB.getChildren(nodeActor .. '.traitlist')) do
 				local sTraitName = StringManager.trim(DB.getValue(vNode, 'name', ''):lower());
-				if sTraitName and string.match(sTraitName, sSearchString .. ' %d*') then
+				if sTraitName and string.match(sTraitName, sSearchString) then
 					return true;
 				end
 			end
@@ -1256,7 +1257,7 @@ function hasSpecialAbility(rActor, sSearchString, bFeat, bTrait, bSpecialAbility
 		if bSpecialAbility then
 			for _,vNode in pairs(DB.getChildren(nodeActor .. '.specialabilitylist')) do
 				local sSpecialAbilityName = StringManager.trim(DB.getValue(vNode, 'name', ''):lower());
-				if sSpecialAbilityName and string.match(sSpecialAbilityName, sSearchString .. ' %d*') then
+				if sSpecialAbilityName and string.match(sSpecialAbilityName, sSearchString) then
 					return true;
 				end
 			end

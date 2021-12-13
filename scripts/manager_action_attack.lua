@@ -250,7 +250,7 @@ function modAttack(rSource, rTarget, rRoll)
 		end
 	end
 	-- KEL adding uncanny dodge
-	if bFlatFooted and not ActorManager35E.hasSpecialAbility(rTarget, "Uncanny Dodge", false, false, true) and not ActorManager35E.hasSpecialAbility(rTarget, "Improved Uncanny Dodge", false, false, true) then
+	if bFlatFooted and not ActorManager35E.hasSpecialAbility(rTarget, "Uncanny Dodge", false, false, true) then
 		table.insert(aAddDesc, "[FF]");
 	end
 	if bSuperiorCover then
@@ -309,7 +309,7 @@ function modAttack(rSource, rTarget, rRoll)
 		if EffectManager35E.hasEffect(rSource, "Ethereal", nil, false, false, rRoll.tags) then
 			bEffects = true;
 			nAddMod = nAddMod + 2;
-			if not ActorManager35E.hasSpecialAbility(rTarget, "Uncanny Dodge", false, false, true) and not ActorManager35E.hasSpecialAbility(rTarget, "Improved Uncanny Dodge", false, false, true) then
+			if not ActorManager35E.hasSpecialAbility(rTarget, "Uncanny Dodge", false, false, true) then
 				table.insert(aAddDesc, "[CA]");
 			end
 		elseif EffectManager35E.hasEffect(rSource, "Invisible", nil, false, false, rRoll.tags) then
@@ -318,7 +318,7 @@ function modAttack(rSource, rTarget, rRoll)
 			if sAttackType == "R" or not bBlindFight then
 				bEffects = true;
 				nAddMod = nAddMod + 2;
-				if not bBlindFight and not ActorManager35E.hasSpecialAbility(rTarget, "Uncanny Dodge", false, false, true) and not ActorManager35E.hasSpecialAbility(rTarget, "Improved Uncanny Dodge", false, false, true) then
+				if not bBlindFight and not ActorManager35E.hasSpecialAbility(rTarget, "Uncanny Dodge", false, false, true) then
 					table.insert(aAddDesc, "[CA]");
 				end
 			end
