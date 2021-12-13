@@ -20,6 +20,7 @@ function onInit()
 	ActionsManager.registerResultHandler("damage", onDamage)
 	ActionsManager.registerResultHandler("spdamage", onDamage)
 
+	ActionDamage.applyAbilityEffectsToModRoll = applyAbilityEffectsToModRoll
 	ActionDamage.applyDmgEffectsToModRoll = applyDmgEffectsToModRoll
 	ActionDamage.applyConditionsToModRoll = applyConditionsToModRoll
 	ActionDamage.applyDmgTypeEffectsToModRoll = applyDmgTypeEffectsToModRoll
@@ -370,6 +371,55 @@ end
 --
 -- MOD ROLL HELPERS
 --
+
+function applyAbilityEffectsToModRoll(rRoll, rSource, rTarget)
+	for _,vClause in ipairs(rRoll.clauses) do
+		-- Get original stat modifier
+		local nStatMod = ActorManager35E.getAbilityBonus(rSource, vClause.stat);
+		
+		-- Get any stat effects bonus
+		-- KEL Add tags
+		local nAbilityEffectMod, nAbilityEffects = ActorManager35E.getAbilityEffectsBonus(rSource, vClause.stat, rRoll.tags);
+		-- END
+		if nAbilityEffects > 0 then
+			rRoll.bEffects = true;
+			
+			-- Calc total stat mod
+			local nTotalStatMod = nStatMod + nAbilityEffectMod;
+			
+			-- Handle maximum stat mod setting
+			-- WORKAROUND: If max limited, then assume no penalty allowed (i.e. bows)
+			local nStatModMax = vClause.statmax or 0;
+			if nStatModMax > 0 then
+				nStatMod = math.max(math.min(nStatMod, nStatModMax), 0);
+				nTotalStatMod = math.max(math.min(nTotalStatMod, nStatModMax), 0);
+			end
+
+			-- Handle multipliers correctly
+			-- NOTE: Negative values are not multiplied, but positive values are.
+			local nMult = vClause.statmult or 1;
+			local nMultOrigStatMod, nMultNewStatMod;
+			if nStatMod <= 0 then
+				nMultOrigStatMod = nStatMod;
+			else
+				nMultOrigStatMod = math.floor(nStatMod * nMult);
+			end
+			if nTotalStatMod <= 0 then
+				nMultNewStatMod = nTotalStatMod;
+			else
+				nMultNewStatMod = math.floor(nTotalStatMod * nMult);
+			end
+			
+			-- Calculate bonus difference
+			local nMultDiffStatMod = nMultNewStatMod - nMultOrigStatMod;
+			
+			-- Apply bonus difference
+			rRoll.nEffectMod = rRoll.nEffectMod + nMultDiffStatMod;
+			vClause.modifier = vClause.modifier + nMultDiffStatMod;
+			rRoll.nMod = rRoll.nMod + nMultDiffStatMod;
+		end
+	end
+end
 
 function applyDmgEffectsToModRoll(rRoll, rSource, rTarget)
 	local tEffects, nEffectCount;
