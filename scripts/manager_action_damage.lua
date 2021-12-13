@@ -563,7 +563,9 @@ function applyAbilityEffectsToModRoll(rRoll, rSource, rTarget)
 		local nStatMod = ActorManager35E.getAbilityBonus(rSource, vClause.stat);
 		
 		-- Get any stat effects bonus
-		local nAbilityEffectMod, nAbilityEffects = ActorManager35E.getAbilityEffectsBonus(rSource, vClause.stat);
+		-- KEL Add tags
+		local nAbilityEffectMod, nAbilityEffects = ActorManager35E.getAbilityEffectsBonus(rSource, vClause.stat, rRoll.tags);
+		-- END
 		if nAbilityEffects > 0 then
 			rRoll.bEffects = true;
 			
