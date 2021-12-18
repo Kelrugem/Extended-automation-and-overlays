@@ -314,294 +314,27 @@ function modStabilization(rSource, rTarget, rRoll)
 end
 
 function modDamage(rSource, rTarget, rRoll)
-	decodeDamageTypes(rRoll);
-	-- KEL here problem of the ADV DISADV thing?
-	CombatManager2.addRightClickDiceToClauses(rRoll);
-	-- END
-	-- Set up
-	local aAddDesc = {};
-	local aAddDice = {};
-	local nAddMod = 0;
-	local bEffects = false;
-	local aEffectDice = {};
-	local nEffectMod = 0;
-	local bPFMode = DataCommon.isPFRPG();
-	
-	-- Build attack type filter
-	local aAttackFilter = {};
-	if rRoll.range == "R" then
-		table.insert(aAttackFilter, "ranged");
-	elseif rRoll.range == "M" then
-		table.insert(aAttackFilter, "melee");
-	end
-	
-	-- Handle ability effects
+	ActionDamage.setupModRoll(rRoll, rSource, rTarget);
+
 	if rSource then
-		-- Apply ability modifiers
-		for kClause,vClause in ipairs(rRoll.clauses) do
-			-- Get original stat modifier
-			local nStatMod = ActorManager35E.getAbilityBonus(rSource, vClause.stat);
-			-- Get any stat effects bonus
-			-- KEL Add tags
-			local nBonusStat, nBonusEffects = ActorManager35E.getAbilityEffectsBonus(rSource, vClause.stat, rRoll.tags);
-			-- END
-			if nBonusEffects > 0 then
-				bEffects = true;
-				
-				-- Calc total stat mod
-				local nTotalStatMod = nStatMod + nBonusStat;
-				
-				-- Handle maximum stat mod setting
-				-- WORKAROUND: If max limited, then assume no penalty allowed (i.e. bows)
-				local nStatModMax = vClause.statmax or 0;
-				if nStatModMax > 0 then
-					nStatMod = math.max(math.min(nStatMod, nStatModMax), 0);
-					nTotalStatMod = math.max(math.min(nTotalStatMod, nStatModMax), 0);
-				end
-				-- KEL Here for ADV etc.?
-				-- Handle multipliers correctly
-				-- NOTE: Negative values are not multiplied, but positive values are.
-				local nMult = vClause.statmult or 1;
-				local nMultOrigStatMod, nMultNewStatMod;
-				if nStatMod <= 0 then
-					nMultOrigStatMod = nStatMod;
-				else
-					nMultOrigStatMod = math.floor(nStatMod * nMult);
-				end
-				if nTotalStatMod <= 0 then
-					nMultNewStatMod = nTotalStatMod;
-				else
-					nMultNewStatMod = math.floor(nTotalStatMod * nMult);
-				end
-				
-				-- Calculate bonus difference
-				local nMultDiffStatMod = nMultNewStatMod - nMultOrigStatMod;
-				if bCritical then
-					local nCritMult = vClause.mult or 2;
-					nMultDiffStatMod = nMultDiffStatMod * nCritMult;
-				end
-				
-				-- Apply bonus difference
-				nEffectMod = nEffectMod + nMultDiffStatMod;
-				vClause.modifier = vClause.modifier + nMultDiffStatMod;
-				rRoll.nMod = rRoll.nMod + nMultDiffStatMod;
-			end
-		end
+		ActionDamage.applyAbilityEffectsToModRoll(rRoll, rSource, rTarget);
 	end
 
-	-- Handle critical
-	local bCritical = ModifierStack.getModifierKey("DMG_CRIT") or Input.isShiftPressed();
-	if ActionAttack.isCrit(rSource, rTarget) then
-		bCritical = true;
+	if rRoll.bCritical then
+		ActionDamage.applyCriticalToModRoll(rRoll, rSource, rTarget);
 	end
-	if bCritical then
-		table.insert(aAddDesc, "[CRITICAL]");
 
-		local nDieIndex = 1;
-		local aNewClauses = {};
-		for _,vClause in ipairs(rRoll.clauses) do
-			nDieIndex = nDieIndex + #(vClause.dice);
-			
-			table.insert(aNewClauses, vClause);
-			
-			local nMult = vClause.mult or 2;
-			if nMult > 1 then
-				local rNewClause = UtilityManager.copyDeep(vClause);
-				rNewClause.dice = {};
-				rNewClause.modifier = 0;
-				if rNewClause.dmgtype == "" then
-					rNewClause.dmgtype = "critical";
-				else
-					rNewClause.dmgtype = rNewClause.dmgtype .. ",critical";
-				end
-				
-				local nDice = #(vClause.dice);
-				local nMod = vClause.modifier or 0;
-				
-				for i = 2, nMult do
-					for j = 1, nDice do
-						if vClause.dice[j]:sub(1,1) == "-" then
-							table.insert(rRoll.aDice, nDieIndex, "-g" .. vClause.dice[j]:sub(3));
-						else
-							table.insert(rRoll.aDice, nDieIndex, "g" .. vClause.dice[j]:sub(2));
-						end
-						nDieIndex = nDieIndex + 1;
-						table.insert(rNewClause.dice, vClause.dice[j]);
-					end
-					rRoll.nMod = rRoll.nMod + nMod;
-					rNewClause.modifier = rNewClause.modifier + nMod;
-				end
-				
-				table.insert(aNewClauses, rNewClause);
-			end
-		end
-		rRoll.clauses = aNewClauses;
-	end
-	
-	-- Handle general damage effects
 	if rSource then
-		local aEffects, nEffectCount;
-		-- KEL add tags
-		if rRoll.sType == "spdamage" then
-			aEffects, nEffectCount = EffectManager35E.getEffectsBonusByType(rSource, "DMGS", true, aAttackFilter, rTarget, false, rRoll.tags);
-		else
-			aEffects, nEffectCount = EffectManager35E.getEffectsBonusByType(rSource, "DMG", true, aAttackFilter, rTarget, false, rRoll.tags);
-		end
-		-- END
-		if nEffectCount > 0 then
-			-- Use the first damage clause to determine damage type and crit multiplier for effect damage
-			local nEffectCritMult = 2;
-			local sEffectBaseType = "";
-			if #(rRoll.clauses) > 0 then
-				nEffectCritMult = rRoll.clauses[1].mult or 2;
-				sEffectBaseType = rRoll.clauses[1].dmgtype or "";
-			end
+		ActionDamage.applyDmgEffectsToModRoll(rRoll, rSource, rTarget);
+		ActionDamage.applyConditionsToModRoll(rRoll, rSource, rTarget);
+		ActionDamage.applyEffectModNotificationToModRoll(rRoll);
 
-			-- For each effect, add a damage clause
-			for _,v in pairs(aEffects) do
-				-- Process effect damage types
-				local bEffectPrecision = false;
-				local bEffectCritical = false;
-				local aEffectDmgType = {};
-				local aEffectSpecialDmgType = {};
-				for _,sWord in ipairs(v.remainder) do
-					if StringManager.contains(DataCommon.specialdmgtypes, sWord) then
-						table.insert(aEffectSpecialDmgType, sWord);
-						if sWord == "critical" then
-							bEffectCritical = true;
-						elseif sWord == "precision" then
-							bEffectPrecision = true;
-						end
-					elseif StringManager.contains(DataCommon.dmgtypes, sWord) then
-						table.insert(aEffectDmgType, sWord);
-					end
-				end
-				
-				if not bEffectCritical or bCritical then
-					bEffects = true;
-					
-					local rClause = {};
-					
-					-- Add effect dice
-					rClause.dice = {};
-					for _,vDie in ipairs(v.dice) do
-						table.insert(aEffectDice, vDie);
-						table.insert(rClause.dice, vDie);
-						if vDie:sub(1,1) == "-" then
-							table.insert(rRoll.aDice, "-p" .. vDie:sub(3));
-						else
-							table.insert(rRoll.aDice, "p" .. vDie:sub(2));
-						end
-					end
-
-					if #aEffectDmgType == 0 then
-						table.insert(aEffectDmgType, sEffectBaseType);
-					end
-					for _,vSpecialDmgType in ipairs(aEffectSpecialDmgType) do
-						table.insert(aEffectDmgType, vSpecialDmgType);
-					end
-					rClause.dmgtype = table.concat(aEffectDmgType, ",");
-
-					local nCurrentMod = v.mod;
-					nEffectMod = nEffectMod + nCurrentMod;
-					rClause.modifier = nCurrentMod;
-					rRoll.nMod = rRoll.nMod + nCurrentMod;
-
-					table.insert(rRoll.clauses, rClause);
-					
-					-- Add critical effect modifier
-					local nCurrentMod;
-					if bCritical and not bEffectPrecision and not bEffectCritical and nEffectCritMult > 1 then
-						local rClauseCritical = {};
-						nCurrentMod = (v.mod * (nEffectCritMult - 1));
-						rClauseCritical.modifier = nCurrentMod;
-						if rClause.dmgtype == "" then
-							rClauseCritical.dmgtype = "critical";
-						else
-							rClauseCritical.dmgtype = rClause.dmgtype .. ",critical";
-						end
-						table.insert(rRoll.clauses, rClauseCritical);
-
-						nEffectMod = nEffectMod + nCurrentMod;
-						rRoll.nMod = rRoll.nMod + nCurrentMod;
-					end
-					
-				end
-			end
-		end
-		
-		-- Apply damage type modifiers
-		-- KEL Making DMG(S)TYPE targetable. Also adding tags
-		if rRoll.sType == "spdamage" then
-			aEffects = EffectManager35E.getEffectsByType(rSource, "DMGSTYPE", {}, rTarget, false, rRoll.tags);
-		else
-			aEffects = EffectManager35E.getEffectsByType(rSource, "DMGTYPE", {}, rTarget, false, rRoll.tags);
-		end
-		-- END
-		local aAddTypes = {};
-		for _,v in ipairs(aEffects) do
-			for _,v2 in ipairs(v.remainder) do
-				if StringManager.contains(DataCommon.dmgtypes, v2) then
-					table.insert(aAddTypes, v2);
-				end
-			end
-		end
-		if #aAddTypes > 0 then
-			for _,vClause in ipairs(rRoll.clauses) do
-				local aSplitTypes = StringManager.split(vClause.dmgtype, ",", true);
-				for _,v2 in ipairs(aAddTypes) do
-					if not StringManager.contains(aSplitTypes, v2) then
-						if vClause.dmgtype ~= "" then
-							vClause.dmgtype = vClause.dmgtype .. "," .. v2;
-						else
-							vClause.dmgtype = v2;
-						end
-					end
-				end
-			end
-		end
-		
-		-- Apply condition modifiers
-		-- KEL adding tags
-		if rRoll.sType ~= "spdamage" then
-			if EffectManager35E.hasEffectCondition(rSource, "Sickened", rRoll.tags) then
-				rRoll.nMod = rRoll.nMod - 2;
-				nEffectMod = nEffectMod - 2;
-				bEffects = true;
-			end
-			if EffectManager35E.hasEffect(rSource, "Incorporeal", nil, false, false, rRoll.tags) and rRoll.range == "M" and not string.match(string.lower(rRoll.sDesc), "incorporeal touch") then
-				bEffects = true;
-				table.insert(aAddDesc, "[INCORPOREAL]");
-			end
-		end
-		-- END
-	end
-	
-	-- Handle half damage
-	local bHalf = ModifierStack.getModifierKey("DMG_HALF");
-	if bHalf then
-		table.insert(aAddDesc, "[HALF]");
-	end
-	
-	-- Add note about effects
-	if bEffects then
-		local sEffects = "";
-		local sMod = StringManager.convertDiceToString(aEffectDice, nEffectMod, true);
-		if sMod ~= "" then
-			sEffects = "[" .. Interface.getString("effects_tag") .. " " .. sMod .. "]";
-		else
-			sEffects = "[" .. Interface.getString("effects_tag") .. "]";
-		end
-		table.insert(aAddDesc, sEffects);
-	end
-	
-	-- Add notes to roll description
-	if #aAddDesc > 0 then
-		rRoll.sDesc = rRoll.sDesc .. " " .. table.concat(aAddDesc, " ");
+		ActionDamage.applyDmgTypeEffectsToModRoll(rRoll, rSource, rTarget);
 	end
 
-	-- Add damage type info to roll description
-	encodeDamageTypes(rRoll);
+	ActionDamage.applyModifierKeysToModRoll(rRoll, rSource, rTarget);
+
+	ActionDamage.finalizeModRoll(rRoll);
 end
 
 function onDamageRoll(rSource, rRoll)
@@ -796,6 +529,296 @@ function onStabilization(rSource, rTarget, rRoll)
 	else
 		applyFailedStabilization(rSource);
 	end
+end
+
+--
+-- MOD ROLL HELPERS
+--
+
+function setupModRoll(rRoll, rSource, rTarget)
+	ActionDamage.decodeDamageTypes(rRoll);
+	CombatManager2.addRightClickDiceToClauses(rRoll);
+
+	rRoll.tNotifications = {};
+	
+	rRoll.bCritical = rRoll.bCritical or ModifierStack.getModifierKey("DMG_CRIT") or Input.isShiftPressed();
+	if ActionAttack.isCrit(rSource, rTarget) then
+		rRoll.bCritical = true;
+	end
+	rRoll.tAttackFilter = {};
+	if rRoll.range == "R" then
+		table.insert(rRoll.tAttackFilter, "ranged");
+	elseif rRoll.range == "M" then
+		table.insert(rRoll.tAttackFilter, "melee");
+	end
+
+	rRoll.bEffects = false;
+	rRoll.tEffectDice = {};
+	rRoll.nEffectMod = 0;
+end
+
+function applyAbilityEffectsToModRoll(rRoll, rSource, rTarget)
+	for _,vClause in ipairs(rRoll.clauses) do
+		-- Get original stat modifier
+		local nStatMod = ActorManager35E.getAbilityBonus(rSource, vClause.stat);
+		
+		-- Get any stat effects bonus
+		-- KEL Add tags
+		local nAbilityEffectMod, nAbilityEffects = ActorManager35E.getAbilityEffectsBonus(rSource, vClause.stat, rRoll.tags);
+		-- END
+		if nAbilityEffects > 0 then
+			rRoll.bEffects = true;
+			
+			-- Calc total stat mod
+			local nTotalStatMod = nStatMod + nAbilityEffectMod;
+			
+			-- Handle maximum stat mod setting
+			-- WORKAROUND: If max limited, then assume no penalty allowed (i.e. bows)
+			local nStatModMax = vClause.statmax or 0;
+			if nStatModMax > 0 then
+				nStatMod = math.max(math.min(nStatMod, nStatModMax), 0);
+				nTotalStatMod = math.max(math.min(nTotalStatMod, nStatModMax), 0);
+			end
+
+			-- Handle multipliers correctly
+			-- NOTE: Negative values are not multiplied, but positive values are.
+			local nMult = vClause.statmult or 1;
+			local nMultOrigStatMod, nMultNewStatMod;
+			if nStatMod <= 0 then
+				nMultOrigStatMod = nStatMod;
+			else
+				nMultOrigStatMod = math.floor(nStatMod * nMult);
+			end
+			if nTotalStatMod <= 0 then
+				nMultNewStatMod = nTotalStatMod;
+			else
+				nMultNewStatMod = math.floor(nTotalStatMod * nMult);
+			end
+			
+			-- Calculate bonus difference
+			local nMultDiffStatMod = nMultNewStatMod - nMultOrigStatMod;
+			
+			-- Apply bonus difference
+			rRoll.nEffectMod = rRoll.nEffectMod + nMultDiffStatMod;
+			vClause.modifier = vClause.modifier + nMultDiffStatMod;
+			rRoll.nMod = rRoll.nMod + nMultDiffStatMod;
+		end
+	end
+end
+
+function applyCriticalToModRoll(rRoll, rSource, rTarget)
+	table.insert(rRoll.tNotifications, "[CRITICAL]");
+
+	local nDieIndex = 1;
+	local aNewClauses = {};
+	for _,vClause in ipairs(rRoll.clauses) do
+		nDieIndex = nDieIndex + #(vClause.dice);
+		
+		table.insert(aNewClauses, vClause);
+		
+		local nMult = vClause.mult or 2;
+		if nMult > 1 then
+			local rNewClause = UtilityManager.copyDeep(vClause);
+			rNewClause.dice = {};
+			rNewClause.modifier = 0;
+			if rNewClause.dmgtype == "" then
+				rNewClause.dmgtype = "critical";
+			else
+				rNewClause.dmgtype = rNewClause.dmgtype .. ",critical";
+			end
+			
+			local nDice = #(vClause.dice);
+			local nMod = vClause.modifier or 0;
+			
+			for i = 2, nMult do
+				for j = 1, nDice do
+					if vClause.dice[j]:sub(1,1) == "-" then
+						table.insert(rRoll.aDice, nDieIndex, "-g" .. vClause.dice[j]:sub(3));
+					else
+						table.insert(rRoll.aDice, nDieIndex, "g" .. vClause.dice[j]:sub(2));
+					end
+					nDieIndex = nDieIndex + 1;
+					table.insert(rNewClause.dice, vClause.dice[j]);
+				end
+				rRoll.nMod = rRoll.nMod + nMod;
+				rNewClause.modifier = rNewClause.modifier + nMod;
+			end
+			
+			table.insert(aNewClauses, rNewClause);
+		end
+	end
+	rRoll.clauses = aNewClauses;
+end
+
+function applyDmgEffectsToModRoll(rRoll, rSource, rTarget)
+	local tEffects, nEffectCount;
+	if rRoll.sType == "spdamage" then
+		tEffects, nEffectCount = EffectManager35E.getEffectsBonusByType(rSource, "DMGS", true, rRoll.tAttackFilter, rTarget, false, rRoll.tags);
+	else
+		tEffects, nEffectCount = EffectManager35E.getEffectsBonusByType(rSource, "DMG", true, rRoll.tAttackFilter, rTarget, false, rRoll.tags);
+	end
+	if nEffectCount > 0 then
+		-- Use the first damage clause to determine damage type and crit multiplier for effect damage
+		local nEffectCritMult = 2;
+		local sEffectBaseType = "";
+		if #(rRoll.clauses) > 0 then
+			nEffectCritMult = rRoll.clauses[1].mult or 2;
+			sEffectBaseType = rRoll.clauses[1].dmgtype or "";
+		end
+
+		-- For each effect, add a damage clause
+		for _,v in pairs(tEffects) do
+			-- Process effect damage types
+			local bEffectPrecision = false;
+			local bEffectCritical = false;
+			local tEffectDmgType = {};
+			local tEffectSpecialDmgType = {};
+			for _,sWord in ipairs(v.remainder) do
+				if StringManager.contains(DataCommon.specialdmgtypes, sWord) then
+					table.insert(tEffectSpecialDmgType, sWord);
+					if sWord == "critical" then
+						bEffectCritical = true;
+					elseif sWord == "precision" then
+						bEffectPrecision = true;
+					end
+				elseif StringManager.contains(DataCommon.dmgtypes, sWord) then
+					table.insert(tEffectDmgType, sWord);
+				end
+			end
+			
+			if not bEffectCritical or rRoll.bCritical then
+				rRoll.bEffects = true;
+				
+				local rClause = {};
+				
+				-- Add effect dice
+				rClause.dice = {};
+				for _,vDie in ipairs(v.dice) do
+					table.insert(rRoll.tEffectDice, vDie);
+					table.insert(rClause.dice, vDie);
+					if vDie:sub(1,1) == "-" then
+						table.insert(rRoll.aDice, "-p" .. vDie:sub(3));
+					else
+						table.insert(rRoll.aDice, "p" .. vDie:sub(2));
+					end
+				end
+
+				if #tEffectDmgType == 0 then
+					table.insert(tEffectDmgType, sEffectBaseType);
+				end
+				for _,vSpecialDmgType in ipairs(tEffectSpecialDmgType) do
+					table.insert(tEffectDmgType, vSpecialDmgType);
+				end
+				rClause.dmgtype = table.concat(tEffectDmgType, ",");
+
+				local nCurrentMod = v.mod;
+				rRoll.nEffectMod = rRoll.nEffectMod + nCurrentMod;
+				rClause.modifier = nCurrentMod;
+				rRoll.nMod = rRoll.nMod + nCurrentMod;
+
+				table.insert(rRoll.clauses, rClause);
+				
+				-- Add critical effect modifier
+				if rRoll.bCritical and not bEffectPrecision and not bEffectCritical and nEffectCritMult > 1 then
+					local rClauseCritical = {};
+					local nCurrentMod = (v.mod * (nEffectCritMult - 1));
+					rClauseCritical.modifier = nCurrentMod;
+					if rClause.dmgtype == "" then
+						rClauseCritical.dmgtype = "critical";
+					else
+						rClauseCritical.dmgtype = rClause.dmgtype .. ",critical";
+					end
+					table.insert(rRoll.clauses, rClauseCritical);
+
+					rRoll.nEffectMod = rRoll.nEffectMod + nCurrentMod;
+					rRoll.nMod = rRoll.nMod + nCurrentMod;
+				end
+			end
+		end
+	end
+end
+
+function applyConditionsToModRoll(rRoll, rSource, rTarget)
+	if rRoll.sType ~= "spdamage" then
+		if EffectManager35E.hasEffectCondition(rSource, "Sickened", rRoll.tags) then
+			rRoll.nMod = rRoll.nMod - 2;
+			rRoll.nEffectMod = rRoll.nEffectMod - 2;
+			rRoll.bEffects = true;
+		end
+		if EffectManager35E.hasEffect(rSource, "Incorporeal", nil, false, false, rRoll.tags) and (rRoll.range == "M") 
+				and not rRoll.sDesc:lower():match("incorporeal touch") then
+			rRoll.bEffects = true;
+			table.insert(rRoll.tNotifications, "[INCORPOREAL]");
+		end
+	end
+end
+
+function applyEffectModNotificationToModRoll(rRoll)
+	if rRoll.bEffects then
+		local sEffects;
+		local sMod = StringManager.convertDiceToString(rRoll.tEffectDice, rRoll.nEffectMod, true);
+		if sMod ~= "" then
+			sEffects = "[" .. Interface.getString("effects_tag") .. " " .. sMod .. "]";
+		else
+			sEffects = "[" .. Interface.getString("effects_tag") .. "]";
+		end
+		table.insert(rRoll.tNotifications, sEffects);
+	end
+end
+
+function applyDmgTypeEffectsToModRoll(rRoll, rSource, rTarget)
+	local tAddDmgTypes = {};
+	local tDmgTypeEffects;
+	if rRoll.sType == "spdamage" then
+		tDmgTypeEffects = EffectManager35E.getEffectsByType(rSource, "DMGSTYPE", nil, rTarget, false, rRoll.tags);
+	else
+		tDmgTypeEffects = EffectManager35E.getEffectsByType(rSource, "DMGTYPE", nil, rTarget, false, rRoll.tags);
+	end
+	for _,rEffectComp in ipairs(tDmgTypeEffects) do
+		for _,v2 in ipairs(rEffectComp.remainder) do
+			if StringManager.contains(DataCommon.dmgtypes, v2) then
+				table.insert(tAddDmgTypes, v2);
+			end
+		end
+	end
+	if #tAddDmgTypes > 0 then
+		for _,vClause in ipairs(rRoll.clauses) do
+			local tSplitTypes = StringManager.split(vClause.dmgtype, ",", true);
+			for _,v2 in ipairs(tAddDmgTypes) do
+				if not StringManager.contains(tSplitTypes, v2) then
+					if vClause.dmgtype ~= "" then
+						vClause.dmgtype = vClause.dmgtype .. "," .. v2;
+					else
+						vClause.dmgtype = v2;
+					end
+				end
+			end
+		end
+
+		local sNotification = "[" .. Interface.getString("effects_tag") .. " " .. table.concat(tAddDmgTypes, ",") .. "]";
+		table.insert(rRoll.tNotifications, sNotification);
+	end
+end
+
+function applyModifierKeysToModRoll(rRoll, rSource, rTarget)
+	if ModifierStack.getModifierKey("DMG_HALF") then
+		table.insert(rRoll.tNotifications, "[HALF]");
+	end
+end
+
+function finalizeModRoll(rRoll)
+	if #(rRoll.tNotifications) > 0 then
+		rRoll.sDesc = rRoll.sDesc .. " " .. table.concat(rRoll.tNotifications, " ");
+	end
+
+	rRoll.tNotifications = nil;
+	rRoll.tAttackFilter = nil;
+
+	rRoll.bEffects = nil;
+	rRoll.tEffectDice = nil;
+	rRoll.nEffectMod = nil;
+
+	ActionDamage.encodeDamageTypes(rRoll);
 end
 
 --
