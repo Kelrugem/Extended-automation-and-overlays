@@ -30,11 +30,7 @@ function roll(rSource, vTargets, rRoll, bMultiTarget)
 		local _, nAdvantage = EffectManager35E.hasEffect(rSource, "keladvantage", nil, false, false, rRoll.tags);
 		local _, nDisAdvantage = EffectManager35E.hasEffect(rSource, "keldisadvantage", nil, false, false, rRoll.tags);
 		
-		if rRoll.adv then
-			rRoll.adv = tonumber(rRoll.adv) + nAdvantage - nDisAdvantage;
-		else
-			rRoll.adv = nAdvantage - nDisAdvantage;
-		end
+		rRoll.adv = ( tonumber(rRoll.adv) or 0 ) + nAdvantage - nDisAdvantage;
 		
 		if rRoll.adv > 0 then
 			local i = 1;

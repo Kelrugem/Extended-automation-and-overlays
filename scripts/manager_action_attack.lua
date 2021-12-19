@@ -744,6 +744,7 @@ function onAttack(rSource, rTarget, rRoll)
 		-- KEL Blind fight
 		if ActorManager35E.hasSpecialAbility(rSource, "Blind-Fight", true, false, false) and AttackType == "M" then
 			rMissChanceRoll.adv = ( rMissChanceRoll.adv or 0 ) + 1;
+			rMissChanceRoll.desc = rMissChanceRoll.desc .. " [BLIND-FIGHT]";
 		end
 		-- END
 		ActionsManager.roll(rSource, rTarget, rMissChanceRoll);

@@ -1142,6 +1142,7 @@ function onSpellAction(draginfo, nodeAction, sSubRoll)
 		-- if tag then
 		rRoll.tags = tag;
 		-- end
+		-- KEL add here information about range such that DMGS etc. profit from that
 		if rAction.bSpellDamage then
 			rRoll.sType = "spdamage";
 		else
