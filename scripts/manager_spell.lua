@@ -1067,23 +1067,20 @@ function onSpellAction(draginfo, nodeAction, sSubRoll)
 	local nodeSpell = DB.getChild(nodeAction, "...");
 	local nodeActions = nodeSpell.createChild("actions");
 	local tag = "";
-	-- KEL If multiple cast actions: Important that all cast actions have the same tags?
+	local range = "";
+	-- KEL If multiple cast actions: Important that all cast actions have the same tags? Also adding ranges
 	if nodeActions then
 		local OthernodeAction = nodeActions.getChildren();
 		if OthernodeAction then
 			for k, v in pairs(OthernodeAction) do
 				if DB.getValue(v, "type") == "cast" then
-					-- local semicolon = "; ";
-					-- tag = DB.getValue(v, "school", "").. semicolon .. DB.getValue(v, "stype", "") .. semicolon .. DB.getValue(v, "othertags", "");
-					tag = SpellManager.getTagsFromAction(v);
+					rCastAction = SpellManager.getSpellAction(rActor, v);
+					tag = SpellManager.getTagsFromAction(rCastAction);
+					range = rCastAction.range;
 					break;
 				end
 			end
 		end
-	end
-	local tagshelp = StringManager.parseWords(tag);
-	if not tagshelp[1] then
-		tag = nil;
 	end
 	local aAddDice, nAddMod, nEffectCount = EffectManager35E.getEffectsBonus(rActor, "CL", false, nil, nil, false, tag);
 	local nClMod = 0;
@@ -1138,11 +1135,15 @@ function onSpellAction(draginfo, nodeAction, sSubRoll)
 		end
 		
 	elseif rAction.type == "damage" then
+		-- KEL add range stuff to spells
+		if range ~= "" then
+			rAction.range = range;
+		end
+		-- END
 		local rRoll = ActionDamage.getRoll(rActor, rAction);
 		-- if tag then
 		rRoll.tags = tag;
 		-- end
-		-- KEL add here information about range such that DMGS etc. profit from that
 		if rAction.bSpellDamage then
 			rRoll.sType = "spdamage";
 		else
