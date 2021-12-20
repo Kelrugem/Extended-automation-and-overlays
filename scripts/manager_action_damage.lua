@@ -804,11 +804,6 @@ function applyModifierKeysToModRoll(rRoll, rSource, rTarget)
 	if ModifierStack.getModifierKey("DMG_HALF") then
 		table.insert(rRoll.tNotifications, "[HALF]");
 	end
-	-- KEL Injury damage button
-    if ModifierStack.getModifierKey("DMG_INJURY") then
-        table.insert(rRoll.tNotifications, "[INJURY]");
-    end
-	-- END
 end
 
 function finalizeModRoll(rRoll)
