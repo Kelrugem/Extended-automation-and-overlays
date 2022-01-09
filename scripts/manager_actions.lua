@@ -25,12 +25,22 @@ function getTargeting(rSource, rTarget, sDragType, rRolls)
 end
 
 function roll(rSource, vTargets, rRoll, bMultiTarget)
-	rRoll.originaldicenumber = #rRoll.aDice or 0;
-	if #rRoll.aDice > 0 then
+	if rRoll.aDice then
+		rRoll.originaldicenumber = #rRoll.aDice;
+	else
+		rRoll.originaldicenumber = 0;
+	end
+	if rRoll.originaldicenumber ~= 0 then
 		local _, nAdvantage = EffectManager35E.hasEffect(rSource, "keladvantage", nil, false, false, rRoll.tags);
 		local _, nDisAdvantage = EffectManager35E.hasEffect(rSource, "keldisadvantage", nil, false, false, rRoll.tags);
 		
 		rRoll.adv = ( tonumber(rRoll.adv) or 0 ) + nAdvantage - nDisAdvantage;
+		
+		if ModifierManager.getKey("ADV") then
+			rRoll.adv = 1;
+		elseif ModifierManager.getKey("DISADV") then
+			rRoll.adv = -1;
+		end
 		
 		if rRoll.adv > 0 then
 			local i = 1;
@@ -54,7 +64,7 @@ function roll(rSource, vTargets, rRoll, bMultiTarget)
 end 
 
 function resolveAction(rSource, rTarget, rRoll)
-	if #rRoll.aDice > 0 then
+	if rRoll.aDice and ( #rRoll.aDice > 0 ) then
 		
 		rRoll.adv = tonumber(rRoll.adv) or 0;
 		
@@ -83,6 +93,7 @@ function resolveAction(rSource, rTarget, rRoll)
 				slot = i+1;
 			end
 			rRoll.sDesc = rRoll.sDesc .. " [ADV]" .. " [DROPPED " .. sDropped .. "]";
+			rRoll.aDice.expr = nil;
 		elseif rRoll.adv < 0 then
 			local i = 1;
 			local slot = i+1;
@@ -108,6 +119,7 @@ function resolveAction(rSource, rTarget, rRoll)
 				slot = i+1;
 			end
 			rRoll.sDesc = rRoll.sDesc .. " [DISADV]" .. " [DROPPED " .. sDropped .. "]";
+			rRoll.aDice.expr = nil;
 		end
 	end
 	OldresolveAction(rSource, rTarget, rRoll);
@@ -128,7 +140,7 @@ function total(rRoll)
 	end
 	if rRoll.originaldicenumber then
 		rRoll.originaldicenumber = tonumber(rRoll.originaldicenumber);
-		if #rRoll.aDice > rRoll.originaldicenumber then
+		if rRoll.aDice and ( #rRoll.aDice > rRoll.originaldicenumber ) then
 		
 			rRoll.adv = tonumber(rRoll.adv) or 0;
 			

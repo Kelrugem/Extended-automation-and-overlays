@@ -677,7 +677,7 @@ function getDefenseValue(rAttacker, rDefender, rRoll)
 			local bBlindFight = ActorManager35E.hasSpecialAbility(rDefender, "Blind-Fight", true, false, false);
 			if sAttackType == "R" or not bBlindFight then
 				nBonusSituational = nBonusSituational - 2;
-				if not bBlindFight and not ActorManager35E.hasSpecialAbility(rDefender, "Uncanny Dodge", false, false, true) then
+				if not ActorManager35E.hasSpecialAbility(rDefender, "Uncanny Dodge", false, false, true) then
 					bCombatAdvantage = true;
 				end
 			end

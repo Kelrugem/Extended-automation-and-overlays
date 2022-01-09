@@ -218,16 +218,16 @@ function modAttack(rSource, rTarget, rRoll)
 	local nAddMod = 0;
 	
 	-- Check for opportunity attack
-	local bOpportunity = ModifierStack.getModifierKey("ATT_OPP") or Input.isShiftPressed();
+	local bOpportunity = ModifierManager.getKey("ATT_OPP") or Input.isShiftPressed();
 
 	-- Check defense modifiers
-	local bTouch = ModifierStack.getModifierKey("ATT_TCH");
-	local bFlatFooted = ModifierStack.getModifierKey("ATT_FF");
-	local bCover = ModifierStack.getModifierKey("DEF_COVER");
-	local bPartialCover = ModifierStack.getModifierKey("DEF_PCOVER");
-	local bSuperiorCover = ModifierStack.getModifierKey("DEF_SCOVER");
-	local bConceal = ModifierStack.getModifierKey("DEF_CONC");
-	local bTotalConceal = ModifierStack.getModifierKey("DEF_TCONC");
+	local bTouch = ModifierManager.getKey("ATT_TCH");
+	local bFlatFooted = ModifierManager.getKey("ATT_FF");
+	local bCover = ModifierManager.getKey("DEF_COVER");
+	local bPartialCover = ModifierManager.getKey("DEF_PCOVER");
+	local bSuperiorCover = ModifierManager.getKey("DEF_SCOVER");
+	local bConceal = ModifierManager.getKey("DEF_CONC");
+	local bTotalConceal = ModifierManager.getKey("DEF_TCONC");
 	
 	if bOpportunity then
 		table.insert(aAddDesc, "[OPPORTUNITY]");
@@ -318,7 +318,7 @@ function modAttack(rSource, rTarget, rRoll)
 			if sAttackType == "R" or not bBlindFight then
 				bEffects = true;
 				nAddMod = nAddMod + 2;
-				if not bBlindFight and not ActorManager35E.hasSpecialAbility(rTarget, "Uncanny Dodge", false, false, true) then
+				if not ActorManager35E.hasSpecialAbility(rTarget, "Uncanny Dodge", false, false, true) then
 					table.insert(aAddDesc, "[CA]");
 				end
 			end
@@ -509,24 +509,11 @@ function onAttack(rSource, rTarget, rRoll)
 		local sDefenseVal = rRoll.sDesc:match(" %[AC ([%-%+]?%d+)%]");
 		if sDefenseVal then
 			nDefenseVal = tonumber(sDefenseVal);
-			-- Debug.console(nDefenseVal);
 		end
-		nMissChance = tonumber(string.match(rRoll.sDesc, "%[MISS CHANCE (%d+)%%%]")) or 0;
-		rMessage.text = string.gsub(rMessage.text, " %[AC ([%-%+]?%d+)%]", "");
-		rMessage.text = string.gsub(rMessage.text, " %[MISS CHANCE %d+%%%]", "");
-		
-		local sAtkEffectsMatch = " %[" .. Interface.getString("effects_tag") .. " ([+-]?%d+)%]";
-		local sAtkEffectsBonus = string.match(rRoll.sDesc, sAtkEffectsMatch);
-		if sAtkEffectsBonus then
-			nAtkEffectsBonus = (tonumber(sAtkEffectsBonus) or 0);
-			if nAtkEffectsBonus ~= 0 then 
-				rAction.nTotal = rAction.nTotal + (tonumber(sAtkEffectsBonus) or 0);
-				local sFormat = "[" .. Interface.getString("effects_tag") .. " %+d]";
-				table.insert(rAction.aMessages, string.format(sFormat, nAtkEffectsBonus));
-			end
-			local sAtkEffectsClear = " %[" .. Interface.getString("effects_tag") .. " [+-]?%d+%]";
-			rMessage.text = string.gsub(rMessage.text, sAtkEffectsClear, "");
-		end
+		nMissChance = tonumber(rRoll.sDesc:match("%[MISS CHANCE (%d+)%%%]")) or 0;
+		rMessage.text = rMessage.text:gsub(" %[AC ([%-%+]?%d+)%]", "");
+		rMessage.text = rMessage.text:gsub(" %[MISS CHANCE %d+%%%]", "");
+	-- END
 	else
 		-- KEL blind fight, skipping checking effects for now (for performance and to avoid problems with On Skip etc.)
 		nDefenseVal, nAtkEffectsBonus, nDefEffectsBonus, nMissChance, nAdditionalDefenseForCC = ActorManager35E.getDefenseValue(rSource, rTarget, rRoll);
@@ -734,9 +721,6 @@ function onAttack(rSource, rTarget, rRoll)
 	-- END
 	if bRollMissChance and (nMissChance > 0) then
 		local aMissChanceDice = { "d100" };
-		if not UtilityManager.isClientFGU() then
-			table.insert(aMissChanceDice, "d10");
-		end
 		local sMissChanceText;
 		sMissChanceText = string.gsub(rMessage.text, " %[CRIT %d+%]", "");
 		sMissChanceText = string.gsub(sMissChanceText, " %[CONFIRM%]", "");
@@ -744,7 +728,7 @@ function onAttack(rSource, rTarget, rRoll)
 		-- KEL Blind fight
 		if ActorManager35E.hasSpecialAbility(rSource, "Blind-Fight", true, false, false) and AttackType == "M" then
 			rMissChanceRoll.adv = ( rMissChanceRoll.adv or 0 ) + 1;
-			rMissChanceRoll.desc = rMissChanceRoll.desc .. " [BLIND-FIGHT]";
+			rMissChanceRoll.sDesc = rMissChanceRoll.sDesc .. " [BLIND-FIGHT]";
 		end
 		-- END
 		ActionsManager.roll(rSource, rTarget, rMissChanceRoll);

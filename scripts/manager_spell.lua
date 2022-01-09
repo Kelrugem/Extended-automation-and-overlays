@@ -1135,15 +1135,13 @@ function onSpellAction(draginfo, nodeAction, sSubRoll)
 		end
 		
 	elseif rAction.type == "damage" then
-		-- KEL add range stuff to spells
+		-- KEL add range and tag stuff to spells
 		if range ~= "" then
 			rAction.range = range;
 		end
+		
+		local rRoll = ActionDamage.getRoll(rActor, rAction, tag);
 		-- END
-		local rRoll = ActionDamage.getRoll(rActor, rAction);
-		-- if tag then
-		rRoll.tags = tag;
-		-- end
 		if rAction.bSpellDamage then
 			rRoll.sType = "spdamage";
 		else
@@ -1153,10 +1151,9 @@ function onSpellAction(draginfo, nodeAction, sSubRoll)
 		table.insert(rRolls, rRoll);
 		
 	elseif rAction.type == "heal" then
-		local rRoll = ActionHeal.getRoll(rActor, rAction);
-		if tag then
-			rRoll.tags = tag;
-		end
+		-- KEL add tags
+		local rRoll = ActionHeal.getRoll(rActor, rAction, tag);
+		-- END
 		table.insert(rRolls, rRoll);
 
 	elseif rAction.type == "effect" then

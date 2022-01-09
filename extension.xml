@@ -1,9 +1,9 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<root version="3.3.15.1" release="1">
+<root version="4.1.13.1" release="1">
   <properties>
     <name>Feature: Extended automation and overlays</name>
     <version>3.3.15.1</version>
-    <author>mr900rr (FFOS), darrenan (keen), phixation (bypass), tahl_liadon (some icons), bmos (TQ and more), DCrumb (max tag), RabidPaladin (better NPC parsing and resisthalved) and Kelrugem (rest)</author>
+    <author>rhythmist, mr900rr, darrenan, tahl_liadon, bmos, DCrumb, RabidPaladin, SoxMax, Cristmo and Kelrugem</author>
     <description>Deekin ist super! (Will ever someone read that strange description?)</description>
     <ruleset>
       <name>3.5E</name>
@@ -13,8 +13,9 @@
     </ruleset>
 	<loadorder>35</loadorder>
   </properties>
-  <announcement text="FORTIF, HRESIST, ghost touch, AoO tracker, save overlays and more, v.3.3.15.1, for 3.5E and PFRPG rulesets. \rCopyright 2021 Smiteworks.\rBy mr900rr (FFOS), darrenan (keen), phixation (bypass), tahl liadon (some icons), bmos (TQ descriptors), DCrumb (max tag) and Kelrugem.\rMany new effects and nice stuff :) (see forum :P)" font="chatfont" />
+  <announcement text="FORTIF, HRESIST, ghost touch, AoO tracker, save overlays and more, dated at 9 January 2022, for 3.5E and PFRPG rulesets, v. 4.1.13. Copyright 2022 Smiteworks.\rBy darrenan, mr900rr, phixation, tahl_liadon, bmos, DCrumb, RabidPaladin, SoxMax, Cristmo and Kelrugem." icon="DeekinMightyBard" font="emotefont" />
   <base>
+	<icon name="DeekinMightyBard" file="DeekinMightyBard.jpg" />
 	<!-- Graphics -->
 	<includefile source="graphics/graphics_icons.xml" />
 	

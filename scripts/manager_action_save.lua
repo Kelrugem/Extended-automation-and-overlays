@@ -286,7 +286,7 @@ function modSave(rSource, rTarget, rRoll)
 		
 		-- Determine flatfooted status
 		local bFlatfooted = false;
-		if not rRoll.bVsSave and ModifierStack.getModifierKey("ATT_FF") then
+		if not rRoll.bVsSave and ModifierManager.getKey("ATT_FF") then
 			bFlatfooted = true;
 		elseif EffectManager35E.hasEffect(rSource, "Flat-footed") or EffectManager35E.hasEffect(rSource, "Flatfooted") then
 			bFlatfooted = true;
