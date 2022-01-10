@@ -1067,22 +1067,20 @@ function onSpellAction(draginfo, nodeAction, sSubRoll)
 	local nodeSpell = DB.getChild(nodeAction, "...");
 	local nodeActions = nodeSpell.createChild("actions");
 	local tag = "";
-	-- KEL If multiple cast actions: Important that all cast actions have the same tags?
+	local range = "";
+	-- KEL If multiple cast actions: Important that all cast actions have the same tags? Also adding ranges
 	if nodeActions then
 		local OthernodeAction = nodeActions.getChildren();
 		if OthernodeAction then
 			for k, v in pairs(OthernodeAction) do
 				if DB.getValue(v, "type") == "cast" then
-					local semicolon = "; ";
-					tag = DB.getValue(v, "school", "").. semicolon .. DB.getValue(v, "stype", "") .. semicolon .. DB.getValue(v, "othertags", "");
+					rCastAction = SpellManager.getSpellAction(rActor, v);
+					tag = SpellManager.getTagsFromAction(rCastAction);
+					range = rCastAction.range;
 					break;
 				end
 			end
 		end
-	end
-	local tagshelp = StringManager.parseWords(tag);
-	if not tagshelp[1] then
-		tag = nil;
 	end
 	local aAddDice, nAddMod, nEffectCount = EffectManager35E.getEffectsBonus(rActor, "CL", false, nil, nil, false, tag);
 	local nClMod = 0;
@@ -1104,24 +1102,21 @@ function onSpellAction(draginfo, nodeAction, sSubRoll)
 	local rCustom = nil;
 	if rAction.type == "cast" then
 		-- KEL Use Cast-specific tags (?)
-		local tagsSpec = getTagsFromAction(rAction);
+		local tagsSpec = SpellManager.getTagsFromAction(rAction);
 		if not rAction.subtype then
-			table.insert(rRolls, ActionSpell.getSpellCastRoll(rActor, rAction));
+			table.insert(rRolls, ActionSpell.getSpellCastRoll(rActor, rAction, tagsSpec));
 		end
 		
 		if not rAction.subtype or rAction.subtype == "atk" then
 			if rAction.range then
 				-- KEL add tag in getRoll itself, since that is need for IFTAG-KEEN; similar for following getRoll
-				local rRoll = ActionAttack.getRoll(rActor, rAction);
-				-- if tag then
-					-- rRoll.tags = tag;
-				-- end
+				local rRoll = ActionAttack.getRoll(rActor, rAction, tagsSpec);
 				table.insert(rRolls, rRoll);
 			end
 		end
 
 		if not rAction.subtype or rAction.subtype == "clc" then
-			local rRoll = ActionSpell.getCLCRoll(rActor, rAction);
+			local rRoll = ActionSpell.getCLCRoll(rActor, rAction, tagsSpec);
 			if not rAction.subtype then
 				rRoll.sType = "castclc";
 				rRoll.aDice = {};
@@ -1131,7 +1126,7 @@ function onSpellAction(draginfo, nodeAction, sSubRoll)
 
 		if not rAction.subtype or rAction.subtype == "save" then
 			if rAction.save and rAction.save ~= "" then
-				local rRoll = ActionSpell.getSaveVsRoll(rActor, rAction);
+				local rRoll = ActionSpell.getSaveVsRoll(rActor, rAction, tagsSpec);
 				if not rAction.subtype then
 					rRoll.sType = "castsave";
 				end
@@ -1140,10 +1135,13 @@ function onSpellAction(draginfo, nodeAction, sSubRoll)
 		end
 		
 	elseif rAction.type == "damage" then
-		local rRoll = ActionDamage.getRoll(rActor, rAction);
-		if tag then
-			rRoll.tags = tag;
+		-- KEL add range and tag stuff to spells
+		if range ~= "" then
+			rAction.range = range;
 		end
+		
+		local rRoll = ActionDamage.getRoll(rActor, rAction, tag);
+		-- END
 		if rAction.bSpellDamage then
 			rRoll.sType = "spdamage";
 		else
@@ -1153,19 +1151,20 @@ function onSpellAction(draginfo, nodeAction, sSubRoll)
 		table.insert(rRolls, rRoll);
 		
 	elseif rAction.type == "heal" then
-		local rRoll = ActionHeal.getRoll(rActor, rAction);
-		if tag then
-			rRoll.tags = tag;
-		end
+		-- KEL add tags
+		local rRoll = ActionHeal.getRoll(rActor, rAction, tag);
+		-- END
 		table.insert(rRolls, rRoll);
 
 	elseif rAction.type == "effect" then
 		local rRoll;
 		rRoll = ActionEffect.getRoll(draginfo, rActor, rAction);
 		if rRoll then
+			-- KEL adding tags, just in case :)
 			if tag then
 				rRoll.tags = tag;
 			end
+			-- END
 			table.insert(rRolls, rRoll);
 		end
 	end
@@ -1197,6 +1196,26 @@ function getTagsFromAction(rAction)
 end
 --END
 
+function getActionAbilityBonus(nodeAction)
+	local nodeSpellClass = nodeAction.getChild(".......");
+	local nodeCreature = nodeSpellClass.getChild("...");
+
+	local sAbility = DB.getValue(nodeSpellClass, "dc.ability", "");
+
+	local rActor = ActorManager.resolveActor(nodeCreature);
+	local nStat = ActorManager35E.getAbilityBonus(rActor, sAbility);
+	
+	-- KEL replace DC if necessary; use getAbilityBonus to have the DC update when ability changes because replacedc.abilitymod does only get updated when save definition window is opened
+	local sReplAbil = DB.getValue(nodeAction, "replacedc.ability", "");
+	if sReplAbil ~= "" then
+		-- nStat = DB.getValue(nodeAction, "replacedc.abilitymod", 0);
+		nStat = ActorManager35E.getAbilityBonus(rActor, sReplAbil);
+	end
+	-- END
+	
+	return nStat;
+end
+
 function getActionCLC(nodeAction)
 	local nStat = DB.getValue(nodeAction, ".......cl", 0);
 	local nPen = DB.getValue(nodeAction, ".......sp", 0);
@@ -1207,39 +1226,23 @@ end
 
 function getActionSaveDC(nodeAction)
 	local nTotal;
-	-- KEL Actor information
-	local nodeCreature = nodeAction.getChild(".........");
-	local rActor = ActorManager.resolveActor(nodeCreature);
-	-- END
 	
 	if DB.getValue(nodeAction, "savedctype", "") == "fixed" then
 		nTotal = DB.getValue(nodeAction, "savedcmod", 0);
     elseif DB.getValue(nodeAction, "savedctype", "") == "casterlevel" then
-		local nStat = DB.getValue(nodeAction, ".......dc.abilitymod", 0);
-		-- KEL replace DC if necessary; use getAbilityBonus to have the DC update when ability changes because replacedc.abilitymod does only get updated when save definition window is opened
-		local sReplAbil = DB.getValue(nodeAction, "replacedc.ability", "");
-		if sReplAbil ~= "" then
-			-- nStat = DB.getValue(nodeAction, "replacedc.abilitymod", 0);
-			nStat = ActorManager35E.getAbilityBonus(rActor, sReplAbil);
-		end
-		-- END
-        local nLevel = math.floor(DB.getValue(nodeAction, ".......cl", 0)/2);
+		local nClassStat = getActionAbilityBonus(nodeAction);
+		local nClassMisc = DB.getValue(nodeAction, ".......dc.misc", 0);
+        local nCasterLevel = math.floor(DB.getValue(nodeAction, ".......cl", 0)/2);
         local nMod = DB.getValue(nodeAction, "savedcmod", 0);
 
-        nTotal = 10 + nStat + nLevel + nMod;
+        nTotal = 10 + nClassStat + nClassMisc + nCasterLevel + nMod;
 	else
-		local nStat = DB.getValue(nodeAction, ".......dc.total", 0);
-		-- KEL replace DC if necessary; beware, here total, so, "different" formula (i.e the other formula is the same but simplified)
-		local sReplAbil = DB.getValue(nodeAction, "replacedc.ability", "");
-		if sReplAbil ~= "" then
-			-- nStat = nStat - DB.getValue(nodeAction, ".......dc.abilitymod", 0) + DB.getValue(nodeAction, "replacedc.abilitymod", 0);
-			nStat = nStat - DB.getValue(nodeAction, ".......dc.abilitymod", 0) + ActorManager35E.getAbilityBonus(rActor, sReplAbil);
-		end
-		-- END
-		local nLevel = DB.getValue(nodeAction, ".....level", 0);
+		local nClassStat = getActionAbilityBonus(nodeAction);
+		local nClassMisc = DB.getValue(nodeAction, ".......dc.misc", 0);
+		local nSpellLevel = DB.getValue(nodeAction, ".....level", 0);
 		local nMod = DB.getValue(nodeAction, "savedcmod", 0);
 		
-		nTotal = nStat + nLevel + nMod;
+		nTotal = 10 + nClassStat + nClassMisc + nSpellLevel + nMod;
 	end
 	
 	return nTotal;

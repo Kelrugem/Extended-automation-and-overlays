@@ -107,12 +107,25 @@ function handleApplyDamage(msgOOB)
 				-- bFortif[k] = false;
 				bSFortif[k] = false;
 				for _,sDmgType in pairs(aSrcDmgClauseTypes) do
+					-- KEL adding vorpal ability, ignoring crit immunity
+					if (sDmgType == "vorpal") then
+						bVorpal = true;
+						break;
+					end
+				end
+				for _,sDmgType in pairs(aSrcDmgClauseTypes) do
 					if StringManager.contains(DataCommon.basicdmgtypes, sDmgType) then
 						if aImmune[sDmgType] then nBasicDmgTypeMatches = nBasicDmgTypeMatches + 1; end
 						if aFortif[sDmgType] then nBasicDmgTypeMatchesFortif = nBasicDmgTypeMatchesFortif + 1; end
 					else
 						nSpecialDmgTypes = nSpecialDmgTypes + 1;
-						if aImmune[sDmgType] then nSpecialDmgTypeMatches = nSpecialDmgTypeMatches + 1; end
+						if aImmune[sDmgType] then
+							if (sDmgType == "critical") and bVorpal then
+								-- Do nothing, crit negation
+							else
+								nSpecialDmgTypeMatches = nSpecialDmgTypeMatches + 1;
+							end
+						end
 						if aFortif[sDmgType] then nSpecialDmgTypeMatchesFortif = nSpecialDmgTypeMatchesFortif + 1; end
 					end
 					if (sDmgType == "bypass") or (sDmgType == "immunebypass") then
@@ -148,17 +161,11 @@ function handleApplyDamage(msgOOB)
 				-- local FortifApplied = false;
 				if bSFortif[k] and not aFortif["all"] and not bSImmune[k] and not aImmune["all"] then
 					table.insert(bDice, "d100");
-					if not UtilityManager.isClientFGU() then
-						table.insert(bDice, "d10");
-					end
 					isFortif = true;
 					-- FortifApplied = true;
 				end
 				if aFortif["all"] and not aImmune["all"] and not bSImmune[k] then
 					table.insert(bDice, "d100");
-					if not UtilityManager.isClientFGU() then
-						table.insert(bDice, "d10");
-					end
 					isFortif = true;
 					MaxFortifMod[k] = math.max(MaxFortifMod[k], aFortif["all"].mod);
 				end
@@ -193,6 +200,17 @@ function handleApplyDamage(msgOOB)
 					aRollFortif.FortifAll = tostring(bSFortif["all"]);
 					aRollFortif[k] = tostring(bSImmune[k]);
 					aRollFortif[l] = tostring(bSFortif[k]);
+					local aVSFortifEffect, aVSFortifCount = EffectManager35E.getEffectsBonusByType(rSource, "VSFORTIF", true, nil, rTarget, false, msgOOB.tags);
+					if aVSFortifCount > 0 then
+						local LowerFortif = 0;
+						for _,v in  pairs(aVSFortifEffect) do
+							LowerFortif = math.max(v.mod,LowerFortif);
+						end
+						MaxFortifMod[k] = MaxFortifMod[k] - LowerFortif;
+						if MaxFortifMod[k] <= 0 then
+							MaxFortifMod[k] = 0;
+						end
+					end
 					aRollFortif[m] = MaxFortifMod[k];
 				end
 			end
@@ -260,13 +278,14 @@ function performStabilizationRoll(rActor)
 
 	ActionsManager.performAction(nil, rActor, rRoll);
 end
-
-function getRoll(rActor, rAction)
+-- KEL adding tags
+function getRoll(rActor, rAction, tag)
 	local rRoll = {};
 	rRoll.sType = "damage";
 	rRoll.aDice = {};
 	rRoll.nMod = 0;
-	
+	rRoll.tags = tag;
+-- END	
 	rRoll.sDesc = "[DAMAGE";
 	if rAction.order and rAction.order > 1 then
 		rRoll.sDesc = rRoll.sDesc .. " #" .. rAction.order;
@@ -354,7 +373,7 @@ function onDamageRoll(rSource, rRoll)
 	end
 	
 	-- Decode damage types
-	decodeDamageTypes(rRoll, true);
+	ActionDamage.decodeDamageTypes(rRoll, true);
 
 	-- Apply empower meta damage
 	if bEmpower then
@@ -401,7 +420,7 @@ function onDamageRoll(rSource, rRoll)
 	end
 	
 	-- Encode the damage results for damage application and readability
-	encodeDamageText(rRoll);
+	ActionDamage.encodeDamageText(rRoll);
 end
 -- KEL TDMG
 function notifyTDMGRollOnClient(msgOOB)
@@ -473,7 +492,6 @@ function getTargetDamageRoll(rTarget, rSource, aAttackFilter, tags)
 			
 			-- Encode the damage types
 			encodeDamageTypes(rRoll);
-			
 			ActionsManager.roll(rTarget, rSource, rRoll);
 		end
 	end
@@ -541,7 +559,7 @@ function setupModRoll(rRoll, rSource, rTarget)
 
 	rRoll.tNotifications = {};
 	
-	rRoll.bCritical = rRoll.bCritical or ModifierStack.getModifierKey("DMG_CRIT") or Input.isShiftPressed();
+	rRoll.bCritical = rRoll.bCritical or ModifierManager.getKey("DMG_CRIT") or Input.isShiftPressed();
 	if ActionAttack.isCrit(rSource, rTarget) then
 		rRoll.bCritical = true;
 	end
@@ -551,6 +569,12 @@ function setupModRoll(rRoll, rSource, rTarget)
 	elseif rRoll.range == "M" then
 		table.insert(rRoll.tAttackFilter, "melee");
 	end
+	-- KEl adding precision handle
+	if ModifierManager.getKey("DMG_ACCURACY") or Input.isControlPressed() then
+		table.insert(rRoll.tAttackFilter, "accuracy");
+		table.insert(rRoll.tNotifications, "[ACCURACY]");
+	end
+	-- END
 
 	rRoll.bEffects = false;
 	rRoll.tEffectDice = {};
@@ -801,7 +825,7 @@ function applyDmgTypeEffectsToModRoll(rRoll, rSource, rTarget)
 end
 
 function applyModifierKeysToModRoll(rRoll, rSource, rTarget)
-	if ModifierStack.getModifierKey("DMG_HALF") then
+	if ModifierManager.getKey("DMG_HALF") then
 		table.insert(rRoll.tNotifications, "[HALF]");
 	end
 end
@@ -819,6 +843,94 @@ function finalizeModRoll(rRoll)
 	rRoll.nEffectMod = nil;
 
 	ActionDamage.encodeDamageTypes(rRoll);
+end
+
+--
+-- APPLY DAMAGE EFFECT HELPERS
+--
+
+-- NOTE: Dice determined randomly, instead of rolled
+-- KEL adding tags
+function applyTargetedDmgEffectsToDamageOutput(rDamageOutput, rSource, rTarget, tags)
+	local tTargetedDamage;
+	if rDamageOutput.sRollType == "spdamage" then
+		tTargetedDamage = EffectManager35E.getEffectsBonusByType(rSource, {"DMGS"}, true, rDamageOutput.aDamageFilter, rTarget, true, tags);
+	else
+		tTargetedDamage = EffectManager35E.getEffectsBonusByType(rSource, {"DMG"}, true, rDamageOutput.aDamageFilter, rTarget, true, tags);
+	end
+
+	local nDamageEffectTotal = 0;
+	local nDamageEffectCount = 0;
+	for k, v in pairs(tTargetedDamage) do
+		local nSubTotal = 0;
+		if rDamageOutput.bCritical then
+			local nMult = rDamageOutput.nFirstDamageMult or 2;
+			nSubTotal = StringManager.evalDice(v.dice, (nMult * v.mod));
+		else
+			nSubTotal = StringManager.evalDice(v.dice, v.mod);
+		end
+		
+		local sDamageType = rDamageOutput.sFirstDamageType;
+		if sDamageType then
+			sDamageType = sDamageType .. "," .. k;
+		else
+			sDamageType = k;
+		end
+
+		rDamageOutput.aDamageTypes[sDamageType] = (rDamageOutput.aDamageTypes[sDamageType] or 0) + nSubTotal;
+		
+		nDamageEffectTotal = nDamageEffectTotal + nSubTotal;
+		nDamageEffectCount = nDamageEffectCount + 1;
+	end
+
+	if nDamageEffectCount > 0 then
+		rDamageOutput.nVal = rDamageOutput.nVal + nDamageEffectTotal;
+
+		local sNotification;
+		if nDamageEffectTotal ~= 0 then
+			sNotification = string.format("[" .. Interface.getString("effects_tag") .. " %+d]", nDamageEffectTotal);
+		else
+			sNotification = "[" .. Interface.getString("effects_tag") .. "]";
+		end
+		table.insert(rDamageOutput.tNotifications, sNotification);
+	end
+end
+-- KEL adding tags
+function applyTargetedDmgTypeEffectsToDamageOutput(rDamageOutput, rSource, rTarget, tags)
+	local tAddDmgTypes = {};
+	local tDmgTypeEffects;
+	if rDamageOutput.sRollType == "spdamage" then
+		tDmgTypeEffects = EffectManager35E.getEffectsByType(rSource, "DMGSTYPE", nil, rTarget, true, tags);
+	else
+		tDmgTypeEffects = EffectManager35E.getEffectsByType(rSource, "DMGTYPE", nil, rTarget, true, tags);
+	end
+	for _,rEffectComp in ipairs(tDmgTypeEffects) do
+		for _,v2 in ipairs(rEffectComp.remainder) do
+			if StringManager.contains(DataCommon.dmgtypes, v2) then
+				table.insert(tAddDmgTypes, v2);
+			end
+		end
+	end
+	if #tAddDmgTypes > 0 then
+		local tNewDmgTypes = {};
+		for k,v in pairs(rDamageOutput.aDamageTypes) do
+			local tSplitDmgTypes = StringManager.split(k, ",", true);
+			for _,v2 in ipairs(tAddDmgTypes) do
+				if not StringManager.contains(tSplitDmgTypes, v2) then
+					if k ~= "" then
+						k = k .. "," .. v2;
+					else
+						k = v2;
+					end
+				end
+			end
+			tNewDmgTypes[k] = v;
+		end
+		rDamageOutput.aDamageTypes = tNewDmgTypes;
+
+		local sNotification = "[" .. Interface.getString("effects_tag") .. " " .. table.concat(tAddDmgTypes, ",") .. "]";
+		table.insert(rDamageOutput.tNotifications, sNotification);
+	end
 end
 
 --
@@ -1079,23 +1191,33 @@ end
 function getDamageAdjust(rSource, rTarget, nDamage, rDamageOutput, bImmune, bFortif, tags)
 	-- SETUP
 	local nDamageAdjust = 0;
+	-- KEL REVERT
+	local nRevert = 0;
+	-- END
 	local nNonlethal = 0;
 	local bVulnerable = false;
 	local bResist = false;
+	-- KEL for adding REVERT chat message
+	local bRevert = false;
 	local aWords;
 	local bPFMode = DataCommon.isPFRPG();
 	-- KEL Removing IMMUNE here since called earlier
 	-- GET THE DAMAGE ADJUSTMENT EFFECTS
 	local aVuln = EffectManager35E.getEffectsBonusByType(rTarget, "VULN", false, {}, rSource, false, tags);
 	local aResist = EffectManager35E.getEffectsBonusByType(rTarget, "RESIST", false, {}, rSource, false, tags);
-	-- KEL Adding HRESIST
+	-- KEL Adding HRESIST and REVERT
 	local aHResist = EffectManager35E.getEffectsBonusByType(rTarget, "HRESIST", false, {}, rSource, false, tags);
+	local aRevert = EffectManager35E.getEffectsBonusByType(rTarget, "REVERT", false, {}, rSource, false, tags);
 	local aDR = EffectManager35E.getEffectsByType(rTarget, "DR", {}, rSource, false, tags);
-	-- KEL critical immunity (PFMode) for incorporeal already checked earlier
+	-- KEL critical immunity (PFMode) for incorporeal already checked earlier; reverted heal check
 	local bApplyIncorporeal = false;
 	local bSourceIncorporeal = false;
+	local bRevHeal = false;
 	if string.match(rDamageOutput.sOriginal, "%[INCORPOREAL%]") then
 		bSourceIncorporeal = true;
+	end
+	if string.match(rDamageOutput.sOriginal, "%[REV%]") then
+		bRevHeal = true;
 	end
 	local bTargetIncorporeal = EffectManager35E.hasEffect(rTarget, "Incorporeal", nil, false, false, tags);
 	if bTargetIncorporeal and not bSourceIncorporeal then
@@ -1103,8 +1225,9 @@ function getDamageAdjust(rSource, rTarget, nDamage, rDamageOutput, bImmune, bFor
 	end
 	
 	-- IF IMMUNE ALL, THEN JUST HANDLE IT NOW
+	-- KEL add new output
 	if bImmune["all"] then
-		return (0 - nDamage), 0, false, true;
+		return (0 - nDamage), 0, false, true, 0;
 	end
 	
 	-- HANDLE REGENERATION
@@ -1207,8 +1330,9 @@ function getDamageAdjust(rSource, rTarget, nDamage, rDamageOutput, bImmune, bFor
 		end
 
 		-- HANDLE IMMUNITY, VULNERABILITY AND RESISTANCE
-		-- KEL Order change; added FORTIF, HRESIST
+		-- KEL Order change; added FORTIF, HRESIST, REVERT
 		local nLocalDamageAdjust = 0;
+		local nLocalRevert = 0;
 		if #aSrcDmgClauseTypes > 0 then
 			-- CHECK FOR IMMUNITY (Must be immune to all damage types in damage source)
 			-- KEL FORTIF, HRESIST, RESIST now work like IMMUNE w.r.t. to damage types (see 3.3.7 patch notes)
@@ -1247,10 +1371,10 @@ function getDamageAdjust(rSource, rTarget, nDamage, rDamageOutput, bImmune, bFor
 				bHResist = true;
 			end
 			if bImmune[k] then
-				nLocalDamageAdjust = nLocalDamageAdjust - v;
+				nLocalDamageAdjust = - v;
 				bResist = true;
 			elseif bFortif[k] then
-				nLocalDamageAdjust = nLocalDamageAdjust - v;
+				nLocalDamageAdjust = - v;
 				bResist = true;	
 			else
 			-- KEL For PF VULN before resistances; 3.5e: VULN at the very end
@@ -1437,7 +1561,7 @@ function getDamageAdjust(rSource, rTarget, nDamage, rDamageOutput, bImmune, bFor
 				end
 			end
 		end
-		-- KEL going back to the initial if clause
+		-- KEL going back to the initial if clause, also adding REVERT; first check damage type matching, but revert the damage at the very end
 		if #aSrcDmgClauseTypes > 0 then
 			if not bImmune[k] and not bFortif[k] then
 				local MaxResistMod = 0;
@@ -1445,12 +1569,16 @@ function getDamageAdjust(rSource, rTarget, nDamage, rDamageOutput, bImmune, bFor
 				local nSpecialDmgTypes = 0;
 				local nBasicDmgTypeMatchesResist = 0;
 				local nSpecialDmgTypeMatchesResist = 0;
+				local nBasicDmgTypeMatchesRevert = 0;
+				local nSpecialDmgTypeMatchesRevert = 0;
 				for _,sDmgType in pairs(aSrcDmgClauseTypes) do
 					if StringManager.contains(DataCommon.basicdmgtypes, sDmgType) then
 						if aResist[sDmgType] then nBasicDmgTypeMatchesResist = nBasicDmgTypeMatchesResist + 1; end
+						if aRevert[sDmgType] then nBasicDmgTypeMatchesRevert = nBasicDmgTypeMatchesRevert + 1; end
 					else
 						nSpecialDmgTypes = nSpecialDmgTypes + 1;
 						if aResist[sDmgType] then nSpecialDmgTypeMatchesResist = nSpecialDmgTypeMatchesResist + 1; end
+						if aRevert[sDmgType] then nSpecialDmgTypeMatchesRevert = nSpecialDmgTypeMatchesRevert + 1; end
 					end
 				end
 				local cResist = false;
@@ -1607,6 +1735,33 @@ function getDamageAdjust(rSource, rTarget, nDamage, rDamageOutput, bImmune, bFor
 						end
 					end
 				end
+				
+				-- KEL REVERT
+				if not bRevHeal and not bRevApplied then
+					if aRevert["all"] then
+						nLocalRevert = nLocalRevert + v + nLocalDamageAdjust;
+						nLocalDamageAdjust = - v;
+					else
+						local bRevert = false;
+						if (nSpecialDmgTypeMatchesRevert > 0) then
+							bRevert = true;
+						elseif (nBasicDmgTypeMatchesRevert > 0) and (nBasicDmgTypeMatchesRevert + nSpecialDmgTypes) == #aSrcDmgClauseTypes then
+							bRevert = true;
+						end
+						
+						local bRevApplied = false;
+						for _,sDmgType in pairs(aSrcDmgClauseTypes) do
+							if not bRevApplied then
+								if aRevert[sDmgType] and bRevert then
+									nLocalRevert = nLocalRevert + v + nLocalDamageAdjust;
+									nLocalDamageAdjust = - v;
+									bRevApplied = true;
+								end
+							end
+						end
+					end
+				end
+				-- END
 			end
 			
 			-- CALCULATE NONLETHAL DAMAGE
@@ -1626,12 +1781,16 @@ function getDamageAdjust(rSource, rTarget, nDamage, rDamageOutput, bImmune, bFor
 
 			-- APPLY DAMAGE ADJUSTMENT FROM THIS DAMAGE CLAUSE TO OVERALL DAMAGE ADJUSTMENT
 			nDamageAdjust = nDamageAdjust + nLocalDamageAdjust - nNonlethalAdjust;
+			-- KEL Tracking reverted damage
+			nRevert = nRevert + nLocalRevert;
+			-- END
 			nNonlethal = nNonlethal + nNonlethalAdjust;
 		end
 	end
 
 	-- RESULTS
-	return nDamageAdjust, nNonlethal, bVulnerable, bResist;
+	-- KEL add revert chat adjustment
+	return nDamageAdjust, nNonlethal, bVulnerable, bResist, nRevert;
 end
 -- KEL Too lazy to make strings manually to boolean variables :P
 function toboolean(sName)
@@ -1909,9 +2068,11 @@ function applyDamage(rSource, rTarget, bSecret, sRollType, sDamage, nTotal, bImm
 	local nWounds = 0;
 	local bPFMode = DataCommon.isPFRPG();
 
-	local aNotifications = {};
 	local bRemoveTarget = false;
-	
+	-- KEL defining reverted rolls
+	local rRollHeal = {};
+	local rRollDamage = {};
+	-- END
 	-- Get health fields
 	local sTargetNodeType, nodeTarget = ActorManager.getTypeAndNode(rTarget);
 	if not nodeTarget then
@@ -1935,17 +2096,36 @@ function applyDamage(rSource, rTarget, bSecret, sRollType, sDamage, nTotal, bImm
 	local sOriginalStatus = ActorHealthManager.getHealthStatus(rTarget);
 
 	-- Decode damage/heal description
-	local rDamageOutput = decodeDamageText(nTotal, sDamage);
-	local aRegenEffectsToDisable = {};
+	local rDamageOutput = ActionDamage.decodeDamageText(nTotal, sDamage);
+	rDamageOutput.sRollType = sRollType;
+	rDamageOutput.tNotifications = {};
+	rDamageOutput.tRegenEffectsToDisable = {};
 
 	-- Healing
 	if rDamageOutput.sType == "heal" or rDamageOutput.sType == "fheal" then
+		-- KEL REVERT
+		local nHealAmount = rDamageOutput.nVal;
+		if rDamageOutput.sType == "heal" and not sDamage:match("%[REV%]") then
+			local aRevert = EffectManager35E.getEffectsBonusByType(rTarget, "REVERT", false, {}, rSource, false, tags);
+			if aRevert["positive"] or aRevert["all"] then
+				rRollHeal.sType = "damage";
+				rRollHeal.aDice = {nil, {result = 0}};
+				rRollHeal.nMod = nHealAmount;
+				rRollHeal.sDesc = "[DAMAGE] [REV] Reverted Heal [TYPE: positive, spell]";
+				rRollHeal.clauses = { dice = { }, dmgtype = "positive, spell", modifier = nHealAmount };
+				rRollHeal.tags = tags;
+				nHealAmount = 0;
+				encodeDamageTypes(rRollHeal);
+				table.insert(rDamageOutput.tNotifications, "[REVERTED]");
+			end
+		end
+		--END
 		-- CHECK COST
-		if nWounds <= 0 and nNonlethal <= 0 then
-			table.insert(aNotifications, "[NOT WOUNDED]");
+		-- KEL small clean-up in case of no wounds (to avoid confusing text)
+		if nWounds <= 0 and nNonlethal <= 0 and nHealAmount > 0 then
+			table.insert(rDamageOutput.tNotifications, "[NOT WOUNDED]");
+		-- END
 		else
-			local nHealAmount = rDamageOutput.nVal;
-			
 			-- CALCULATE HEAL AMOUNTS
 			local nNonlethalHealAmount = math.min(nHealAmount, nNonlethal);
 			nNonlethal = nNonlethal - nNonlethalHealAmount;
@@ -1975,7 +2155,7 @@ function applyDamage(rSource, rTarget, bSecret, sRollType, sDamage, nTotal, bImm
 	-- Regeneration
 	elseif rDamageOutput.sType == "regen" then
 		if nNonlethal <= 0 then
-			table.insert(aNotifications, "[NO NONLETHAL DAMAGE]");
+			table.insert(rDamageOutput.tNotifications, "[NO NONLETHAL DAMAGE]");
 		else
 			local nNonlethalHealAmount = math.min(rDamageOutput.nVal, nNonlethal);
 			nNonlethal = nNonlethal - nNonlethalHealAmount;
@@ -1986,7 +2166,7 @@ function applyDamage(rSource, rTarget, bSecret, sRollType, sDamage, nTotal, bImm
 
 	-- Temporary hit points
 	elseif rDamageOutput.sType == "temphp" then
-		nTempHP = nTempHP + nTotal;
+		nTempHP = nTempHP + rDamageOutput.nVal;
 
 	-- Damage
 	else
@@ -1994,52 +2174,16 @@ function applyDamage(rSource, rTarget, bSecret, sRollType, sDamage, nTotal, bImm
 		-- NOTE: Dice determined randomly, instead of rolled
 		-- KEL Here TDMG is not needed, the following only for: Multiple targets while dmg only rolled once (as for spells), thence, random table only. That is not a problem of DMG
 		if rSource and rTarget and rTarget.nOrder then
-			local aTargetedDamage;
-			if sRollType == "spdamage" then
-				aTargetedDamage = EffectManager35E.getEffectsBonusByType(rSource, {"DMGS"}, true, rDamageOutput.aDamageFilter, rTarget, true, tags);
-			else
-				aTargetedDamage = EffectManager35E.getEffectsBonusByType(rSource, {"DMG"}, true, rDamageOutput.aDamageFilter, rTarget, true, tags);
-			end
-
-			local nDamageEffectTotal = 0;
-			local nDamageEffectCount = 0;
-			for k, v in pairs(aTargetedDamage) do
-				local nSubTotal = 0;
-				if rDamageOutput.bCritical then
-					local nMult = rDamageOutput.nFirstDamageMult or 2;
-					nSubTotal = StringManager.evalDice(v.dice, (nMult * v.mod));
-				else
-					nSubTotal = StringManager.evalDice(v.dice, v.mod);
-				end
-				
-				local sDamageType = rDamageOutput.sFirstDamageType;
-				if sDamageType then
-					sDamageType = sDamageType .. "," .. k;
-				else
-					sDamageType = k;
-				end
-
-				rDamageOutput.aDamageTypes[sDamageType] = (rDamageOutput.aDamageTypes[sDamageType] or 0) + nSubTotal;
-				
-				nDamageEffectTotal = nDamageEffectTotal + nSubTotal;
-				nDamageEffectCount = nDamageEffectCount + 1;
-			end
-			nTotal = nTotal + nDamageEffectTotal;
-
-			if nDamageEffectCount > 0 then
-				if nDamageEffectTotal ~= 0 then
-					local sFormat = "[" .. Interface.getString("effects_tag") .. " %+d]";
-					table.insert(aNotifications, string.format(sFormat, nDamageEffectTotal));
-				else
-					table.insert(aNotifications, "[" .. Interface.getString("effects_tag") .. "]");
-				end
-			end
+			-- KEL adding tags
+			ActionDamage.applyTargetedDmgEffectsToDamageOutput(rDamageOutput, rSource, rTarget, tags);
+			ActionDamage.applyTargetedDmgTypeEffectsToDamageOutput(rDamageOutput, rSource, rTarget, tags);
+			-- END
 		end
 		
 		-- Handle evasion and half damage
 		local isAvoided = false;
-		local isHalf = string.match(sDamage, "%[HALF%]");
-		local sAttack = string.match(sDamage, "%[DAMAGE[^]]*%] ([^[]+)");
+		local isHalf = sDamage:match("%[HALF%]");
+		local sAttack = sDamage:match("%[DAMAGE[^]]*%] ([^[]+)");
 		if sAttack then
 			local sDamageState = getDamageState(rSource, rTarget, StringManager.trim(sAttack));
 			if sDamageState == "none" then
@@ -2053,13 +2197,13 @@ function applyDamage(rSource, rTarget, bSecret, sRollType, sDamage, nTotal, bImm
 			end
 		end
 		if isAvoided then
-			table.insert(aNotifications, "[EVADED]");
+			table.insert(rDamageOutput.tNotifications, "[EVADED]");
 			for kType, nType in pairs(rDamageOutput.aDamageTypes) do
 				rDamageOutput.aDamageTypes[kType] = 0;
 			end
-			nTotal = 0;
+			rDamageOutput.nVal = 0;
 		elseif isHalf then
-			table.insert(aNotifications, "[HALF]");
+			table.insert(rDamageOutput.tNotifications, "[HALF]");
 			local bCarry = false;
 			for kType, nType in pairs(rDamageOutput.aDamageTypes) do
 				local nOddCheck = nType % 2;
@@ -2073,25 +2217,36 @@ function applyDamage(rSource, rTarget, bSecret, sRollType, sDamage, nTotal, bImm
 					end
 				end
 			end
-			nTotal = math.max(math.floor(nTotal / 2), 1);
+			rDamageOutput.nVal = math.max(math.floor(rDamageOutput.nVal / 2), 1);
 		end
 		
 		-- Apply damage type adjustments
-		-- KEL bImmune, bFortif, tags
-		local nDamageAdjust, nNonlethalDmgAmount, bVulnerable, bResist = ActionDamage.getDamageAdjust(rSource, rTarget, nTotal, rDamageOutput, bImmune, bFortif, tags);
-		local nAdjustedDamage = nTotal + nDamageAdjust;
+		-- KEL bImmune, bFortif, tags, bRevert
+		local nDamageAdjust, nNonlethalDmgAmount, bVulnerable, bResist, nRevert = ActionDamage.getDamageAdjust(rSource, rTarget, rDamageOutput.nVal, rDamageOutput, bImmune, bFortif, tags);
+		local nAdjustedDamage = rDamageOutput.nVal + nDamageAdjust;
+		-- KEL adding revert. If revert leads to negative damage, then apply heal instead
+		if nRevert > 0 then
+			rRollDamage.sType = "heal";
+			rRollDamage.aDice = {nil, {result = 0}};
+			rRollDamage.nMod = nRevert;
+			rRollDamage.sDesc = "[HEAL] [REV] Reverted Damage";
+			rRollDamage.clauses = { dice = { }, dmgtype = "", modifier = nRevert };
+			rRollDamage.tags = tags;
+			ActionHeal.encodeHealClauses(rRollDamage);
+		end
 		if nAdjustedDamage < 0 then
 			nAdjustedDamage = 0;
 		end
-		if bResist then
+		if bResist or nRevert > 0 then
+		-- END
 			if nAdjustedDamage <= 0 then
-				table.insert(aNotifications, "[RESISTED]");
+				table.insert(rDamageOutput.tNotifications, "[RESISTED]");
 			else
-				table.insert(aNotifications, "[PARTIALLY RESISTED]");
+				table.insert(rDamageOutput.tNotifications, "[PARTIALLY RESISTED]");
 			end
 		end
 		if bVulnerable then
-			table.insert(aNotifications, "[VULNERABLE]");
+			table.insert(rDamageOutput.tNotifications, "[VULNERABLE]");
 		end
 		
 		-- Reduce damage by temporary hit points
@@ -2099,11 +2254,11 @@ function applyDamage(rSource, rTarget, bSecret, sRollType, sDamage, nTotal, bImm
 			if nAdjustedDamage > nTempHP then
 				nAdjustedDamage = nAdjustedDamage - nTempHP;
 				nTempHP = 0;
-				table.insert(aNotifications, "[PARTIALLY ABSORBED]");
+				table.insert(rDamageOutput.tNotifications, "[PARTIALLY ABSORBED]");
 			else
 				nTempHP = nTempHP - nAdjustedDamage;
 				nAdjustedDamage = 0;
-				table.insert(aNotifications, "[ABSORBED]");
+				table.insert(rDamageOutput.tNotifications, "[ABSORBED]");
 			end
 		end
 
@@ -2157,7 +2312,7 @@ function applyDamage(rSource, rTarget, bSecret, sRollType, sDamage, nTotal, bImm
 								end
 								
 								if bMatch then
-									table.insert(aRegenEffectsToDisable, v);
+									table.insert(rDamageOutput.tRegenEffectsToDisable, v);
 								end
 							end
 						end
@@ -2193,6 +2348,7 @@ function applyDamage(rSource, rTarget, bSecret, sRollType, sDamage, nTotal, bImm
 
 	-- Check for status change
 	local sNewStatus = ActorHealthManager.getHealthStatus(rTarget);
+	
 	local bShowStatus = false;
 	if ActorManager.getFaction(rTarget) == "friend" then
 		bShowStatus = not OptionsManager.isOption("SHPC", "off");
@@ -2201,15 +2357,15 @@ function applyDamage(rSource, rTarget, bSecret, sRollType, sDamage, nTotal, bImm
 	end
 	if bShowStatus then
 		if sOriginalStatus ~= sNewStatus then
-			table.insert(aNotifications, "[" .. Interface.getString("combat_tag_status") .. ": " .. sNewStatus .. "]");
+			table.insert(rDamageOutput.tNotifications, "[" .. Interface.getString("combat_tag_status") .. ": " .. sNewStatus .. "]");
 		end
 	end
 	
 	-- Manage Regeneration effect state when hit with disabling damage
-	if #aRegenEffectsToDisable > 0 then
+	if #(rDamageOutput.tRegenEffectsToDisable) > 0 then
 		local nodeTargetCT = ActorManager.getCTNode(rTarget);
 		if nodeTargetCT then
-			for _,v in ipairs(aRegenEffectsToDisable) do
+			for _,v in ipairs(rDamageOutput.tRegenEffectsToDisable) do
 				if sNewStatus == ActorHealthManager.STATUS_DEAD then
 					EffectManager.deactivateEffect(nodeTargetCT, v);
 				else
@@ -2224,7 +2380,6 @@ function applyDamage(rSource, rTarget, bSecret, sRollType, sDamage, nTotal, bImm
 		if (sNewStatus ~= ActorHealthManager.STATUS_DYING) and (sNewStatus ~= ActorHealthManager.STATUS_DEAD) then
 			ActorManager35E.removeStableEffect(rTarget);
 		else
-			-- KEL Remove it after new incoming (lethal) damage
 			if ((rDamageOutput.sType == "heal") or (rDamageOutput.sType == "fheal") or (rDamageOutput.sType == "regen")) and (rDamageOutput.nVal > 0) then
 				ActorManager35E.applyStableEffect(rTarget);
 			elseif (rDamageOutput.sType == "damage") and (rDamageOutput.nVal > 0) then
@@ -2234,7 +2389,16 @@ function applyDamage(rSource, rTarget, bSecret, sRollType, sDamage, nTotal, bImm
 	end
 	
 	-- Output results
-	messageDamage(rSource, rTarget, bSecret, rDamageOutput.sTypeOutput, sDamage, rDamageOutput.sVal, table.concat(aNotifications, " "));
+	messageDamage(rSource, rTarget, bSecret, rDamageOutput.sTypeOutput, sDamage, rDamageOutput.sVal, table.concat(rDamageOutput.tNotifications, " "));
+
+	-- KEL rolling reverted rolls; important due to DB readings of the HP: Put this to the end here
+	if rRollHeal.nMod and ( rRollHeal.nMod > 0 ) then
+		ActionDamage.onDamage(rSource, rTarget, rRollHeal);
+	end
+	if rRollDamage.nMod and ( rRollDamage.nMod > 0 ) then
+		ActionDamage.onDamage(rSource, rTarget, rRollDamage);
+	end
+	-- END
 
 	-- Remove target after applying damage
 	if bRemoveTarget and rSource and rTarget then

@@ -73,6 +73,45 @@ tvermintraits = {
 	"mindaffecting"
 }
 -- END
+-- Adding ethereal; need to overwrite full vector for ordering
+conditions = {
+	"blinded", 
+	"climbing",
+	"confused",
+	"cowering",
+	"dazed",
+	"dazzled",
+	"deafened", 
+	"entangled",
+	"ethereal",
+	"exhausted",
+	"fascinated",
+	"fatigued",
+	"flat-footed",
+	"frightened", 
+	"grappled", 
+	"helpless",
+	"incorporeal", 
+	"invisible", 
+	"kneeling",
+	"nauseated",
+	"panicked", 
+	"paralyzed",
+	"petrified",
+	"pinned", 
+	"prone", 
+	"rebuked",
+	"running",
+	"shaken", 
+	"sickened", 
+	"sitting",
+	"slowed", 
+	"squeezing", 
+	"stable", 
+	"stunned",
+	"turned",
+	"unconscious"
+};
 
 function onInit()
 	table.insert(DataCommon.targetableeffectcomps, "DMGS");
@@ -89,6 +128,8 @@ function onInit()
 	table.insert(DataCommon.immunetypes, "injury");
 	table.insert(DataCommon.dmgtypes, "immunebypass");
 	table.insert(DataCommon.specialdmgtypes, "immunebypass");
+	table.insert(DataCommon.dmgtypes, "vorpal");
+	table.insert(DataCommon.specialdmgtypes, "vorpal");
 	table.insert(DataCommon.dmgtypes, "resistbypass");
 	table.insert(DataCommon.specialdmgtypes, "resistbypass");
 	table.insert(DataCommon.dmgtypes, "resisthalved");
@@ -99,6 +140,7 @@ function onInit()
 	table.insert(DataCommon.dmgtypes, "bypass");
 	table.insert(DataCommon.specialdmgtypes, "bypass");
 	table.insert(DataCommon.energytypes, "bypass");
+	DataCommon.conditions = conditions;
 	-- KEL Removing certain things for IFTAG parsing to avoid additional unneeded effects
 	table.remove(DataCommon.immunetypes, 8);
 	table.remove(DataCommon.immunetypes, 8);
@@ -109,6 +151,10 @@ function onInit()
 	table.remove(DataCommon.immunetypes, 8);
 	table.remove(DataCommon.immunetypes, 8);
 	table.remove(DataCommon.immunetypes, 8);
+	-- KEL Modifier buttons
+	ModifierManager.addModWindowPresets({ { sCategory = "damage", tPresets = { "DMG_ACCURACY" } } });
+	ModifierManager.addModWindowPresets({ { sCategory = "general", tPresets = { "ADV", "DISADV" } } });
+	ModifierManager.addKeyExclusionSets({ { "ADV", "DISADV" } });
 	
 	if not DataCommon.isPFRPG() then
 		table.insert(tnodex, "grappled");

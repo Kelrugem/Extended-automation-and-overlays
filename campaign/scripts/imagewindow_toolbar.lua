@@ -6,7 +6,7 @@
 function onInit()
 	update(true);
 
-	if Session.IsHost and UtilityManager.isClientFGU() then
+	if Session.IsHost then
 		local bShowLockButton = (parentcontrol.window.getClass() ~= "imagewindow");
 		h5.setVisible(bShowLockButton);
 		locked.setVisible(bShowLockButton);
@@ -22,42 +22,22 @@ function update(bInit)
 	local bHasTokens = image.hasTokens();
 	local sCursorMode = image.getCursorMode();
 
-	if UtilityManager.isClientFGU() then
-		h1.setVisible(true);
-		toggle_unmask.updateState(sCursorMode);
-		toolbar_draw.onValueChanged();
+	h1.setVisible(true);
+	toggle_unmask.updateState(sCursorMode);
+	toolbar_draw.onValueChanged();
 
-		h4.setVisible(true);
-		toggle_shortcut.setValueByBoolean(image.getShortcutState());
-		if Session.IsHost then
-			toggle_tokenlock.setVisible(bHasTokens);
-			toggle_tokenlock.setValueByBoolean(image.getTokenLockState());
-			toggle_preview.setVisible(true);
-			toggle_preview.setValueByBoolean(image.getPreviewState());
-			-- KEL
-			h0.setVisible(bHasTokens);
-			toolbar_clear_saves.setVisible(bHasTokens);
-			toolbar_clear_wounds.setVisible(bHasTokens);
-			-- END
-		end
-	else
-		if Session.IsHost then
-			toolbar_draw.setVisibility(true);
-			toolbar_draw.onValueChanged();
-			-- KEL
-			h0.setVisible(bHasTokens);
-			toolbar_clear_saves.setVisible(bHasTokens);
-			toolbar_clear_wounds.setVisible(bHasTokens);
-			-- END
-			local bShowGridToggle = image.hasGrid();
-			h1.setVisible(bShowGridToggle);
-			toggle_grid.setVisible(bShowGridToggle);
-			local bShowGridToolbar = false;
-			if toggle_grid.getValue() > 0 then
-				bShowGridToolbar = bShowGridToggle;
-			end
-			toolbar_grid.setVisibility(bShowGridToolbar);
-		end
+	h4.setVisible(true);
+	toggle_shortcut.setValueByBoolean(image.getShortcutState());
+	if Session.IsHost then
+		toggle_tokenlock.setVisible(bHasTokens);
+		toggle_tokenlock.setValueByBoolean(image.getTokenLockState());
+		toggle_preview.setVisible(true);
+		toggle_preview.setValueByBoolean(image.getPreviewState());
+		-- KEL
+		h0.setVisible(bHasTokens);
+		toolbar_clear_saves.setVisible(bHasTokens);
+		toolbar_clear_wounds.setVisible(bHasTokens);
+		-- END
 	end
 
 	h2.setVisible(bHasTokens);
@@ -79,8 +59,6 @@ function onDrawToolbarValueChanged()
 		toolbar_draw.setActive("paint");
 	elseif sTool == "erase" then
 		toolbar_draw.setActive("erase");
-	elseif not UtilityManager.isClientFGU() and sTool == "unmask" then
-		toolbar_draw.setActive("unmask");
 	else
 		toolbar_draw.setActive("");
 	end
@@ -109,32 +87,6 @@ function onDrawToolbarButtonPressed(sID)
 		else
 			image.setCursorMode("");
 		end
-	end
-end
-
-function onGridToolbarButtonPressed(sID)
-	local image = getImage();
-	local gridsize = image.getGridSize();
-	local ox, oy = image.getGridOffset();
-	
-	if (sID == "gridleft") then
-		ox = ox - 1;
-		image.setGridOffset(ox, oy);
-	elseif (sID == "gridright") then
-		ox = ox + 1;
-		image.setGridOffset(ox, oy);
-	elseif (sID == "gridup") then
-		oy = oy - 1;
-		image.setGridOffset(ox, oy);
-	elseif (sID == "griddown") then
-		oy = oy + 1;
-		image.setGridOffset(ox, oy);
-	elseif (sID == "gridplus") then
-		gridsize = gridsize + 1;
-		image.setGridSize(gridsize);
-	elseif (sID == "gridminus") then
-		gridsize = gridsize - 1;
-		image.setGridSize(gridsize);
 	end
 end
 

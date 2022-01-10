@@ -526,6 +526,7 @@ function getDefenseValue(rAttacker, rDefender, rRoll)
 	-- if string.match(sAttack, "%[INCORPOREAL%]") then
 		-- bIncorporealAttack = true;
 	-- end
+	-- KEL check for uncanny dodge here not needed, but maybe a security check?
 	local bFlatFooted = string.match(sAttack, "%[FF%]");
 	local nCover = tonumber(string.match(sAttack, "%[COVER %-(%d)%]")) or 0;
 	local bConceal = string.match(sAttack, "%[CONCEAL%]");
@@ -666,16 +667,26 @@ function getDefenseValue(rAttacker, rDefender, rRoll)
 		end
 		
 		-- GET DEFENDER SITUATIONAL MODIFIERS - GENERAL
-		if EffectManager35E.hasEffect(rAttacker, "CA", rDefender, true, false, rRoll.tags) then
-			bCombatAdvantage = true;
-		end
-		if EffectManager35E.hasEffect(rAttacker, "Invisible", rDefender, true, false, rRoll.tags) then
+		-- KEL adding uncanny dodge, blind-fight and ethereal; also improving performance a little bit
+		if EffectManager35E.hasEffect(rAttacker, "Ethereal", rDefender, true, false, rRoll.tags) then
 			nBonusSituational = nBonusSituational - 2;
+			if not ActorManager35E.hasSpecialAbility(rDefender, "Uncanny Dodge", false, false, true) then
+				bCombatAdvantage = true;
+			end
+		elseif EffectManager35E.hasEffect(rAttacker, "Invisible", rDefender, true, false, rRoll.tags) then
+			local bBlindFight = ActorManager35E.hasSpecialAbility(rDefender, "Blind-Fight", true, false, false);
+			if sAttackType == "R" or not bBlindFight then
+				nBonusSituational = nBonusSituational - 2;
+				if not ActorManager35E.hasSpecialAbility(rDefender, "Uncanny Dodge", false, false, true) then
+					bCombatAdvantage = true;
+				end
+			end
+		elseif EffectManager35E.hasEffect(rAttacker, "CA", rDefender, true, false, rRoll.tags) then
+			bCombatAdvantage = true;
+		elseif EffectManager35E.hasEffect(rDefender, "GRANTCA", rAttacker, false, false, rRoll.tags) then
 			bCombatAdvantage = true;
 		end
-		if EffectManager35E.hasEffect(rDefender, "GRANTCA", rAttacker, false, false, rRoll.tags) then
-			bCombatAdvantage = true;
-		end
+		-- END
 		if EffectManager35E.hasEffect(rDefender, "Blinded", nil, false, false, rRoll.tags) then
 			nBonusSituational = nBonusSituational - 2;
 			bCombatAdvantage = true;
@@ -741,10 +752,11 @@ function getDefenseValue(rAttacker, rDefender, rRoll)
 			end
 			bCombatAdvantage = true;
 		end
-		if EffectManager35E.hasEffect(rDefender, "Invisible", rAttacker, false, false, rRoll.tags) then
+		-- KEL Ethereal
+		if EffectManager35E.hasEffect(rDefender, "Invisible", rAttacker, false, false, rRoll.tags) or EffectManager35E.hasEffect(rDefender, "Ethereal", rAttacker, false, false, rRoll.tags) then
 			bTotalConceal = true;
 		end
-		
+		-- END
 		-- DETERMINE EXISTING AC MODIFIER TYPES
 		local aExistingBonusByType = getArmorComps (rDefender);
 		
@@ -1030,31 +1042,41 @@ function getSize(rActor)
 	local nActorSize = nil;
 	
 	local sNodeType, nodeActor = ActorManager.getTypeAndNode(rActor);
-	local sField;
 	if sNodeType == "pc" then
-		sField = "size";
-	else
-		sField = "type";
-	end
-	local aActorSplit = StringManager.split(DB.getValue(nodeActor, sField, ""):lower(), " \n", true);
-	for _,v in ipairs(aActorSplit) do
-		if not nActorSize and DataCommon.creaturesize[v] then
-			nActorSize = DataCommon.creaturesize[v];
-			break;
+		local sSize = DB.getValue(nodeActor, "size", ""):lower();
+		local aActorSplit = StringManager.split(sSize, " \n", true);
+		for _,v in ipairs(aActorSplit) do
+			if not nActorSize and DataCommon.creaturesize[v] then
+				nActorSize = DataCommon.creaturesize[v];
+				break;
+			end
 		end
-		if (sNodeType ~= "pc") and 
-				not DataCommon.alignment_lawchaos[v] and 
-				not DataCommon.alignment_goodevil[v] and 
-				(v ~= DataCommon.alignment_neutral) and 
-				not DataCommon.creaturesize[v] then
-			break;
+	else
+		local sType = DB.getValue(nodeActor, "type", ""):lower();
+		local tLines = StringManager.splitByPattern(sType, "\n", true);
+		for _,sLine in ipairs(tLines) do
+			local tWords = StringManager.splitByPattern(sLine, "%s+", true);
+			if #tWords > 0 then
+				if DataCommon.creaturesize[tWords[1]] 
+						or DataCommon.alignment_lawchaos[tWords[1]] 
+						or DataCommon.alignment_goodevil[tWords[1]] 
+						or (tWords[1] == DataCommon.alignment_neutral) 
+						then
+					for _,sWord in ipairs(tWords) do
+						if DataCommon.creaturesize[sWord] then
+							nActorSize = DataCommon.creaturesize[sWord];
+							break;
+						end
+					end
+				end
+			end
+			if nActorSize then
+				break;
+			end
 		end
 	end
 	
-	if not nActorSize then
-		nActorSize = 0;
-	end
-	return nActorSize;
+	return nActorSize or 0;
 end
 
 function isSize(rActor, sSizeCheck)
@@ -1214,3 +1236,54 @@ function removeStableEffect(rActor)
 	local _,_,_ = getWoundPercent(rActor);
 	-- END
 end
+
+-- BMOS's feat search etc., see also CharManager hasFeat and hasTrait
+function hasSpecialAbility(rActor, sSearchStringIni, bFeat, bTrait, bSpecialAbility)
+	if not rActor or not sSearchStringIni then
+		return false;
+	end
+	local nodeActor = rActor.sCreatureNode;
+
+	local sSearchString = string.lower(sSearchStringIni);
+	local sSearchString = string.gsub(sSearchString, '%-', '%%%-');
+	-- local sSearchString = StringManager.trim(sSearchStringIni:lower());
+	if ActorManager.isPC(nodeActor) then
+		if bFeat then
+			for _,vNode in pairs(DB.getChildren(nodeActor .. '.featlist')) do
+				local sFeatName = StringManager.trim(DB.getValue(vNode, 'name', ''):lower());
+				if sFeatName and string.match(sFeatName, sSearchString) then
+					return true;
+				end
+			end
+		end
+		if bTrait then
+			for _,vNode in pairs(DB.getChildren(nodeActor .. '.traitlist')) do
+				local sTraitName = StringManager.trim(DB.getValue(vNode, 'name', ''):lower());
+				if sTraitName and string.match(sTraitName, sSearchString) then
+					return true;
+				end
+			end
+		end
+		if bSpecialAbility then
+			for _,vNode in pairs(DB.getChildren(nodeActor .. '.specialabilitylist')) do
+				local sSpecialAbilityName = StringManager.trim(DB.getValue(vNode, 'name', ''):lower());
+				if sSpecialAbilityName and string.match(sSpecialAbilityName, sSearchString) then
+					return true;
+				end
+			end
+		end
+	else
+		local sSpecialQualities = string.lower(DB.getValue(nodeActor .. '.specialqualities', ''));
+		local sSpecAtks = string.lower(DB.getValue(nodeActor .. '.specialattacks', ''));
+		local sFeats = string.lower(DB.getValue(nodeActor .. '.feats', ''));
+
+		if bFeat and string.find(sFeats, sSearchString) then
+			return true;
+		elseif bSpecialAbility and (string.find(sSpecAtks, sSearchString) or string.find(sSpecialQualities, sSearchString)) then
+			return true;
+		end
+	end
+	
+	return false;
+end
+-- END

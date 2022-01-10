@@ -9,11 +9,6 @@ function onInit()
 		registerMenuItem(Interface.getString("menu_restshort"), "pointer_cone", 7, 8);
 		registerMenuItem(Interface.getString("menu_restovernight"), "pointer_circle", 7, 6);
 	end
-
-	if not minisheet and Session.IsLocal then
-		portrait.setVisible(false);
-		localportrait.setVisible(true);
-	end
 end
 
 function onMenuSelection(selection, subselection)

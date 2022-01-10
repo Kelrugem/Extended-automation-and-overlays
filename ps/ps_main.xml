@@ -1,0 +1,18 @@
+﻿<?xml version="1.0" encoding="iso-8859-1"?>
+
+<!-- 
+  Please see the license.html file included with this distribution for 
+  attribution and copyright information.
+-->
+
+<root>
+	<windowclass name="ps_mainitem" merge="join">
+		<sheetdata>
+			<hnx name="hptotal" />
+			<hnx name="hptemp" />
+			<hnx name="wounds" />
+			<hnx name="nonlethal" merge="delete"/>
+			<hnx name="injury" />
+		</sheetdata>
+	</windowclass>
+</root>

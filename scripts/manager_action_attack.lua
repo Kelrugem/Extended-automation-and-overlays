@@ -23,18 +23,6 @@ function onInit()
 	ActionsManager.registerResultHandler("critconfirm", onAttack);
 	ActionsManager.registerResultHandler("misschance", onMissChance);
 	ActionsManager.registerResultHandler("grapple", onGrapple);
-	-- KEL Compatibilities with other extensions
-	-- if MirrorImageHandler then
-		-- ActionsManager.registerResultHandler("mirrorimage", MirrorImageHandler.onMirrorImage);
-	-- end
-	-- if SpellFailure then
-		-- ActionsManager.registerResultHandler("spellfailure", SpellFailure.spellFailureMessage);
-	-- end
-	-- if DiseaseTracker then
-		-- ActionsManager.registerResultHandler("disease", ActionDiseaseSave.onRoll);
-		-- ActionsManager.registerResultHandler("diseasetimeroll", ActionDiseaseTimeRoll.onRoll);
-	-- end
-	-- END
 end
 
 function handleApplyAttack(msgOOB)
@@ -117,8 +105,8 @@ function performRoll(draginfo, rActor, rAction)
 	
 	ActionsManager.performAction(draginfo, rActor, rRoll);
 end
-
-function getRoll(rActor, rAction)
+-- KEL add tag argument
+function getRoll(rActor, rAction, tag)
 	local rRoll = {};
 	if rAction.cm then
 		rRoll.sType = "grapple";
@@ -156,19 +144,11 @@ function getRoll(rActor, rAction)
 	end
 	
 	-- Add other modifiers
-	-- KEL compatibility with KEEN and iftag stuff
-	rRoll.tags = SpellManager.getTagsFromAction(rAction);
-	local rActionCrit = rAction.crit;
-    if EffectManager35E.hasEffect(rActor, "KEEN", nil, false, false, rRoll.tags) then
-        if rActionCrit then
-            rActionCrit = 20 - ((20 - rActionCrit + 1) * 2) + 1;
-        else
-            rActionCrit = 19;
-        end
-    end
-	if rActionCrit and rActionCrit < 20 then
-		rRoll.sDesc = rRoll.sDesc .. " [CRIT " .. rActionCrit .. "]";
-	end
+	-- KEL compatibility with KEEN and iftag stuff; EDIT: Moving KEEN stuff such that it is targetable. Hence, saving crit value
+	rRoll.tags = tag;
+	rRoll.crit = rAction.crit;
+	-- END
+	
 	if rAction.touch then
 		rRoll.sDesc = rRoll.sDesc .. " [TOUCH]";
 	end
@@ -238,16 +218,16 @@ function modAttack(rSource, rTarget, rRoll)
 	local nAddMod = 0;
 	
 	-- Check for opportunity attack
-	local bOpportunity = ModifierStack.getModifierKey("ATT_OPP") or Input.isShiftPressed();
+	local bOpportunity = ModifierManager.getKey("ATT_OPP") or Input.isShiftPressed();
 
 	-- Check defense modifiers
-	local bTouch = ModifierStack.getModifierKey("ATT_TCH");
-	local bFlatFooted = ModifierStack.getModifierKey("ATT_FF");
-	local bCover = ModifierStack.getModifierKey("DEF_COVER");
-	local bPartialCover = ModifierStack.getModifierKey("DEF_PCOVER");
-	local bSuperiorCover = ModifierStack.getModifierKey("DEF_SCOVER");
-	local bConceal = ModifierStack.getModifierKey("DEF_CONC");
-	local bTotalConceal = ModifierStack.getModifierKey("DEF_TCONC");
+	local bTouch = ModifierManager.getKey("ATT_TCH");
+	local bFlatFooted = ModifierManager.getKey("ATT_FF");
+	local bCover = ModifierManager.getKey("DEF_COVER");
+	local bPartialCover = ModifierManager.getKey("DEF_PCOVER");
+	local bSuperiorCover = ModifierManager.getKey("DEF_SCOVER");
+	local bConceal = ModifierManager.getKey("DEF_CONC");
+	local bTotalConceal = ModifierManager.getKey("DEF_TCONC");
 	
 	if bOpportunity then
 		table.insert(aAddDesc, "[OPPORTUNITY]");
@@ -269,7 +249,8 @@ function modAttack(rSource, rTarget, rRoll)
 			table.insert(aAddDesc, "[TOUCH]");
 		end
 	end
-	if bFlatFooted then
+	-- KEL adding uncanny dodge
+	if bFlatFooted and not ActorManager35E.hasSpecialAbility(rTarget, "Uncanny Dodge", false, false, true) then
 		table.insert(aAddDesc, "[FF]");
 	end
 	if bSuperiorCover then
@@ -323,14 +304,62 @@ function modAttack(rSource, rTarget, rRoll)
 			table.insert(aAttackFilter, "opportunity");
 		end
 		
-		-- Get attack effect modifiers
-		-- KEL add tags
+		-- Get condition modifiers; KEL moved it here for nodex automation later (not yet done) such that following effects can profit from it; similar for bEffects; adding ethereal
 		local bEffects = false;
+		if EffectManager35E.hasEffect(rSource, "Ethereal", nil, false, false, rRoll.tags) then
+			bEffects = true;
+			nAddMod = nAddMod + 2;
+			if not ActorManager35E.hasSpecialAbility(rTarget, "Uncanny Dodge", false, false, true) then
+				table.insert(aAddDesc, "[CA]");
+			end
+		elseif EffectManager35E.hasEffect(rSource, "Invisible", nil, false, false, rRoll.tags) then
+			-- KEL blind fight, skipping checking effects for now (for performance and to avoid problems with On Skip etc.)
+			local bBlindFight = ActorManager35E.hasSpecialAbility(rTarget, "Blind-Fight", true, false, false);
+			if sAttackType == "R" or not bBlindFight then
+				bEffects = true;
+				nAddMod = nAddMod + 2;
+				if not ActorManager35E.hasSpecialAbility(rTarget, "Uncanny Dodge", false, false, true) then
+					table.insert(aAddDesc, "[CA]");
+				end
+			end
+			-- END
+		elseif EffectManager35E.hasEffect(rSource, "CA", nil, false, false, rRoll.tags) then
+			bEffects = true;
+			table.insert(aAddDesc, "[CA]");
+		end
+		-- END
+		-- Get attack effect modifiers
+		-- KEL New KEEN code for allowing several new configurations
+		local rActionCrit = tonumber(rRoll.crit) or 20;
+		local aKEEN = EffectManager35E.getEffectsByType(rSource, "KEEN", aAttackFilter, rTarget, false, rRoll.tags);
+		if (#aKEEN > 0) or EffectManager35E.hasEffect(rSource, "KEEN", rTarget, false, false, rRoll.tags) then
+			rActionCrit = 20 - ((20 - rActionCrit + 1) * 2) + 1;
+			bEffects = true;
+		end
+		if rActionCrit < 20 then
+			table.insert(aAddDesc, "[CRIT " .. rActionCrit .. "]");
+		end
+		-- END
+		-- KEL add tags, and relabel nAddMod to nAddModi to avoid overwriting the previous nAddMod
 		local nEffectCount;
-		aAddDice, nAddMod, nEffectCount = EffectManager35E.getEffectsBonus(rSource, {"ATK"}, false, aAttackFilter, rTarget, false, rRoll.tags);
+		aAddDice, nAddModi, nEffectCount = EffectManager35E.getEffectsBonus(rSource, {"ATK"}, false, aAttackFilter, rTarget, false, rRoll.tags);
+		nAddMod = nAddMod + nAddModi;
+		-- END
 		if (nEffectCount > 0) then
 			bEffects = true;
 		end
+		-- KEL (DIS)ADV; also add total amount of all dis/adv effects which are then compared with kel(dis)advantage numbers
+		local aADVATK = EffectManager35E.getEffectsByType(rSource, "ADVATK", aAttackFilter, rTarget, false, rRoll.tags);
+		local aDISATK = EffectManager35E.getEffectsByType(rSource, "DISATK", aAttackFilter, rTarget, false, rRoll.tags);
+		local aGRANTADVATK = EffectManager35E.getEffectsByType(rTarget, "GRANTADVATK", aAttackFilter, rSource, false, rRoll.tags);
+		local aGRANTDISATK = EffectManager35E.getEffectsByType(rTarget, "GRANTDISATK", aAttackFilter, rSource, false, rRoll.tags);
+		local _, nADVATK = EffectManager35E.hasEffect(rSource, "ADVATK", rTarget, false, false, rRoll.tags);
+		local _, nDISATK = EffectManager35E.hasEffect(rSource, "DISATK", rTarget, false, false, rRoll.tags);
+		local _, nGRANTADVATK = EffectManager35E.hasEffect(rTarget, "GRANTADVATK", rSource, false, false, rRoll.tags);
+		local _, nGRANTDISATK = EffectManager35E.hasEffect(rTarget, "GRANTDISATK", rSource, false, false, rRoll.tags);
+		
+		rRoll.adv = #aADVATK + #aGRANTADVATK + nADVATK + nGRANTADVATK - (#aDISATK + #aGRANTDISATK + nDISATK + nGRANTDISATK);
+		-- END
 		if rRoll.sType == "grapple" then
 			local aPFDice, nPFMod, nPFCount = EffectManager35E.getEffectsBonus(rSource, {"CMB"}, false, aAttackFilter, rTarget, false, rRoll.tags);
 			if nPFCount > 0 then
@@ -342,15 +371,6 @@ function modAttack(rSource, rTarget, rRoll)
 			end
 		end
 		
-		-- Get condition modifiers
-		if EffectManager35E.hasEffect(rSource, "Invisible", nil, false, false, rRoll.tags) then
-			bEffects = true;
-			nAddMod = nAddMod + 2;
-			table.insert(aAddDesc, "[CA]");
-		elseif EffectManager35E.hasEffect(rSource, "CA", nil, false, false, rRoll.tags) then
-			bEffects = true;
-			table.insert(aAddDesc, "[CA]");
-		end
 		if EffectManager35E.hasEffect(rSource, "Blinded", nil, false, false, rRoll.tags) then
 			bEffects = true;
 			table.insert(aAddDesc, "[BLINDED]");
@@ -460,6 +480,24 @@ function onAttack(rSource, rTarget, rRoll)
 		rRoll.sType = "grapple";
 	end
 	
+	-- KEL We need the attack filter here 
+	-- DETERMINE ATTACK TYPE AND DEFENSE
+	local AttackType = "M";
+	if rRoll.sType == "attack" then
+		AttackType = string.match(rRoll.sDesc, "%[ATTACK.*%((%w+)%)%]");
+	end
+	local Opportunity = string.match(rRoll.sDesc, "%[OPPORTUNITY%]");
+	-- BUILD ATTACK FILTER 
+	local AttackFilter = {};
+	if AttackType == "M" then
+		table.insert(AttackFilter, "melee");
+	elseif AttackType == "R" then
+		table.insert(AttackFilter, "ranged");
+	end
+	if Opportunity then
+		table.insert(AttackFilter, "opportunity");
+	end
+	-- END
 	local rAction = {};
 	rAction.nTotal = ActionsManager.total(rRoll);
 	rAction.aMessages = {};
@@ -471,43 +509,15 @@ function onAttack(rSource, rTarget, rRoll)
 		local sDefenseVal = rRoll.sDesc:match(" %[AC ([%-%+]?%d+)%]");
 		if sDefenseVal then
 			nDefenseVal = tonumber(sDefenseVal);
-			-- Debug.console(nDefenseVal);
 		end
-		nMissChance = tonumber(string.match(rRoll.sDesc, "%[MISS CHANCE (%d+)%%%]")) or 0;
-		rMessage.text = string.gsub(rMessage.text, " %[AC ([%-%+]?%d+)%]", "");
-		rMessage.text = string.gsub(rMessage.text, " %[MISS CHANCE %d+%%%]", "");
-		
-		local sAtkEffectsMatch = " %[" .. Interface.getString("effects_tag") .. " ([+-]?%d+)%]";
-		local sAtkEffectsBonus = string.match(rRoll.sDesc, sAtkEffectsMatch);
-		if sAtkEffectsBonus then
-			nAtkEffectsBonus = (tonumber(sAtkEffectsBonus) or 0);
-			if nAtkEffectsBonus ~= 0 then 
-				rAction.nTotal = rAction.nTotal + (tonumber(sAtkEffectsBonus) or 0);
-				local sFormat = "[" .. Interface.getString("effects_tag") .. " %+d]";
-				table.insert(rAction.aMessages, string.format(sFormat, nAtkEffectsBonus));
-			end
-			local sAtkEffectsClear = " %[" .. Interface.getString("effects_tag") .. " [+-]?%d+%]";
-			rMessage.text = string.gsub(rMessage.text, sAtkEffectsClear, "");
-		end
+		nMissChance = tonumber(rRoll.sDesc:match("%[MISS CHANCE (%d+)%%%]")) or 0;
+		rMessage.text = rMessage.text:gsub(" %[AC ([%-%+]?%d+)%]", "");
+		rMessage.text = rMessage.text:gsub(" %[MISS CHANCE %d+%%%]", "");
+	-- END
 	else
+		-- KEL blind fight, skipping checking effects for now (for performance and to avoid problems with On Skip etc.)
 		nDefenseVal, nAtkEffectsBonus, nDefEffectsBonus, nMissChance, nAdditionalDefenseForCC = ActorManager35E.getDefenseValue(rSource, rTarget, rRoll);
 		-- KEL CONC on Attacker
-		-- DETERMINE ATTACK TYPE AND DEFENSE
-		local AttackType = "M";
-		if rRoll.sType == "attack" then
-			AttackType = string.match(rRoll.sDesc, "%[ATTACK.*%((%w+)%)%]");
-		end
-		local Opportunity = string.match(rRoll.sDesc, "%[OPPORTUNITY%]");
-		-- BUILD ATTACK FILTER 
-		local AttackFilter = {};
-		if AttackType == "M" then
-			table.insert(AttackFilter, "melee");
-		elseif AttackType == "R" then
-			table.insert(AttackFilter, "ranged");
-		end
-		if Opportunity then
-			table.insert(AttackFilter, "opportunity");
-		end
 		local aVConcealEffect, aVConcealCount = EffectManager35E.getEffectsBonusByType(rSource, "TVCONC", true, AttackFilter, rTarget, false, rRoll.tags);
 		
 		if aVConcealCount > 0 then
@@ -711,13 +721,16 @@ function onAttack(rSource, rTarget, rRoll)
 	-- END
 	if bRollMissChance and (nMissChance > 0) then
 		local aMissChanceDice = { "d100" };
-		if not UtilityManager.isClientFGU() then
-			table.insert(aMissChanceDice, "d10");
-		end
 		local sMissChanceText;
 		sMissChanceText = string.gsub(rMessage.text, " %[CRIT %d+%]", "");
 		sMissChanceText = string.gsub(sMissChanceText, " %[CONFIRM%]", "");
 		local rMissChanceRoll = { sType = "misschance", sDesc = sMissChanceText .. " [MISS CHANCE " .. nMissChance .. "%]", aDice = aMissChanceDice, nMod = 0, fullattack = FullAttack, actionStuffForOverlay = ActionStuffForOverlay };
+		-- KEL Blind fight
+		if ActorManager35E.hasSpecialAbility(rSource, "Blind-Fight", true, false, false) and AttackType == "M" then
+			rMissChanceRoll.adv = ( rMissChanceRoll.adv or 0 ) + 1;
+			rMissChanceRoll.sDesc = rMissChanceRoll.sDesc .. " [BLIND-FIGHT]";
+		end
+		-- END
 		ActionsManager.roll(rSource, rTarget, rMissChanceRoll);
 	-- KEL compatibility test with mirror image handler
 	elseif MirrorImageHandler and bRollMissChance then

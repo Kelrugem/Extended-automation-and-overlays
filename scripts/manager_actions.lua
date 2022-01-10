@@ -1,107 +1,3 @@
--- KEL add counter to hasEffect
-function hasEffect(rActor, sEffect, rTarget, bTargetedOnly, bIgnoreEffectTargets, rEffectSpell)
-	if not sEffect or not rActor then
-		return false;
-	end
-	local sLowerEffect = sEffect:lower();
-	
-	-- Iterate through each effect
-	local aMatch = {};
-	for _,v in pairs(DB.getChildren(ActorManager.getCTNode(rActor), "effects")) do
-		local nActive = DB.getValue(v, "isactive", 0);
-		if nActive ~= 0 then
-			-- Parse each effect label
-			local sLabel = DB.getValue(v, "label", "");
-			local bTargeted = EffectManager.isTargetedEffect(v);
-			-- KEL making conditions work with IFT etc.
-			local bIFT = false;
-			local aEffectComps = EffectManager.parseEffect(sLabel);
-
-			-- Iterate through each effect component looking for a type match
-			local nMatch = 0;
-			for kEffectComp, sEffectComp in ipairs(aEffectComps) do
-				local rEffectComp = EffectManager35E.parseEffectComp(sEffectComp);
-				-- Check conditionals
-				-- KEL Adding TAG for SIMMUNE
-				if rEffectComp.type == "IF" then
-					if not EffectManager35E.checkConditional(rActor, v, rEffectComp.remainder) then
-						break;
-					end
-				elseif rEffectComp.type == "NIF" then
-					if EffectManager35E.checkConditional(rActor, v, rEffectComp.remainder) then
-						break;
-					end
-				elseif rEffectComp.type == "IFT" then
-					if not rTarget then
-						break;
-					end
-					if not EffectManager35E.checkConditional(rTarget, v, rEffectComp.remainder, rActor) then
-						break;
-					end
-					bIFT = true;
-				elseif rEffectComp.type == "NIFT" then
-					if rActor.aTargets and not rTarget then
-						-- if ( #rActor.aTargets[1] > 0 ) and not rTarget then
-						break;
-						-- end
-					end
-					if EffectManager35E.checkConditional(rTarget, v, rEffectComp.remainder, rActor) then
-						break;
-					end
-					if rTarget then
-						bIFT = true;
-					end
-				elseif rEffectComp.type == "IFTAG" then
-					if not rEffectSpell then
-						break;
-					elseif not EffectManager35E.checkTagConditional(rActor, v, rEffectComp.remainder, rEffectSpell) then
-						break;
-					end
-				elseif rEffectComp.type == "NIFTAG" then
-					if EffectManager35E.checkTagConditional(rActor, v, rEffectComp.remainder, rEffectSpell) then
-						break;
-					end
-				
-				-- Check for match
-				elseif rEffectComp.original:lower() == sLowerEffect then
-					if bTargeted and not bIgnoreEffectTargets then
-						if EffectManager.isEffectTarget(v, rTarget) then
-							nMatch = kEffectComp;
-						end
-					elseif bTargetedOnly and bIFT then
-						nMatch = kEffectComp;
-					elseif not bTargetedOnly then
-						nMatch = kEffectComp;
-					end
-				end
-				
-			end
-			
-			-- If matched, then remove one-off effects
-			if nMatch > 0 then
-				if nActive == 2 then
-					DB.setValue(v, "isactive", "number", 1);
-				else
-					table.insert(aMatch, v);
-					local sApply = DB.getValue(v, "apply", "");
-					if sApply == "action" then
-						EffectManager.notifyExpire(v, 0);
-					elseif sApply == "roll" then
-						EffectManager.notifyExpire(v, 0, true);
-					elseif sApply == "single" then
-						EffectManager.notifyExpire(v, nMatch, true);
-					end
-				end
-			end
-		end
-	end
-	
-	if #aMatch > 0 then
-		return true, #aMatch;
-	end
-	return false, 0;
-end
-
 function onInit()
 	OldgetTargeting = ActionsManager.getTargeting;
 	ActionsManager.getTargeting = getTargeting;
@@ -129,19 +25,24 @@ function getTargeting(rSource, rTarget, sDragType, rRolls)
 end
 
 function roll(rSource, vTargets, rRoll, bMultiTarget)
-	rRoll.originaldicenumber = #rRoll.aDice or 0;
-	if #rRoll.aDice > 0 then
-		local bAdvantage, nAdvantage = hasEffect(rSource, "keladvantage", nil, false, false, rRoll.tags);
-		local bDisAdvantage, nDisAdvantage = hasEffect(rSource, "keldisadvantage", nil, false, false, rRoll.tags);
+	if rRoll.aDice then
+		rRoll.originaldicenumber = #rRoll.aDice;
+	else
+		rRoll.originaldicenumber = 0;
+	end
+	if rRoll.originaldicenumber ~= 0 then
+		local _, nAdvantage = EffectManager35E.hasEffect(rSource, "keladvantage", nil, false, false, rRoll.tags);
+		local _, nDisAdvantage = EffectManager35E.hasEffect(rSource, "keldisadvantage", nil, false, false, rRoll.tags);
 		
-		if bAdvantage or bDisAdvantage then
-			if nAdvantage > nDisAdvantage then
-				rRoll.adv = "true";
-			elseif nDisAdvantage > nAdvantage then
-				rRoll.disadv = "true";
-			end
+		rRoll.adv = ( tonumber(rRoll.adv) or 0 ) + nAdvantage - nDisAdvantage;
+		
+		if ModifierManager.getKey("ADV") then
+			rRoll.adv = 1;
+		elseif ModifierManager.getKey("DISADV") then
+			rRoll.adv = -1;
 		end
-		if ( rRoll.adv == "true" ) then
+		
+		if rRoll.adv > 0 then
 			local i = 1;
 			local slot = i + 1;
 			while rRoll.aDice[i] do
@@ -149,7 +50,7 @@ function roll(rSource, vTargets, rRoll, bMultiTarget)
 				i = i + 2;
 				slot = i+1;
 			end
-		elseif ( rRoll.disadv == "true" ) then
+		elseif rRoll.adv < 0 then
 			local i = 1;
 			local slot = i + 1;
 			while rRoll.aDice[i] do
@@ -163,8 +64,11 @@ function roll(rSource, vTargets, rRoll, bMultiTarget)
 end 
 
 function resolveAction(rSource, rTarget, rRoll)
-	if #rRoll.aDice > 0 then
-		if rRoll.adv == "true" then
+	if rRoll.aDice and ( #rRoll.aDice > 0 ) then
+		
+		rRoll.adv = tonumber(rRoll.adv) or 0;
+		
+		if rRoll.adv > 0 then
 			local i = 1;
 			local slot = i+1;
 			local sDropped = "";
@@ -189,7 +93,8 @@ function resolveAction(rSource, rTarget, rRoll)
 				slot = i+1;
 			end
 			rRoll.sDesc = rRoll.sDesc .. " [ADV]" .. " [DROPPED " .. sDropped .. "]";
-		elseif rRoll.disadv == "true" then
+			rRoll.aDice.expr = nil;
+		elseif rRoll.adv < 0 then
 			local i = 1;
 			local slot = i+1;
 			local sDropped = "";
@@ -214,6 +119,7 @@ function resolveAction(rSource, rTarget, rRoll)
 				slot = i+1;
 			end
 			rRoll.sDesc = rRoll.sDesc .. " [DISADV]" .. " [DROPPED " .. sDropped .. "]";
+			rRoll.aDice.expr = nil;
 		end
 	end
 	OldresolveAction(rSource, rTarget, rRoll);
@@ -234,8 +140,11 @@ function total(rRoll)
 	end
 	if rRoll.originaldicenumber then
 		rRoll.originaldicenumber = tonumber(rRoll.originaldicenumber);
-		if #rRoll.aDice > rRoll.originaldicenumber then
-			if rRoll.adv == "true" then
+		if rRoll.aDice and ( #rRoll.aDice > rRoll.originaldicenumber ) then
+		
+			rRoll.adv = tonumber(rRoll.adv) or 0;
+			
+			if rRoll.adv > 0 then
 				local i = 1;
 				local slot = i+1;
 				while corrector[i] do
@@ -247,7 +156,7 @@ function total(rRoll)
 					i = i + 1;
 					slot = i+1;
 				end
-			elseif rRoll.disadv == "true" then
+			elseif rRoll.adv < 0 then
 				local i = 1;
 				local slot = i+1;
 				while corrector[i] do
