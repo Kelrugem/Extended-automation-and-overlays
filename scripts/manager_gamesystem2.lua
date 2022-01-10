@@ -8,6 +8,7 @@
 function onInit()
 	-- GameSystem.actions = GameSystem2.actions;
 	GameSystem.actions["fortification"] = { };
+	GameSystem.getStabilizationRoll = GameSystem2.getStabilizationRoll;
 	GameSystem.performConcentrationCheck = GameSystem2.performConcentrationCheck;
 end
 
@@ -91,4 +92,39 @@ function performConcentrationCheck(draginfo, rActor, nodeSpellClass)
 		
 		ActionSkill.performRoll(draginfo, rActor, sSkill, nValue, nil, sExtra);
 	end
+end
+
+function getStabilizationRoll(rActor)
+	local rRoll = { sType = "stabilization", sDesc = "[STABILIZATION]" };
+	
+	if DataCommon.isPFRPG() then
+		rRoll.aDice = { "d20" };
+		rRoll.nMod = ActorManager35E.getAbilityBonus(rActor, "constitution");
+		
+		local nHP = 0;
+		local nWounds = 0;
+        local nInjury = 0;
+		
+		local sNodeType, nodeActor = ActorManager.getTypeAndNode(rActor);
+		if sNodeType == "pc" then
+			nHP = DB.getValue(nodeActor, "hp.total", 0);
+			nWounds = DB.getValue(nodeActor, "hp.wounds", 0);
+            nInjury = DB.getValue(nodeActor, "hp.injury", 0);
+		elseif sNodeType == "ct" then
+			nHP = DB.getValue(nodeActor, "hp", 0);
+			nWounds = DB.getValue(nodeActor, "wounds", 0);
+            nInjury = DB.getValue(nodeActor, "injury", 0);
+		end
+			
+		if nHP > 0 and nWounds + nInjury > nHP then
+			rRoll.sDesc = string.format("%s [at %+d]", rRoll.sDesc, (nHP - (nWounds + nInjury)));
+			rRoll.nMod = rRoll.nMod + (nHP - (nWounds + nInjury));
+		end
+	
+	else
+		rRoll.aDice = { "d100" };
+		rRoll.nMod = 0;
+	end
+	
+	return rRoll;
 end

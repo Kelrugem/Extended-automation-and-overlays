@@ -15,7 +15,7 @@ function getRoll(rActor, rAction, tag)
 	rRoll.nMod = 0;
 	rRoll.tags = tag;
 -- END
-	
+
 	rRoll.sDesc = "[HEAL";
 	if rAction.order and rAction.order > 1 then
 		rRoll.sDesc = rRoll.sDesc .. " #" .. rAction.order;
@@ -103,7 +103,7 @@ function modHeal(rSource, rTarget, rRoll)
 		
 		-- Apply general heal modifiers
 		local nEffectCount;
-		-- KEL
+		-- Kel add tags
 		local aAddDice, nAddMod, nEffectCount = EffectManager35E.getEffectsBonus(rSource, {"HEAL"}, false, nil, rTarget, false, rRoll.tags);
 		-- END
 		if (nEffectCount > 0) then

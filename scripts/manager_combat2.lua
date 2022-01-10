@@ -74,7 +74,7 @@ function getNPCSpaceReach(nodeNPC)
 	
 	return nSpace, nReach;
 end
--- KEL for NPC parsing
+-- KEL For NPC parsing
 function tableConcat(origTable, addTable)
 	for _,v in pairs(addTable) do
 		if not(StringManager.contains(origTable, v)) then
@@ -91,7 +91,7 @@ function addNPC(sClass, nodeNPC, sName)
 	-- KEL for IFTAG SIMMUNE parsing
 	local sIftagcomp = {};
 	-- END
-	
+
 	-- HP
 	local sOptHRNH = OptionsManager.getOption("HRNH");
 	local nHP = DB.getValue(nodeNPC, "hp", 0);
@@ -107,7 +107,7 @@ function addNPC(sClass, nodeNPC, sName)
 	local sAC = DB.getValue(nodeNPC, "ac", "10");
 	DB.setValue(nodeEntry, "ac_final", "number", tonumber(string.match(sAC, "^(%d+)")) or 10);
 	DB.setValue(nodeEntry, "ac_touch", "number", tonumber(string.match(sAC, "touch (%d+)")) or 10);
-	local sFlatFooted = string.match(sAC, "flat[%-–]footed (%d+)");
+	local sFlatFooted = string.match(sAC, "flat[%-â€“]footed (%d+)");
 	if not sFlatFooted then
 		sFlatFooted = string.match(sAC, "flatfooted (%d+)");
 	end
@@ -235,10 +235,10 @@ function addNPC(sClass, nodeNPC, sName)
 		elseif StringManager.contains(aTypes, "undead") then
 			table.insert(aEffects, "Undead traits");
 			bImmuneNonlethal = true;
-			tableConcat(sIftagcomp, DataCommon2.tundeadtraits);
 			-- KEL
 			bRevert = true;
 			-- END
+			tableConcat(sIftagcomp, DataCommon2.tundeadtraits);
 		elseif StringManager.contains(aTypes, "vermin") then
 			tableConcat(sIftagcomp, DataCommon2.tvermintraits);
 		end
@@ -474,7 +474,7 @@ function addNPC(sClass, nodeNPC, sName)
 		-- IMMUNITY
 		elseif StringManager.isWord(aSQWords[i], "immunity") and StringManager.isWord(aSQWords[i+1], "to") then
 			i = i + 1;
-			
+		
 			while aSQWords[i+1] do
 				if StringManager.isWord(aSQWords[i+1], "and") then
 					-- SKIP
@@ -525,7 +525,7 @@ function addNPC(sClass, nodeNPC, sName)
 				else
 					break;
 				end
-				
+
 				i = i + 1;
 			end
 		elseif StringManager.isWord(aSQWords[i], "immune") then
@@ -706,6 +706,15 @@ function clearExpiringEffects(bShort)
 			end
 		end
 	end
+	
+	-- KEL !STRAIN-INJURY! --
+	for _, vChild in pairs(DB.getChildren(CombatManager.CT_LIST)) do
+
+        -- A short rest clears all strain, which is represented by the 'wounds' field.
+        DB.setValue(vChild, "wounds", "number", 0);
+	end
+	-- END !STRAIN-INJURY! --
+	
 	CombatManager.callForEachCombatantEffect(checkEffectExpire, bShort);
 end
 
@@ -878,7 +887,7 @@ function parseAttackLine(rActor, sLine)
 	local sOptANPC = OptionsManager.getOption("ANPC");
 
 	-- PARSE 'OR'/'AND' PHRASES
-	sLine = sLine:gsub("–", "-");
+	sLine = sLine:gsub("â€“", "-");
 	local aPhrasesOR, aSkipOR = ActionDamage.decodeAndOrClauses(sLine);
 
 	-- PARSE EACH ATTACK

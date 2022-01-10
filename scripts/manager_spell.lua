@@ -1104,7 +1104,7 @@ function onSpellAction(draginfo, nodeAction, sSubRoll)
 		-- KEL Use Cast-specific tags (?)
 		local tagsSpec = SpellManager.getTagsFromAction(rAction);
 		if not rAction.subtype then
-			table.insert(rRolls, ActionSpell.getSpellCastRoll(rActor, rAction));
+			table.insert(rRolls, ActionSpell.getSpellCastRoll(rActor, rAction, tagsSpec));
 		end
 		
 		if not rAction.subtype or rAction.subtype == "atk" then
@@ -1116,7 +1116,7 @@ function onSpellAction(draginfo, nodeAction, sSubRoll)
 		end
 
 		if not rAction.subtype or rAction.subtype == "clc" then
-			local rRoll = ActionSpell.getCLCRoll(rActor, rAction);
+			local rRoll = ActionSpell.getCLCRoll(rActor, rAction, tagsSpec);
 			if not rAction.subtype then
 				rRoll.sType = "castclc";
 				rRoll.aDice = {};
@@ -1126,7 +1126,7 @@ function onSpellAction(draginfo, nodeAction, sSubRoll)
 
 		if not rAction.subtype or rAction.subtype == "save" then
 			if rAction.save and rAction.save ~= "" then
-				local rRoll = ActionSpell.getSaveVsRoll(rActor, rAction);
+				local rRoll = ActionSpell.getSaveVsRoll(rActor, rAction, tagsSpec);
 				if not rAction.subtype then
 					rRoll.sType = "castsave";
 				end
@@ -1160,9 +1160,11 @@ function onSpellAction(draginfo, nodeAction, sSubRoll)
 		local rRoll;
 		rRoll = ActionEffect.getRoll(draginfo, rActor, rAction);
 		if rRoll then
+			-- KEL adding tags, just in case :)
 			if tag then
 				rRoll.tags = tag;
 			end
+			-- END
 			table.insert(rRolls, rRoll);
 		end
 	end

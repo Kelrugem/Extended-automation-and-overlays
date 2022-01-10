@@ -100,6 +100,7 @@ function delete()
 	local sClass, sRecord = link.getValue();
 	if sClass ~= "charsheet" then
 		wounds.setValue(0);
+		injury.setValue(0);
 	end
 	
 	-- Move to the next actor, if this CT entry is active
@@ -146,7 +147,7 @@ function onHealthChanged()
 	local _,sStatus,sColor = ActorHealthManager.getHealthInfo(rActor);
 	
 	wounds.setColor(sColor);
-	nonlethal.setColor(sColor);
+	injury.setColor(sColor);
 	status.setValue(sStatus);
 	
 	local sClass,_ = link.getValue();
@@ -184,9 +185,9 @@ function linkPCFields()
 
 		hp.setLink(nodeChar.createChild("hp.total", "number"));
 		hptemp.setLink(nodeChar.createChild("hp.temporary", "number"));
-		nonlethal.setLink(nodeChar.createChild("hp.nonlethal", "number"));
 		wounds.setLink(nodeChar.createChild("hp.wounds", "number"));
-
+        injury.setLink(nodeChar.createChild("hp.injury", "number"));
+		
 		if DataCommon.isPFRPG() then
 			type.addSource(DB.getPath(nodeChar, "alignment"), true);
 		else
@@ -194,7 +195,7 @@ function linkPCFields()
 		end
 		type.addSource(DB.getPath(nodeChar, "size"), true);
 		type.addSource(DB.getPath(nodeChar, "race"));
-		
+
 		grapple.setLink(nodeChar.createChild("attackbonus.grapple.total", "number"), true);
 		
 		ac_final.setLink(nodeChar.createChild("ac.totals.general", "number"), true);

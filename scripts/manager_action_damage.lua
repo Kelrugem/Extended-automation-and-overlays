@@ -106,13 +106,27 @@ function handleApplyDamage(msgOOB)
 				bSImmune[k] = false;
 				-- bFortif[k] = false;
 				bSFortif[k] = false;
+				local bVorpal = false;
+				for _,sDmgType in pairs(aSrcDmgClauseTypes) do
+					-- KEL adding vorpal ability, ignoring crit immunity
+					if (sDmgType == "vorpal") then
+						bVorpal = true;
+						break;
+					end
+				end
 				for _,sDmgType in pairs(aSrcDmgClauseTypes) do
 					if StringManager.contains(DataCommon.basicdmgtypes, sDmgType) then
 						if aImmune[sDmgType] then nBasicDmgTypeMatches = nBasicDmgTypeMatches + 1; end
 						if aFortif[sDmgType] then nBasicDmgTypeMatchesFortif = nBasicDmgTypeMatchesFortif + 1; end
 					else
 						nSpecialDmgTypes = nSpecialDmgTypes + 1;
-						if aImmune[sDmgType] then nSpecialDmgTypeMatches = nSpecialDmgTypeMatches + 1; end
+						if aImmune[sDmgType] then
+							if (sDmgType == "critical") and bVorpal then
+								-- Do nothing, crit negation
+							else
+								nSpecialDmgTypeMatches = nSpecialDmgTypeMatches + 1;
+							end
+						end
 						if aFortif[sDmgType] then nSpecialDmgTypeMatchesFortif = nSpecialDmgTypeMatchesFortif + 1; end
 					end
 					if (sDmgType == "bypass") or (sDmgType == "immunebypass") then
@@ -239,7 +253,7 @@ function notifyApplyDamage(rSource, rTarget, bSecret, sRollType, sDesc, nTotal, 
 
 	local msgOOB = {};
 	msgOOB.type = OOB_MSGTYPE_APPLYDMG;
-	-- KEL tdmg and tags
+	-- KEL tdmg
 	msgOOB.sFilter = sAttackFilter;
 	msgOOB.tags = tag;
 	-- END
@@ -252,7 +266,7 @@ function notifyApplyDamage(rSource, rTarget, bSecret, sRollType, sDesc, nTotal, 
 	msgOOB.sRollType = sRollType;
 	msgOOB.nTotal = nTotal;
 	msgOOB.sDamage = sDesc;
-
+	
 	msgOOB.sSourceNode = ActorManager.getCreatureNodeName(rSource);
 	msgOOB.sTargetNode = ActorManager.getCreatureNodeName(rTarget);
 	msgOOB.nTargetOrder = rTarget.nOrder;
@@ -439,8 +453,8 @@ function getTargetDamageRoll(rTarget, rSource, aAttackFilter, tags)
 			-- For each effect, add a damage clause
 			for _,v in pairs(aEffects) do
 				-- Process effect damage types
-				-- local bEffectPrecision = false;
-				-- local bEffectCritical = false;
+				local bEffectPrecision = false;
+				local bEffectCritical = false;
 				local aEffectDmgType = {};
 				-- local aEffectSpecialDmgType = {};
 				for _,sWord in ipairs(v.remainder) do
@@ -479,6 +493,7 @@ function getTargetDamageRoll(rTarget, rSource, aAttackFilter, tags)
 			
 			-- Encode the damage types
 			encodeDamageTypes(rRoll);
+			
 			ActionsManager.roll(rTarget, rSource, rRoll);
 		end
 	end
@@ -500,7 +515,7 @@ function onDamage(rSource, rTarget, rRoll)
 		Comm.deliverChatMessage(rMessage);
 	end
 	
-	-- KEL for TDMG and tags
+	-- KEL for TDMG
 	local aAttackFilter = "";
 	if rRoll.range == "R" then
 		aAttackFilter = "ranged"
@@ -815,6 +830,19 @@ function applyModifierKeysToModRoll(rRoll, rSource, rTarget)
 	if ModifierManager.getKey("DMG_HALF") then
 		table.insert(rRoll.tNotifications, "[HALF]");
 	end
+	-- KEL Injury damage button
+    if ModifierManager.getKey("DMG_INJURY") then
+        table.insert(rRoll.tNotifications, "[INJURY]");
+		
+		for _,vClause in ipairs(rRoll.clauses) do
+			if vClause.dmgtype == "" then
+				vClause.dmgtype = "injury";
+			else
+				vClause.dmgtype = vClause.dmgtype .. ",injury";
+			end
+		end
+    end
+	-- END
 end
 
 function finalizeModRoll(rRoll)
@@ -1188,6 +1216,9 @@ function getDamageAdjust(rSource, rTarget, nDamage, rDamageOutput, bImmune, bFor
 	local bRevert = false;
 	local aWords;
 	local bPFMode = DataCommon.isPFRPG();
+	-- KEL
+	local aInjury = false;
+	-- END
 	-- KEL Removing IMMUNE here since called earlier
 	-- GET THE DAMAGE ADJUSTMENT EFFECTS
 	local aVuln = EffectManager35E.getEffectsBonusByType(rTarget, "VULN", false, {}, rSource, false, tags);
@@ -1214,7 +1245,7 @@ function getDamageAdjust(rSource, rTarget, nDamage, rDamageOutput, bImmune, bFor
 	-- IF IMMUNE ALL, THEN JUST HANDLE IT NOW
 	-- KEL add new output
 	if bImmune["all"] then
-		return (0 - nDamage), 0, false, true, 0;
+		return (0 - nDamage), 0, false, true, false, 0;
 	end
 	
 	-- HANDLE REGENERATION
@@ -1251,6 +1282,9 @@ function getDamageAdjust(rSource, rTarget, nDamage, rDamageOutput, bImmune, bFor
 						aClausesOR = decodeAndOrClauses(sRegen);
 						if matchAndOrClauses(aClausesOR, aSrcDmgClauseTypes) then
 							bApplyRegen = false;
+							-- KEL
+							aInjury = true;
+							--END
 						end
 						
 						if bApplyRegen then
@@ -1298,6 +1332,7 @@ function getDamageAdjust(rSource, rTarget, nDamage, rDamageOutput, bImmune, bFor
 	end
 	-- ITERATE THROUGH EACH DAMAGE TYPE ENTRY
 	local nVulnApplied = 0;
+	
 	for k, v in pairs(rDamageOutput.aDamageTypes) do
 		-- KEL bypass stuff
 		local bypass = false; 
@@ -1328,7 +1363,12 @@ function getDamageAdjust(rSource, rTarget, nDamage, rDamageOutput, bImmune, bFor
 			
 			local nSpecialDmgTypes = 0;
 			local nSpecialDmgTypeMatchesHResist = 0;
+			
 			for _,sDmgType in pairs(aSrcDmgClauseTypes) do
+				-- KEL adding injury damage type handle (IMPORTANT: Different place in package with advanced effects!)
+				if sDmgType == "injury" then
+					aInjury = true;
+				end
 				if StringManager.contains(DataCommon.basicdmgtypes, sDmgType) then
 					if aHResist[sDmgType] then nBasicDmgTypeMatchesHResist = nBasicDmgTypeMatchesHResist + 1; end
 				else
@@ -1776,8 +1816,9 @@ function getDamageAdjust(rSource, rTarget, nDamage, rDamageOutput, bImmune, bFor
 	end
 
 	-- RESULTS
-	-- KEL add revert chat adjustment
-	return nDamageAdjust, nNonlethal, bVulnerable, bResist, nRevert;
+	-- KEL add injury and revert chat adjustment
+	return nDamageAdjust, nNonlethal, bVulnerable, bResist, aInjury, nRevert;
+	-- END
 end
 -- KEL Too lazy to make strings manually to boolean variables :P
 function toboolean(sName)
@@ -2002,7 +2043,10 @@ function decodeDamageText(nDamage, sDamageDesc)
 
 		-- Determine critical
 		rDamageOutput.bCritical = string.match(sDamageDesc, "%[CRITICAL%]");
-
+		
+		-- KEL Determine injury
+        rDamageOutput.bInjury = string.match(sDamageDesc, "%[INJURY%]") or rDamageOutput.bCritical;
+		
 		-- Determine range
 		rDamageOutput.sRange = string.match(sDamageDesc, "%[DAMAGE %((%w)%)%]") or "";
 		rDamageOutput.aDamageFilter = {};
@@ -2051,8 +2095,8 @@ end
 function applyDamage(rSource, rTarget, bSecret, sRollType, sDamage, nTotal, bImmune, bFortif, tags)
 	local nTotalHP = 0;
 	local nTempHP = 0;
-	local nNonLethal = 0;
 	local nWounds = 0;
+    local nInjury = 0;
 	local bPFMode = DataCommon.isPFRPG();
 
 	local bRemoveTarget = false;
@@ -2068,13 +2112,13 @@ function applyDamage(rSource, rTarget, bSecret, sRollType, sDamage, nTotal, bImm
 	if sTargetNodeType == "pc" then
 		nTotalHP = DB.getValue(nodeTarget, "hp.total", 0);
 		nTempHP = DB.getValue(nodeTarget, "hp.temporary", 0);
-		nNonlethal = DB.getValue(nodeTarget, "hp.nonlethal", 0);
 		nWounds = DB.getValue(nodeTarget, "hp.wounds", 0);
+        nInjury = DB.getValue(nodeTarget, "hp.injury", 0);
 	elseif sTargetNodeType == "ct" then
 		nTotalHP = DB.getValue(nodeTarget, "hp", 0);
 		nTempHP = DB.getValue(nodeTarget, "hptemp", 0);
-		nNonlethal = DB.getValue(nodeTarget, "nonlethal", 0);
 		nWounds = DB.getValue(nodeTarget, "wounds", 0);
+		nInjury = DB.getValue(nodeTarget, "injury", 0);
 	else
 		return;
 	end
@@ -2087,6 +2131,8 @@ function applyDamage(rSource, rTarget, bSecret, sRollType, sDamage, nTotal, bImm
 	rDamageOutput.sRollType = sRollType;
 	rDamageOutput.tNotifications = {};
 	rDamageOutput.tRegenEffectsToDisable = {};
+	-- KEL adding variable for handling unconscious and disabled
+	local bNonLethalUncons = false;
 
 	-- Healing
 	if rDamageOutput.sType == "heal" or rDamageOutput.sType == "fheal" then
@@ -2098,8 +2144,8 @@ function applyDamage(rSource, rTarget, bSecret, sRollType, sDamage, nTotal, bImm
 				rRollHeal.sType = "damage";
 				rRollHeal.aDice = {nil, {result = 0}};
 				rRollHeal.nMod = nHealAmount;
-				rRollHeal.sDesc = "[DAMAGE] [REV] Reverted Heal [TYPE: positive]";
-				rRollHeal.clauses = { dice = { }, dmgtype = "positive", modifier = nHealAmount };
+				rRollHeal.sDesc = "[DAMAGE] [REV] Reverted Heal [TYPE: positive, spell]";
+				rRollHeal.clauses = { dice = { }, dmgtype = "positive, spell", modifier = nHealAmount };
 				rRollHeal.tags = tags;
 				nHealAmount = 0;
 				encodeDamageTypes(rRollHeal);
@@ -2109,43 +2155,37 @@ function applyDamage(rSource, rTarget, bSecret, sRollType, sDamage, nTotal, bImm
 		--END
 		-- CHECK COST
 		-- KEL small clean-up in case of no wounds (to avoid confusing text)
-		if nWounds <= 0 and nNonlethal <= 0 and nHealAmount > 0 then
+		if nInjury <= 0 and nWounds <= 0 and nHealAmount > 0 then
 			table.insert(rDamageOutput.tNotifications, "[NOT WOUNDED]");
 		-- END
 		else
 			-- CALCULATE HEAL AMOUNTS
-			local nNonlethalHealAmount = math.min(nHealAmount, nNonlethal);
-			nNonlethal = nNonlethal - nNonlethalHealAmount;
-			if (not bPFMode) and (rDamageOutput.sType == "fheal") then
-				nHealAmount = nHealAmount - nNonlethalHealAmount;
-			end
-
 			local nOriginalWounds = nWounds;
-			
-			local nWoundHealAmount = math.min(nHealAmount, nWounds);
+			local nOriginalInjury = nInjury;
+
+            local nInjuryHealAmount = math.min(nHealAmount, nInjury);
+            nInjury = nInjury - nInjuryHealAmount;
+
+			local nWoundHealAmount = math.min(nHealAmount - nInjuryHealAmount, nWounds);
 			nWounds = nWounds - nWoundHealAmount;
 			
 			-- SET THE ACTUAL HEAL AMOUNT FOR DISPLAY
-			rDamageOutput.nVal = nNonlethalHealAmount + nWoundHealAmount;
-			if nWoundHealAmount > 0 then
-				rDamageOutput.sVal = "" .. nWoundHealAmount;
-				if nNonlethalHealAmount > 0 then
-					rDamageOutput.sVal = rDamageOutput.sVal .. " (+" .. nNonlethalHealAmount .. " NL)";
-				end
-			elseif nNonlethalHealAmount > 0 then
-				rDamageOutput.sVal = "" .. nNonlethalHealAmount .. " NL";
+			rDamageOutput.nVal = nWoundHealAmount + nInjuryHealAmount;
+			if nWoundHealAmount + nInjuryHealAmount > 0 then
+				rDamageOutput.sVal = "" .. nWoundHealAmount + nInjuryHealAmount .. " (" .. nInjuryHealAmount .. " injury, " .. nWoundHealAmount .. " strain)";
 			else
 				rDamageOutput.sVal = "0";
 			end
 		end
 
 	-- Regeneration
+	-- KEL replacing nonlethal (only important for 3.5e, in Pathfinder stype="regen" not possible
 	elseif rDamageOutput.sType == "regen" then
-		if nNonlethal <= 0 then
+		if nWounds <= 0 then
 			table.insert(rDamageOutput.tNotifications, "[NO NONLETHAL DAMAGE]");
 		else
-			local nNonlethalHealAmount = math.min(rDamageOutput.nVal, nNonlethal);
-			nNonlethal = nNonlethal - nNonlethalHealAmount;
+			local nNonlethalHealAmount = math.min(rDamageOutput.nVal, nWounds);
+			nWounds = nWounds - nNonlethalHealAmount;
 			
 			rDamageOutput.nVal = nNonlethalHealAmount;
 			rDamageOutput.sVal = "" .. nNonlethalHealAmount .. " NL";
@@ -2181,6 +2221,8 @@ function applyDamage(rSource, rTarget, bSecret, sRollType, sDamage, nTotal, bImm
 				bRemoveTarget = true;
 			elseif sDamageState == "half_failure" then
 				isHalf = true;
+			elseif sDamageState == "failure" then
+				rDamageOutput.bInjury = true;
 			end
 		end
 		if isAvoided then
@@ -2209,7 +2251,12 @@ function applyDamage(rSource, rTarget, bSecret, sRollType, sDamage, nTotal, bImm
 		
 		-- Apply damage type adjustments
 		-- KEL bImmune, bFortif, tags, bRevert
-		local nDamageAdjust, nNonlethalDmgAmount, bVulnerable, bResist, nRevert = ActionDamage.getDamageAdjust(rSource, rTarget, rDamageOutput.nVal, rDamageOutput, bImmune, bFortif, tags);
+		-- KEL Adding Injury information
+		local nDamageAdjust, nNonlethalDmgAmount, bVulnerable, bResist, aInjury, nRevert = ActionDamage.getDamageAdjust(rSource, rTarget, rDamageOutput.nVal, rDamageOutput, bImmune, bFortif, tags);
+		if aInjury then
+			rDamageOutput.bInjury = aInjury;
+		end
+		-- END
 		local nAdjustedDamage = rDamageOutput.nVal + nDamageAdjust;
 		-- KEL adding revert. If revert leads to negative damage, then apply heal instead
 		if nRevert > 0 then
@@ -2249,24 +2296,24 @@ function applyDamage(rSource, rTarget, bSecret, sRollType, sDamage, nTotal, bImm
 			end
 		end
 
-		-- Apply remaining damage
+		-- Apply remaining damage. KEL simplified in StrainInjury
 		if nNonlethalDmgAmount > 0 then
-			if bPFMode and (nNonlethal + nNonlethalDmgAmount > nTotalHP) then
-				local aRegen = EffectManager35E.getEffectsByType(rTarget, "REGEN");
-				if #aRegen == 0 then
-					local nOver = nNonlethal + nNonlethalDmgAmount - nTotalHP;
-					if nOver > nNonlethalDmgAmount then
-						nOver = nNonlethalDmgAmount;
-					end
-					nAdjustedDamage = nAdjustedDamage + nOver;
-					nNonlethalDmgAmount = nNonlethalDmgAmount - nOver;
-				end
-			end
-			nNonlethal = math.max(nNonlethal + nNonlethalDmgAmount, 0);
+            nWounds = math.min(nTotalHP, nWounds + nNonlethalDmgAmount);
 		end
+		-- END
 		if nAdjustedDamage > 0 then
-			nWounds = math.max(nWounds + nAdjustedDamage, 0);
-			
+			-- KEL Injury handle
+			if rDamageOutput.bInjury then
+                nInjury = math.max(nInjury + nAdjustedDamage, 0);
+            else
+                local newWounds = math.max(nWounds + nAdjustedDamage, 0);
+                if newWounds + nInjury > nTotalHP then
+                    nInjury = math.max(nInjury + nAdjustedDamage, 0);
+                else
+                    nWounds = newWounds;
+                end
+            end
+			-- END
 			-- For Pathfinder, disable regeneration next round on correct damage type
 			if bPFMode then
 				local nodeTargetCT = ActorManager.getCTNode(rTarget);
@@ -2317,6 +2364,11 @@ function applyDamage(rSource, rTarget, bSecret, sRollType, sDamage, nTotal, bImm
 			end
 		elseif nNonlethalDmgAmount > 0 then
 			rDamageOutput.sVal = string.format("%01d NL", nNonlethalDmgAmount);
+			-- KEL nonlethal, for StrainInury, when already dying then not "true" to avoid applying the stable effect
+			if (sOriginalStatus ~= "Dying") and (sOriginalStatus ~= "Dead") then
+				bNonLethalUncons = true;
+			end
+			-- END
 		else
 			rDamageOutput.sVal = "0";
 		end
@@ -2326,16 +2378,17 @@ function applyDamage(rSource, rTarget, bSecret, sRollType, sDamage, nTotal, bImm
 	if sTargetNodeType == "pc" then
 		DB.setValue(nodeTarget, "hp.temporary", "number", nTempHP);
 		DB.setValue(nodeTarget, "hp.wounds", "number", nWounds);
-		DB.setValue(nodeTarget, "hp.nonlethal", "number", nNonlethal);
+		DB.setValue(nodeTarget, "hp.injury", "number", nInjury);
 	else
 		DB.setValue(nodeTarget, "hptemp", "number", nTempHP);
 		DB.setValue(nodeTarget, "wounds", "number", nWounds);
-		DB.setValue(nodeTarget, "nonlethal", "number", nNonlethal);
+		DB.setValue(nodeTarget, "injury", "number", nInjury);
 	end
 
 	-- Check for status change
-	local sNewStatus = ActorHealthManager.getHealthStatus(rTarget);
-	
+	-- KEL adding variable for handling strain-nonlethal, therefore keep getWoundPercent, not getHealthStatus
+	local _,sNewStatus = ActorManager35E.getWoundPercent(rTarget, bNonLethalUncons);
+	-- END
 	local bShowStatus = false;
 	if ActorManager.getFaction(rTarget) == "friend" then
 		bShowStatus = not OptionsManager.isOption("SHPC", "off");
@@ -2372,6 +2425,11 @@ function applyDamage(rSource, rTarget, bSecret, sRollType, sDamage, nTotal, bImm
 			elseif (rDamageOutput.sType == "damage") and (rDamageOutput.nVal > 0) then
 				ActorManager35E.removeStableEffect(rTarget);
 			end
+		end
+	-- KEL Clean up when there is still the stable effect (for unconscious people getting lethal damage)
+	elseif EffectManager35E.hasEffectCondition(rTarget, "Stable") then
+		if not bNonLethalUncons and (rDamageOutput.sType == "damage") and (rDamageOutput.nVal > 0) then
+			ActorManager35E.removeStableEffect(rTarget);
 		end
 	end
 	
@@ -2422,7 +2480,7 @@ function messageDamage(rSource, rTarget, bSecret, sDamageType, sDamageDesc, sTot
 	
 	ActionsManager.outputResult(bSecret, rSource, rTarget, msgLong, msgShort);
 end
-
+-- KEL Has to be injury damage (if no temp HP of course)
 function applyFailedStabilization(rActor)
 	local sDamageTypeOutput = "Damage";
 	local sDamage = "[DAMAGE] Dying";
@@ -2442,11 +2500,11 @@ function applyFailedStabilization(rActor)
 	if sNodeType == "pc" then
 		nTotalHP = DB.getValue(nodeActor, "hp.total", 0);
 		nTempHP = DB.getValue(nodeActor, "hp.temporary", 0);
-		nWounds = DB.getValue(nodeActor, "hp.wounds", 0);
+		nWounds = DB.getValue(nodeActor, "hp.injury", 0);
 	elseif sNodeType == "ct" then
 		nTotalHP = DB.getValue(nodeActor, "hp", 0);
 		nTempHP = DB.getValue(nodeActor, "hptemp", 0);
-		nWounds = DB.getValue(nodeActor, "wounds", 0);
+		nWounds = DB.getValue(nodeActor, "injury", 0);
 	else
 		return;
 	end
@@ -2478,10 +2536,10 @@ function applyFailedStabilization(rActor)
 	-- Set health fields
 	if sNodeType == "pc" then
 		DB.setValue(nodeActor, "hp.temporary", "number", nTempHP);
-		DB.setValue(nodeActor, "hp.wounds", "number", nWounds);
+		DB.setValue(nodeActor, "hp.injury", "number", nWounds);
 	else
 		DB.setValue(nodeActor, "hptemp", "number", nTempHP);
-		DB.setValue(nodeActor, "wounds", "number", nWounds);
+		DB.setValue(nodeActor, "injury", "number", nWounds);
 	end
 
 	-- Check for status change

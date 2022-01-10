@@ -7,42 +7,24 @@
 
 <root>
 	<windowclass name="charsheet_main" merge="join">
+		<script file="campaign/scripts/char_main.lua" />
 		<sheetdata>
-			<number_dropadd name="nonlethal" source="hp.nonlethal" merge="replace">
+			<number_charwounds name="wounds" source="hp.wounds">
+				<description textres="char_tooltip_strain" />
+			</number_charwounds>
+			<label_fieldtop name="wounds_label">
+				<static textres="char_label_strain" />
+			</label_fieldtop>
+            <number_charinjury name="injury" source="hp.injury" insertbefore="dr">
 				<anchored to="wounds" position="right" offset="20,0" width="40" />
-				<hideonvalue>0</hideonvalue>
-				<description textres="char_tooltip_nonlethal" />
-				<script>
-					function onValueChanged()
-						window.onHealthChanged();
-					end
-					function onInit()
-						if super.super.onInit then
-							super.super.onInit();
-						end
-
-						OptionsManager.registerCallback("WNDC", onValueChanged);
-						onValueChanged();
-					end
-					function onClose()
-						OptionsManager.unregisterCallback("WNDC", onValueChanged);
-					end
-					function onDrop(x, y, draginfo)
-						if draginfo.getType() == "number" then
-							local rActor = ActorManager.resolveActor(window.getDatabaseNode());
-							local rRoll = {};
-							rRoll.bSecret = false;
-							rRoll.sType = "number";
-							rRoll.sDesc = draginfo.getDescription() .. " [TYPE: nonlethal]";
-							rRoll.nMod = draginfo.getNumberData();
-							rRoll.aDice = {nil, {result = 0}};
-							ActionDamage.onDamage(nil, rActor, rRoll);
-						end
-
-						return true;
-					end
-				</script>
-			</number_dropadd>
+                <description textres="char_tooltip_injury" />
+			</number_charinjury>
+            <label_fieldtop name="injury_label" insertbefore="dr">
+                <anchored to="injury" />
+                <static textres="char_label_injury" />
+            </label_fieldtop>
+			<number_dropadd name="nonlethal" merge="delete" />
+			<label_fieldtop name="nonlethal_label" merge="delete" />
 		</sheetdata>
-	</windowclass>	
+	</windowclass>
 </root>

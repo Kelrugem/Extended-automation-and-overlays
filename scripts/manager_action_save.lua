@@ -115,75 +115,6 @@ function getVsRoll(rActor, sSave, sSaveDesc, tags)
 	end
 
 	rRoll.sDesc = "[SAVE] " .. StringManager.capitalize(sSave);
-	-- KEL Look up spell specific information
-	local spell = (sSaveDesc:match("%[SPELL%]") ~= nil);
-	local spelllike = (sSaveDesc:match("%[SPELLLIKE%]") ~= nil);
-	local abjuration = (sSaveDesc:match("%[ABJURATION%]") ~= nil);
-	local conjuration = (sSaveDesc:match("%[CONJURATION%]") ~= nil);
-	local divination = (sSaveDesc:match("%[DIVINATION%]") ~= nil);
-	local enchantment = (sSaveDesc:match("%[ENCHANTMENT%]") ~= nil);
-	local evocation = (sSaveDesc:match("%[EVOCATION%]") ~= nil);
-	local illusion = (sSaveDesc:match("%[ILLUSION%]") ~= nil);
-	local necromancy = (sSaveDesc:match("%[NECROMANCY%]") ~= nil);
-	local transmutation = (sSaveDesc:match("%[TRANSMUTATION%]") ~= nil);
-	local universal = (sSaveDesc:match("%[UNIVERSAL%]") ~= nil);
-	-- KEL Adding tags
-	local rEffectSpell = "";
-	
-	if spell then
-		rRoll.sDesc = rRoll.sDesc .. " [SPELL]";
-        rEffectSpell = rEffectSpell.. "spell;";
-	end
-	if spelllike then
-		rRoll.sDesc = rRoll.sDesc .. " [SPELLLIKE]";
-		rEffectSpell = rEffectSpell.. "spelllike;";
-	end
-	
-	if abjuration then
-		rRoll.sDesc = rRoll.sDesc .. " [ABJURATION]";
-        rEffectSpell = rEffectSpell.. "abjuration;";
-	end
-	if conjuration then
-		rRoll.sDesc = rRoll.sDesc .. " [CONJURATION]";
-        rEffectSpell = rEffectSpell.. "conjuration;";
-	end
-	if divination then
-		rRoll.sDesc = rRoll.sDesc .. " [DIVINATION]";
-        rEffectSpell = rEffectSpell.. "divination;";
-	end
-	if enchantment then
-		rRoll.sDesc = rRoll.sDesc .. " [ENCHANTMENT]";
-        rEffectSpell = rEffectSpell.. "enchantment;";
-	end
-	if evocation then
-		rRoll.sDesc = rRoll.sDesc .. " [EVOCATION]";
-        rEffectSpell = rEffectSpell.. "evocation;";
-	end
-	if illusion then
-		rRoll.sDesc = rRoll.sDesc .. " [ILLUSION]";
-        rEffectSpell = rEffectSpell.. "illusion;";
-	end
-	if necromancy then
-		rRoll.sDesc = rRoll.sDesc .. " [NECROMANCY]";
-        rEffectSpell = rEffectSpell.. "necromancy;";
-	end
-	if transmutation then
-		rRoll.sDesc = rRoll.sDesc .. " [TRANSMUTATION]";
-        rEffectSpell = rEffectSpell.. "transmutation;";
-	end
-	if universal then
-		rRoll.sDesc = rRoll.sDesc .. " [UNIVERSAL]";
-        rEffectSpell = rEffectSpell.. "universal;";
-	end
-	if (tags or "") ~= "" then
-		rRoll.sDesc = rRoll.sDesc .. " [Other tags: " .. tags .. "]";
-		rEffectSpell = rEffectSpell.. tags;
-	end
-	
-	if rEffectSpell == "" then
-		rEffectSpell = nil;
-	end
-	-- END
 	
 	if sAbility and sAbility ~= "" then
 		if (sSave == "fortitude" and sAbility ~= "constitution") or
@@ -195,8 +126,8 @@ function getVsRoll(rActor, sSave, sSaveDesc, tags)
 			end
 		end
 	end
-	-- Add tags
-	rRoll.tags = rEffectSpell;
+	-- KEL Add tags
+	rRoll.tags = tags;
 	
 	return rRoll;
 end
@@ -242,8 +173,7 @@ function getRoll(rActor, sSave)
 			end
 		end
 	end
-	-- KEL
-	rRoll.tags = "";
+	
 	return rRoll;
 end
 
@@ -288,12 +218,9 @@ function modSave(rSource, rTarget, rRoll)
 		local bFlatfooted = false;
 		if not rRoll.bVsSave and ModifierManager.getKey("ATT_FF") then
 			bFlatfooted = true;
-		elseif EffectManager35E.hasEffect(rSource, "Flat-footed") or EffectManager35E.hasEffect(rSource, "Flatfooted") then
+		elseif EffectManager35E.hasEffect(rSource, "Flat-footed", nil, false, false, rRoll.tags) or EffectManager35E.hasEffect(rSource, "Flatfooted", nil, false, false, rRoll.tags) then
 			bFlatfooted = true;
 		end
-		
-		-- KEL Tags
-		local sEffectSpell = rRoll.tags;
 		
 		-- Get effect modifiers
 		local rSaveSource = nil;
@@ -301,8 +228,16 @@ function modSave(rSource, rTarget, rRoll)
 			rSaveSource = ActorManager.resolveActor(rRoll.sSource);
 		end
 		local aExistingBonusByType = {};
-		-- KEL Adding tag information
-		local aSaveEffects = EffectManager35E.getEffectsByType(rSource, "SAVE", aSaveFilter, rSaveSource, false, sEffectSpell);
+		-- KEL Adding tag information and (dis)adv
+		local aADVSAV = EffectManager35E.getEffectsByType(rSource, "ADVSAV", aSaveFilter, rSaveSource, false, rRoll.tags);
+		local aDISSAV = EffectManager35E.getEffectsByType(rSource, "DISSAV", aSaveFilter, rSaveSource, false, rRoll.tags);
+		local _, nADVSAV = EffectManager35E.hasEffect(rSource, "ADVSAV", rSaveSource, false, false, rRoll.tags);
+		local _, nDISSAV = EffectManager35E.hasEffect(rSource, "DISSAV", rSaveSource, false, false, rRoll.tags);
+		
+		rRoll.adv = #aADVSAV + nADVSAV - (#aDISSAV + nDISSAV);
+		
+		local aSaveEffects = EffectManager35E.getEffectsByType(rSource, "SAVE", aSaveFilter, rSaveSource, false, rRoll.tags);
+		-- END
 		for _,v in pairs(aSaveEffects) do
 			-- Determine bonus type if any
 			local sBonusType = nil;
@@ -339,33 +274,33 @@ function modSave(rSource, rTarget, rRoll)
 		end
 		
 		-- Get condition modifiers
-		if EffectManager35E.hasEffectCondition(rSource, "Frightened") or 
-				EffectManager35E.hasEffectCondition(rSource, "Panicked") or
-				EffectManager35E.hasEffectCondition(rSource, "Shaken") then
+		if EffectManager35E.hasEffectCondition(rSource, "Frightened", rRoll.tags) or 
+				EffectManager35E.hasEffectCondition(rSource, "Panicked", rRoll.tags) or
+				EffectManager35E.hasEffectCondition(rSource, "Shaken", rRoll.tags) then
 			nAddMod = nAddMod - 2;
 			bEffects = true;
 		end
 		
-		if EffectManager35E.hasEffectCondition(rSource, "Sickened") then
+		if EffectManager35E.hasEffectCondition(rSource, "Sickened", rRoll.tags) then
 			nAddMod = nAddMod - 2;
 			bEffects = true;
 		end
 		if sSave == "reflex" then
-			if EffectManager35E.hasEffectCondition(rSource, "Slowed") then
+			if EffectManager35E.hasEffectCondition(rSource, "Slowed", rRoll.tags) then
 				nAddMod = nAddMod - 1;
 				bEffects = true;
 			end
 		end
 
 		-- Get ability modifiers
-		local nBonusStat, nBonusEffects = ActorManager35E.getAbilityEffectsBonus(rSource, sActionStat);
+		local nBonusStat, nBonusEffects = ActorManager35E.getAbilityEffectsBonus(rSource, sActionStat, rRoll.tags);
 		if nBonusEffects > 0 then
 			bEffects = true;
 			nAddMod = nAddMod + nBonusStat;
 		end
 		
 		-- Get negative levels
-		local nNegLevelMod, nNegLevelCount = EffectManager35E.getEffectsBonus(rSource, {"NLVL"}, true);
+		local nNegLevelMod, nNegLevelCount = EffectManager35E.getEffectsBonus(rSource, {"NLVL"}, true, nil, nil, false, rRoll.tags);
 		if nNegLevelCount > 0 then
 			bEffects = true;
 			nAddMod = nAddMod - nNegLevelMod;
@@ -478,7 +413,7 @@ function applySave(rSource, rOrigin, rAction, sUser)
 					-- KEL taking conditions into account for (improved) evasion and tags
 					if EffectManager35E.hasEffect(rSource, "Improved Evasion", nil, false, true, sEffectSpell) then 
 						local condEvasion = true;
-						if EffectManager35E.hasEffectCondition(rSource, "helpless") or EffectManager35E.hasEffectCondition(rSource, "paralyzed") or EffectManager35E.hasEffectCondition(rSource, "sleeping") or EffectManager35E.hasEffectCondition(rSource, "unconscious") or EffectManager35E.hasEffectCondition(rSource, "petrified") or EffectManager35E.hasEffectCondition(rSource, "bound") then
+						if EffectManager35E.hasEffectCondition(rSource, "helpless", sEffectSpell) or EffectManager35E.hasEffectCondition(rSource, "paralyzed", sEffectSpell) or EffectManager35E.hasEffectCondition(rSource, "sleeping", sEffectSpell) or EffectManager35E.hasEffectCondition(rSource, "unconscious", sEffectSpell) or EffectManager35E.hasEffectCondition(rSource, "petrified", sEffectSpell) or EffectManager35E.hasEffectCondition(rSource, "bound", sEffectSpell) then
 							condEvasion = false;
 						end
 						if condEvasion then
@@ -487,7 +422,7 @@ function applySave(rSource, rOrigin, rAction, sUser)
 						end
 					elseif EffectManager35E.hasEffect(rSource, "Evasion", nil, false, true, sEffectSpell) then
 						local condEvasion = true;
-						if EffectManager35E.hasEffectCondition(rSource, "helpless") or EffectManager35E.hasEffectCondition(rSource, "paralyzed") or EffectManager35E.hasEffectCondition(rSource, "sleeping") or EffectManager35E.hasEffectCondition(rSource, "unconscious") or EffectManager35E.hasEffectCondition(rSource, "petrified") or EffectManager35E.hasEffectCondition(rSource, "bound") then
+						if EffectManager35E.hasEffectCondition(rSource, "helpless", sEffectSpell) or EffectManager35E.hasEffectCondition(rSource, "paralyzed", sEffectSpell) or EffectManager35E.hasEffectCondition(rSource, "sleeping", sEffectSpell) or EffectManager35E.hasEffectCondition(rSource, "unconscious", sEffectSpell) or EffectManager35E.hasEffectCondition(rSource, "petrified", sEffectSpell) or EffectManager35E.hasEffectCondition(rSource, "bound", sEffectSpell) then
 							condEvasion = false;
 						end
 						if condEvasion then
@@ -536,7 +471,7 @@ function applySave(rSource, rOrigin, rAction, sUser)
 					-- KEL taking conditions into account for improved evasion and tags
 					if EffectManager35E.hasEffect(rSource, "Improved Evasion", nil, false, true, sEffectSpell) then
 						local condEvasion = true;
-						if EffectManager35E.hasEffectCondition(rSource, "helpless") or EffectManager35E.hasEffectCondition(rSource, "paralyzed") or EffectManager35E.hasEffectCondition(rSource, "sleeping") or EffectManager35E.hasEffectCondition(rSource, "unconscious") or EffectManager35E.hasEffectCondition(rSource, "petrified") or EffectManager35E.hasEffectCondition(rSource, "bound") then
+						if EffectManager35E.hasEffectCondition(rSource, "helpless", sEffectSpell) or EffectManager35E.hasEffectCondition(rSource, "paralyzed", sEffectSpell) or EffectManager35E.hasEffectCondition(rSource, "sleeping", sEffectSpell) or EffectManager35E.hasEffectCondition(rSource, "unconscious", sEffectSpell) or EffectManager35E.hasEffectCondition(rSource, "petrified", sEffectSpell) or EffectManager35E.hasEffectCondition(rSource, "bound", sEffectSpell) then
 							condEvasion = false;
 						end
 						if condEvasion then
@@ -552,7 +487,6 @@ function applySave(rSource, rOrigin, rAction, sUser)
 				rAction.sResult = "half_failure";
 				TokenManager3.setSaveOverlay(ActorManager.getCTNode(rSource), -2);
 			else
-				-- KEL the failure is just for StrainInjury; here it has no use
 				rAction.sResult = "failure";
 				TokenManager3.setSaveOverlay(ActorManager.getCTNode(rSource), -1);
 			end

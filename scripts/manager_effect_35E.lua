@@ -294,20 +294,20 @@ function applyOngoingDamageAdjustment(nodeActor, nodeEffect, rEffectComp)
 		if sStatus == ActorHealthManager.STATUS_DEAD then
 			return;
 		end
-		if DB.getValue(nodeActor, "wounds", 0) == 0 and DB.getValue(nodeActor, "nonlethal", 0) == 0 then
+		if DB.getValue(nodeActor, "wounds", 0) == 0 and DB.getValue(nodeActor, "injury", 0) == 0 then
 			return;
 		end
 		
 		table.insert(aResults, "[FHEAL] Fast Heal");
-
+	-- KEL replace nonlethal
 	elseif rEffectComp.type == "REGEN" then
 		local bPFMode = DataCommon.isPFRPG();
 		if bPFMode then
-			if DB.getValue(nodeActor, "wounds", 0) == 0 and DB.getValue(nodeActor, "nonlethal", 0) == 0 then
+			if DB.getValue(nodeActor, "wounds", 0) == 0 and DB.getValue(nodeActor, "injury", 0) == 0 then
 				return;
 			end
 		else
-			if DB.getValue(nodeActor, "nonlethal", 0) == 0 then
+			if DB.getValue(nodeActor, "wounds", 0) == 0 then
 				return;
 			end
 		end
@@ -953,20 +953,20 @@ function checkConditional(rActor, nodeEffect, aConditions, rTarget, aIgnore, rEf
 	for _,v in ipairs(aConditions) do
 		local sLower = v:lower();
 		if sLower == DataCommon.healthstatusfull then
-			-- KEL Add true as second argument to avoid that effect icons check the stable effect all the time
-			local _,_,nPercentLethal = ActorManager35E.getWoundPercent(rActor, true);
+			-- KEL Add true as second argument to avoid that effect icons check the stable effect all the time (it is the third argument for StrainInjury! Do not forget the extra variable here)
+			local _,_,nPercentLethal = ActorManager35E.getWoundPercent(rActor, false, true);
 			if nPercentLethal > 0 then
 				bReturn = false;
 				break;
 			end
 		elseif sLower == DataCommon.healthstatushalf then
-			local _,_,nPercentLethal = ActorManager35E.getWoundPercent(rActor, true);
+			local _,_,nPercentLethal = ActorManager35E.getWoundPercent(rActor, false, true);
 			if nPercentLethal < .5 then
 				bReturn = false;
 				break;
 			end
 		elseif sLower == DataCommon.healthstatuswounded then
-			local _,_,nPercentLethal = ActorManager35E.getWoundPercent(rActor, true);
+			local _,_,nPercentLethal = ActorManager35E.getWoundPercent(rActor, false, true);
 			if nPercentLethal == 0 then
 				bReturn = false;
 				break;
@@ -1003,7 +1003,7 @@ function checkConditional(rActor, nodeEffect, aConditions, rTarget, aIgnore, rEf
 					break;
 				end
 			elseif sCustomCheck then
-				if not checkConditionalHelper(rActor, sCustomCheck, rTarget, aIgnore, rEffectSpell) then
+				if not checkConditionalHelper(rActor, sCustomCheck, rTarget, aIgnore,rEffectSpell) then
 					bReturn = false;
 					break;
 				end
@@ -1099,13 +1099,11 @@ end
 function checkTagConditional(aConditions, rEffectSpell)
 	if rEffectSpell then
 		local tagshelp = StringManager.parseWords(rEffectSpell);
-		
 		if not tagshelp[1] then
 			return false;
 		end
 		
 		local i = 1;
-		
 		for _,v in ipairs(aConditions) do	
 			while tagshelp[i] do
 				if tagshelp[i] == v then

@@ -117,31 +117,38 @@ function onSpellTargeting(rSource, aTargeting, rRolls)
 
 	return aTargeting;
 end
-
-function getSpellCastRoll(rActor, rAction)
+-- KEL adding tags
+function getSpellCastRoll(rActor, rAction, tag)
 	local rRoll = {};
 	rRoll.sType = "cast";
 	rRoll.aDice = {};
 	rRoll.nMod = 0;
+	-- KEL
+	rRoll.tags = tag;
+	-- END
 	
 	rRoll.sDesc = "[CAST";
 	if rAction.order and rAction.order > 1 then
 		rRoll.sDesc = rRoll.sDesc .. " #" .. rAction.order;
 	end
 	rRoll.sDesc = rRoll.sDesc .. "] " .. rAction.label;
-	-- Adding new information
-	rRoll.school = rAction.school;
-	rRoll.spelltype = rAction.stype;
-	rRoll.tags = rAction.tags;
+	
+	-- KEL adding tags to chat message
+	if rRoll.tags then
+		rRoll.sDesc = rRoll.sDesc .. " [TAGS: " .. rRoll.tags .. "]";
+	end
+	-- END
 	
 	return rRoll;
 end
-
-function getCLCRoll(rActor, rAction)
+-- END
+-- KEL adding tags
+function getCLCRoll(rActor, rAction, tag)
 	local rRoll = {};
 	rRoll.sType = "clc";
 	rRoll.aDice = { "d20" };
 	rRoll.nMod = rAction.clc or 0;
+	rRoll.tags = tag;
 	
 	rRoll.sDesc = "[CL CHECK";
 	if rAction.order and rAction.order > 1 then
@@ -151,27 +158,19 @@ function getCLCRoll(rActor, rAction)
 	if rAction.sr == "no" then
 		rRoll.sDesc = rRoll.sDesc .. " [SR NOT ALLOWED]";
 	end
-	-- Adding new information
-	rRoll.school = rAction.school;
-	rRoll.spelltype = rAction.stype;
-	rRoll.tags = rAction.tags;
 	
 	return rRoll;
 end
-
-function getSaveVsRoll(rActor, rAction)
+-- END
+-- KEL adding tags
+function getSaveVsRoll(rActor, rAction, tag)
 	local rRoll = {};
 	rRoll.sType = "spellsave";
 	rRoll.aDice = {};
+	-- KEL Save the new tags information (of the bottom line)
+	rRoll.tags = tag;
 	-- KEL DC effect
-	local rEffectSpell = "";
-	local semicolon = ";";
-	rEffectSpell = rAction.stype .. semicolon .. rAction.school .. semicolon .. rAction.tags;
-	local tagshelp = StringManager.parseWords(rEffectSpell);	
-	if not tagshelp[1] then
-		rEffectSpell = nil;
-	end
-	local nDCMod, nDCCount = EffectManager35E.getEffectsBonus(rActor, {"DC"}, true, nil, nil, false, rEffectSpell);
+	local nDCMod, nDCCount = EffectManager35E.getEffectsBonus(rActor, {"DC"}, true, nil, nil, false, rRoll.tags);
 	rAction.savemod = rAction.savemod + nDCMod;
 	-- END
 	rRoll.nMod = rAction.savemod or 0;
@@ -198,51 +197,10 @@ function getSaveVsRoll(rActor, rAction)
 	if rAction.onmissdamage == "half" then
 		rRoll.sDesc = rRoll.sDesc .. " [HALF ON SAVE]";
 	end
-	-- KEL Save versus tags new descriptions
-	if rAction.stype == "spell" then
-		rRoll.sDesc = rRoll.sDesc .. " [SPELL]";
-	end
-	if rAction.stype == "spelllike" then
-		rRoll.sDesc = rRoll.sDesc .. " [SPELLLIKE]";
-	end
-	if rAction.school == "abjuration" then
-		rRoll.sDesc = rRoll.sDesc .. " [ABJURATION]";
-	end
-	if rAction.school == "conjuration" then
-		rRoll.sDesc = rRoll.sDesc .. " [CONJURATION]";
-	end
-	if rAction.school == "divination" then
-		rRoll.sDesc = rRoll.sDesc .. " [DIVINATION]";
-	end
-	if rAction.school == "enchantment" then
-		rRoll.sDesc = rRoll.sDesc .. " [ENCHANTMENT]";
-	end
-	if rAction.school == "evocation" then
-		rRoll.sDesc = rRoll.sDesc .. " [EVOCATION]";
-	end
-	if rAction.school == "illusion" then
-		rRoll.sDesc = rRoll.sDesc .. " [ILLUSION]";
-	end
-	if rAction.school == "necromancy" then
-		rRoll.sDesc = rRoll.sDesc .. " [NECROMANCY]";
-	end
-	if rAction.school == "transmutation" then
-		rRoll.sDesc = rRoll.sDesc .. " [TRANSMUTATION]";
-	end
-	if rAction.school == "universal" then
-		rRoll.sDesc = rRoll.sDesc .. " [UNIVERSAL]";
-	end
-	if rAction.tags ~= "" then
-		rRoll.sDesc = rRoll.sDesc .. " [Other tags: " .. rAction.tags .. "]";
-	end
-	-- END new descriptions
-	
-	-- Save the new tags information (of the bottom line)
-	rRoll.tags = rAction.tags;
 	
 	return rRoll;
 end
-
+-- END
 function modCastSave(rSource, rTarget, rRoll)
 	if rSource then
 		local sActionStat = nil;
@@ -268,17 +226,9 @@ function modCLC(rSource, rTarget, rRoll)
 		local aAddDice = {};
 		local nAddMod = 0;
 		
-		-- KEL Adding immunity against tags
-		local rEffectSpell = "";
-		local semicolon = ";";
-		rEffectSpell = rRoll.spelltype .. semicolon .. rRoll.school .. semicolon .. rRoll.tags;
-		local tagshelp = StringManager.parseWords(rEffectSpell);
-		if not tagshelp[1] then
-			rEffectSpell = nil;
-		end
-		
 		-- Get CLC modifier effects
-		local nCLCMod, nCLCCount = EffectManager35E.getEffectsBonus(rSource, {"CLC"}, true, nil, rTarget, false, rEffectSpell);
+		-- KEL adding tags
+		local nCLCMod, nCLCCount = EffectManager35E.getEffectsBonus(rSource, {"CLC"}, true, nil, rTarget, false, rRoll.tags);
 		-- END
 		if nCLCCount > 0 then
 			bEffects = true;
@@ -287,7 +237,7 @@ function modCLC(rSource, rTarget, rRoll)
 		
 		-- Get negative levels
 		-- KEL add tags
-		local nNegLevelMod, nNegLevelCount = EffectManager35E.getEffectsBonus(rSource, {"NLVL"}, true, nil, nil, false, rEffectSpell);
+		local nNegLevelMod, nNegLevelCount = EffectManager35E.getEffectsBonus(rSource, {"NLVL"}, true, nil, nil, false, rRoll.tags);
 		-- END
 		if nNegLevelCount > 0 then
 			bEffects = true;
@@ -344,16 +294,8 @@ function onSpellCast(rSource, rTarget, rRoll)
 	if rTarget then
 		rMessage.text = rMessage.text .. " [at " .. ActorManager.getDisplayName(rTarget) .. "]";
 		-- KEL Adding immunity against tags and overlays
-		local rEffectSpell = "";
-		local semicolon = ";";
-		rEffectSpell = rRoll.spelltype .. semicolon .. rRoll.school .. semicolon .. rRoll.tags;
-		local tagshelp = StringManager.parseWords(rEffectSpell);
-		if not tagshelp[1] then
-			rEffectSpell = nil;
-		end
-		
-		local spellImmunity = EffectManager35E.hasEffect(rTarget, "SIMMUNE", rSource, false, false, rEffectSpell);
-		
+		local spellImmunity = EffectManager35E.hasEffect(rTarget, "SIMMUNE", rSource, false, false, rRoll.tags);
+		-- END
 		if spellImmunity then
 			rMessage.text = rMessage.text .. " [IMMUNE]";
 			rMessage.icon = "spell_fail";
@@ -382,20 +324,12 @@ end
 function onCastCLC(rSource, rTarget, rRoll)
 	if rTarget then
 		-- KEL adding SR and tags
-		local rEffectSpell = "";
-		local semicolon = ";";
-		rEffectSpell = rRoll.spelltype .. semicolon .. rRoll.school .. semicolon .. rRoll.tags;
-		local tagshelp = StringManager.parseWords(rEffectSpell);
-		if not tagshelp[1] then
-			rEffectSpell = nil;
-		end
-		
-		local nSRMod, nSRCount = EffectManager35E.getEffectsBonus(rTarget, {"SR"}, true, nil, rSource, false, rEffectSpell);
+		local nSRMod, nSRCount = EffectManager35E.getEffectsBonus(rTarget, {"SR"}, true, nil, rSource, false, rRoll.tags);
 		
 		local nSR = math.max(ActorManager35E.getSpellDefense(rTarget), nSRMod);
 		if nSR > 0 then
 			if not string.match(rRoll.sDesc, "%[SR NOT ALLOWED%]") then
-				local rRoll = { sType = "clc", sDesc = rRoll.sDesc, aDice = {"d20"}, nMod = rRoll.nMod, bRemoveOnMiss = rRoll.bRemoveOnMiss, spelltype = rRoll.spelltype, school = rRoll.school, tags = rRoll.tags };
+				local rRoll = { sType = "clc", sDesc = rRoll.sDesc, aDice = {"d20"}, nMod = rRoll.nMod, bRemoveOnMiss = rRoll.bRemoveOnMiss, tags = rRoll.tags };
 		-- END
 				ActionsManager.actionDirect(rSource, "clc", { rRoll }, { { rTarget } });
 				return true;
@@ -430,16 +364,8 @@ function onCLC(rSource, rTarget, rRoll)
 	
 	if rTarget then
 		-- KEL adding SR and overlays etc
-		local rEffectSpell = "";
-		local semicolon = ";";
-		rEffectSpell = rRoll.spelltype .. semicolon .. rRoll.school .. semicolon .. rRoll.tags;
-		local tagshelp = StringManager.parseWords(rEffectSpell);
-		if not tagshelp[1] then
-			rEffectSpell = nil;
-		end
-		
 		-- Effect called again, but no problem for [ROLL] etc. because of bSRAllowed check. Maybe change later for performance and aesthetics?
-		local nSRMod, nSRCount = EffectManager35E.getEffectsBonus(rTarget, {"SR"}, true, nil, rSource, false, rEffectSpell);
+		local nSRMod, nSRCount = EffectManager35E.getEffectsBonus(rTarget, {"SR"}, true, nil, rSource, false, rRoll.tags);
 		rMessage.text = rMessage.text .. " [at " .. ActorManager.getDisplayName(rTarget) .. "]";
 		
 		if bSRAllowed then

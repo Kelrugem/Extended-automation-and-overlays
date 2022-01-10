@@ -198,8 +198,10 @@ function getEffectAdjustments(rActor, sActionStat)
 		bEffects = true;
 		nEffectMod = nEffectMod - 4;
 	end
-
+	
+	-- KEL adding advantage count
 	return bEffects, aEffectDice, nEffectMod, nAdv;
+	-- END
 end
 
 function onResolve(rSource, rTarget, rRoll)
