@@ -32,7 +32,6 @@ iftagcomp = {
 	"mind-affecting",
 	"mindaffecting"
 }
--- END
 tconstructtraits = {
 	"mindaffecting",
 	"death",
@@ -73,6 +72,7 @@ tundeadtraits = {
 tvermintraits = {
 	"mindaffecting"
 }
+-- END
 -- Adding ethereal; need to overwrite full vector for ordering
 conditions = {
 	"blinded", 
@@ -152,7 +152,7 @@ function onInit()
 	table.remove(DataCommon.immunetypes, 8);
 	table.remove(DataCommon.immunetypes, 8);
 	-- KEL Modifier buttons
-	ModifierManager.addModWindowPresets({ { sCategory = "damage", tPresets = { "DMG_INJURY", "DMG_ACCURACY" } } });
+	ModifierManager.addModWindowPresets({ { sCategory = "damage", tPresets = { "DMG_ACCURACY" } } });
 	ModifierManager.addModWindowPresets({ { sCategory = "general", tPresets = { "ADV", "DISADV" } } });
 	ModifierManager.addKeyExclusionSets({ { "ADV", "DISADV" } });
 	

@@ -26,36 +26,36 @@ end
 -- NOTE 2: We can not use default effect checking in this function; 
 -- 		as it will cause endless loop with conditionals that check health
 
--- KEL adding variable for unconscious treatment etc. (yeah, I know that it has a typo.. :P), measuring whether damage is nonlethal. Also adding bNoIcon to treat NOTE 2
-function getWoundPercent(v, bNonLethalUncons, bNoIcon)
+-- KEL adding bNoIcon to treat NOTE 2
+function getWoundPercent(v, bNoIcon)
 	local rActor = ActorManager.resolveActor(v);
 
 	local nHP = 0;
 	local nTemp = 0;
 	local nWounds = 0;
-    local nInjury = 0;
-	
+	local nNonlethal = 0;
+
 	local nodeCT = ActorManager.getCTNode(rActor);
 	if nodeCT then
 		nHP = math.max(DB.getValue(nodeCT, "hp", 0), 0);
 		nTemp = math.max(DB.getValue(nodeCT, "hptemp", 0), 0);
 		nWounds = math.max(DB.getValue(nodeCT, "wounds", 0), 0);
-        nInjury = math.max(DB.getValue(nodeCT, "injury", 0), 0);
+		nNonlethal = math.max(DB.getValue(nodeCT, "nonlethal", 0), 0);
 	elseif ActorManager.isPC(rActor) then
 		local nodePC = ActorManager.getCreatureNode(rActor);
 		if nodePC then
 			nHP = math.max(DB.getValue(nodePC, "hp.total", 0), 0);
 			nTemp = math.max(DB.getValue(nodePC, "hp.temporary", 0), 0);
 			nWounds = math.max(DB.getValue(nodePC, "hp.wounds", 0), 0);
-			nInjury = math.max(DB.getValue(nodePC, "hp.injury", 0), 0);
+			nNonlethal = math.max(DB.getValue(nodePC, "hp.nonlethal", 0), 0);
 		end
 	end
 	
 	local nPercentLethal = 0;
 	local nPercentNonlethal = 0;
 	if nHP > 0 then
-		nPercentLethal = (nWounds + nInjury) / nHP;
-		nPercentNonlethal = (nWounds + nInjury) / (nHP + nTemp);
+		nPercentLethal = nWounds / nHP;
+		nPercentNonlethal = (nWounds + nNonlethal) / (nHP + nTemp);
 	end
 	
 	-- KEL Adding overlays
@@ -67,10 +67,10 @@ function getWoundPercent(v, bNonLethalUncons, bNoIcon)
 	if bDiesAtZero and nPercentLethal >= 1 then
 		sStatus = ActorHealthManager.STATUS_DEAD;
 		TokenManager3.setDeathOverlay(nodeCT, 1);
-	elseif nPercentLethal > 1 and not bNonLethalUncons then
+	elseif nPercentLethal > 1 then
 		local nDying = GameSystem.getDeathThreshold(rActor);
 		
-		if ((nWounds + nInjury) - nHP) < nDying then
+		if (nWounds - nHP) < nDying then
 			sStatus = ActorHealthManager.STATUS_DYING;
 			if not bNoIcon then
 				if EffectManager35E.hasEffectCondition(rActor, "Stable") then
@@ -83,15 +83,16 @@ function getWoundPercent(v, bNonLethalUncons, bNoIcon)
 			sStatus = ActorHealthManager.STATUS_DEAD;
 			TokenManager3.setDeathOverlay(nodeCT, 1);
 		end
-	-- KEL Adding unconscious/stable effect such that stabilization will not be triggered (and removing for dying)
-	elseif nPercentNonlethal >= 1 and bNonLethalUncons then
+	elseif nPercentNonlethal > 1 then
 		sStatus = ActorHealthManager.STATUS_UNCONSCIOUS;
 		TokenManager3.setDeathOverlay(nodeCT, 9);
-		applyStableEffect(rActor);
 	elseif nPercentLethal == 1 then
 		sStatus = ActorHealthManager.STATUS_DISABLED;
 		TokenManager3.setDeathOverlay(nodeCT, 8);
-	-- KEL we keep the following structure instead of replacing with ActorHealthManager.getDefaultStatusFromWoundPercent; maybe replace the value of the deathNode with the status string, then this code could be more elegant. Our approach however is a biiiiit better since it has one less if-clause (and a number for deathNode may be better in sense of bytes)
+	elseif nPercentNonlethal == 1 then
+		sStatus = ActorHealthManager.STATUS_STAGGERED;
+		TokenManager3.setDeathOverlay(nodeCT, 10);
+	-- KEL we keep the following structure instead of replacing with ActorHealthManager.getDefaultStatusFromWoundPercent (see this function as reference); maybe replace the value of the deathNode with the status string, then this code could be more elegant. Our approach however is a biiiiit better since it has one less if-clause (and a number for deathNode may be better in sense of bytes)
 	elseif nPercentNonlethal > 0 then
 		local bDetailedStatus = OptionsManager.isOption("WNDC", "detailed");
 	
@@ -125,8 +126,7 @@ function getWoundPercent(v, bNonLethalUncons, bNoIcon)
 	
 	return nPercentNonlethal, sStatus, nPercentLethal;
 end
--- END
--- KEL adjusting for StrainInjury; but colour can't be always correct because of lack of bNonLethalUncons (see function above; needed for incoming damage stuff and applying stable effect etc.)
+
 function getPCSheetWoundColor(nodePC)
 	local nHP = 0;
 	local nTemp = 0;
@@ -136,14 +136,14 @@ function getPCSheetWoundColor(nodePC)
 		nHP = math.max(DB.getValue(nodePC, "hp.total", 0), 0);
 		nTemp = math.max(DB.getValue(nodePC, "hp.temporary", 0), 0);
 		nWounds = math.max(DB.getValue(nodePC, "hp.wounds", 0), 0);
-		nInjury = math.max(DB.getValue(nodeCT, "injury", 0), 0);
+		nNonlethal = math.max(DB.getValue(nodePC, "hp.nonlethal", 0), 0);
 	end
 
 	local nPercentLethal = 0;
 	local nPercentNonlethal = 0;
 	if nHP > 0 then
-		nPercentLethal = (nWounds + nInjury) / nHP;
-		nPercentNonlethal = (nWounds + nInjury) / (nHP + nTemp);
+		nPercentLethal = nWounds / nHP;
+		nPercentNonlethal = (nWounds + nNonlethal) / (nHP + nTemp);
 	end
 	
 	if nPercentLethal > 1 then

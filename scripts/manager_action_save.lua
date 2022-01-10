@@ -487,6 +487,7 @@ function applySave(rSource, rOrigin, rAction, sUser)
 				rAction.sResult = "half_failure";
 				TokenManager3.setSaveOverlay(ActorManager.getCTNode(rSource), -2);
 			else
+				-- KEL the failure is just for StrainInjury; here it has no use
 				rAction.sResult = "failure";
 				TokenManager3.setSaveOverlay(ActorManager.getCTNode(rSource), -1);
 			end

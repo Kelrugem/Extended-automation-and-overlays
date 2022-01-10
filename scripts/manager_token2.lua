@@ -9,8 +9,6 @@ OOB_MSGTYPE_APPLYOVERLAY = "applyoverlay";
 OOB_MSGTYPE_APPLYWOUNDS = "applywounds";
 
 function onInit()
-	-- KEL For StrainInjury the first line extra
-	TokenManager.addDefaultHealthFeatures(getHealthInfo, {"injury"});
 	TokenManager.addEffectTagIconSimple("NIFT", "");
 	TokenManager.addEffectTagIconSimple("NIF", "");
 	TokenManager.addEffectTagIconSimple("IFTAG", "");
@@ -20,11 +18,6 @@ function onInit()
     DB.addHandler("combattracker.list.*.death", "onUpdate", updateDeathOverlay);
 	OOBManager.registerOOBMsgHandler(OOB_MSGTYPE_APPLYOVERLAY, handleApplyOverlay);
 	OOBManager.registerOOBMsgHandler(OOB_MSGTYPE_APPLYWOUNDS, handleApplyWounds);
-end
-
-function getHealthInfo(nodeCT)
-	local rActor = ActorManager.resolveActor(nodeCT);
-	return ActorHealthManager.getTokenHealthInfo(rActor);
 end
 
 function setSaveOverlay(nodeCT, success, erase)

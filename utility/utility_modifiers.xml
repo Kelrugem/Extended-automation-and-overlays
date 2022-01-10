@@ -6,7 +6,6 @@
 -->
 
 <root>
-	<string name="modifier_label_DMG_INJURY">Injury</string>
 	<string name="modifier_label_DMG_ACCURACY">Accuracy</string>
 	<string name="modifier_category_general">General</string>
 	<string name="modifier_label_ADV">Advantage</string>
