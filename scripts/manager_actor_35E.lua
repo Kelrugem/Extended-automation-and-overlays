@@ -1042,31 +1042,41 @@ function getSize(rActor)
 	local nActorSize = nil;
 	
 	local sNodeType, nodeActor = ActorManager.getTypeAndNode(rActor);
-	local sField;
 	if sNodeType == "pc" then
-		sField = "size";
-	else
-		sField = "type";
-	end
-	local aActorSplit = StringManager.split(DB.getValue(nodeActor, sField, ""):lower(), " \n", true);
-	for _,v in ipairs(aActorSplit) do
-		if not nActorSize and DataCommon.creaturesize[v] then
-			nActorSize = DataCommon.creaturesize[v];
-			break;
+		local sSize = DB.getValue(nodeActor, "size", ""):lower();
+		local aActorSplit = StringManager.split(sSize, " \n", true);
+		for _,v in ipairs(aActorSplit) do
+			if not nActorSize and DataCommon.creaturesize[v] then
+				nActorSize = DataCommon.creaturesize[v];
+				break;
+			end
 		end
-		if (sNodeType ~= "pc") and 
-				not DataCommon.alignment_lawchaos[v] and 
-				not DataCommon.alignment_goodevil[v] and 
-				(v ~= DataCommon.alignment_neutral) and 
-				not DataCommon.creaturesize[v] then
-			break;
+	else
+		local sType = DB.getValue(nodeActor, "type", ""):lower();
+		local tLines = StringManager.splitByPattern(sType, "\n", true);
+		for _,sLine in ipairs(tLines) do
+			local tWords = StringManager.splitByPattern(sLine, "%s+", true);
+			if #tWords > 0 then
+				if DataCommon.creaturesize[tWords[1]] 
+						or DataCommon.alignment_lawchaos[tWords[1]] 
+						or DataCommon.alignment_goodevil[tWords[1]] 
+						or (tWords[1] == DataCommon.alignment_neutral) 
+						then
+					for _,sWord in ipairs(tWords) do
+						if DataCommon.creaturesize[sWord] then
+							nActorSize = DataCommon.creaturesize[sWord];
+							break;
+						end
+					end
+				end
+			end
+			if nActorSize then
+				break;
+			end
 		end
 	end
 	
-	if not nActorSize then
-		nActorSize = 0;
-	end
-	return nActorSize;
+	return nActorSize or 0;
 end
 
 function isSize(rActor, sSizeCheck)

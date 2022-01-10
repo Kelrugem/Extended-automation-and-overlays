@@ -251,7 +251,9 @@ function modCastSave(rSource, rTarget, rRoll)
 			sActionStat = DataCommon.ability_stol[sModStat];
 		end
 		if sActionStat then
-			local nBonusStat, nBonusEffects = ActorManager35E.getAbilityEffectsBonus(rSource, sActionStat);
+			-- KEL adding tags
+			local nBonusStat, nBonusEffects = ActorManager35E.getAbilityEffectsBonus(rSource, sActionStat, rRoll.tags);
+			-- END
 			if nBonusEffects > 0 then
 				local sFormat = "[" .. Interface.getString("effects_tag") .. " %+d]";
 				rRoll.sDesc = rRoll.sDesc .. " " .. string.format(sFormat, nBonusStat);

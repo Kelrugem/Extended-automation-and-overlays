@@ -687,9 +687,17 @@ function getEffectsBonusByType(rActor, aEffectType, bAddEmptyBonus, aFilter, rFi
 			local dmg_type = nil;
 			local mod_type = nil;
 			for _,v3 in pairs(v2.remainder) do
-				if StringManager.contains(DataCommon.dmgtypes, v3) or StringManager.contains(DataCommon.immunetypes, v3) or v3 == "all" then
-					dmg_type = v3;
-					break;
+				-- KEL DataCommon.immunetypes check actually not needed in this extension
+				if StringManager.contains(DataCommon.dmgtypes, v3) or v3 == "all" then
+					-- KEL fix damage type distribution to allow chains of damage types
+					-- dmg_type = v3;
+					-- break;
+					if dmg_type then
+						dmg_type = dmg_type .. ", " .. v3;
+					else
+						dmg_type = v3;
+					end
+					-- END
 				elseif StringManager.contains(DataCommon.bonustypes, v3) then
 					mod_type = v3;
 					break;

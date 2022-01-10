@@ -74,7 +74,7 @@ function getNPCSpaceReach(nodeNPC)
 	
 	return nSpace, nReach;
 end
-
+-- KEL for NPC parsing
 function tableConcat(origTable, addTable)
 	for _,v in pairs(addTable) do
 		if not(StringManager.contains(origTable, v)) then
@@ -82,7 +82,7 @@ function tableConcat(origTable, addTable)
 		end
 	end
 end
-
+-- END
 function addNPC(sClass, nodeNPC, sName)
 	local nodeEntry, nodeLastMatch = CombatManager.addNPCHelper(nodeNPC, sName);
 
@@ -212,6 +212,9 @@ function addNPC(sClass, nodeNPC, sName)
 	local bImmuneNonlethal = false;
 	local bImmuneCritical = false;
 	local bImmunePrecision = false;
+	-- KEL adding Revert effects
+	local bRevert = false;
+	-- END
 	if bPFMode then
 		local bElemental = false;
 		if StringManager.contains(aTypes, "construct") then
@@ -233,6 +236,9 @@ function addNPC(sClass, nodeNPC, sName)
 			table.insert(aEffects, "Undead traits");
 			bImmuneNonlethal = true;
 			tableConcat(sIftagcomp, DataCommon2.tundeadtraits);
+			-- KEL
+			bRevert = true;
+			-- END
 		elseif StringManager.contains(aTypes, "vermin") then
 			tableConcat(sIftagcomp, DataCommon2.tvermintraits);
 		end
@@ -289,6 +295,9 @@ function addNPC(sClass, nodeNPC, sName)
 			bImmuneNonlethal = true;
 			bImmuneCritical = true;
 			bImmunePrecision = true;
+			-- KEL
+			bRevert = true;
+			-- END
 			tableConcat(sIftagcomp, DataCommon2.tundeadtraits);
 		end
 		if StringManager.contains(aSubTypes, "swarm") then
@@ -306,6 +315,12 @@ function addNPC(sClass, nodeNPC, sName)
 	if bImmunePrecision then
 		table.insert(aEffects, "IMMUNE: precision");
 	end
+	-- KEL
+	if bRevert then
+		table.insert(aEffects, "REVERT: positive");
+		table.insert(aEffects, "REVERT: negative");
+	end
+	-- END
 
 	-- DECODE SPECIAL QUALITIES
 	local sSpecialQualities = string.lower(DB.getValue(nodeNPC, "specialqualities", ""));

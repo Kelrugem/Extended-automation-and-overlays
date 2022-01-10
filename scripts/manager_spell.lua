@@ -1194,6 +1194,26 @@ function getTagsFromAction(rAction)
 end
 --END
 
+function getActionAbilityBonus(nodeAction)
+	local nodeSpellClass = nodeAction.getChild(".......");
+	local nodeCreature = nodeSpellClass.getChild("...");
+
+	local sAbility = DB.getValue(nodeSpellClass, "dc.ability", "");
+
+	local rActor = ActorManager.resolveActor(nodeCreature);
+	local nStat = ActorManager35E.getAbilityBonus(rActor, sAbility);
+	
+	-- KEL replace DC if necessary; use getAbilityBonus to have the DC update when ability changes because replacedc.abilitymod does only get updated when save definition window is opened
+	local sReplAbil = DB.getValue(nodeAction, "replacedc.ability", "");
+	if sReplAbil ~= "" then
+		-- nStat = DB.getValue(nodeAction, "replacedc.abilitymod", 0);
+		nStat = ActorManager35E.getAbilityBonus(rActor, sReplAbil);
+	end
+	-- END
+	
+	return nStat;
+end
+
 function getActionCLC(nodeAction)
 	local nStat = DB.getValue(nodeAction, ".......cl", 0);
 	local nPen = DB.getValue(nodeAction, ".......sp", 0);
@@ -1204,39 +1224,23 @@ end
 
 function getActionSaveDC(nodeAction)
 	local nTotal;
-	-- KEL Actor information
-	local nodeCreature = nodeAction.getChild(".........");
-	local rActor = ActorManager.resolveActor(nodeCreature);
-	-- END
 	
 	if DB.getValue(nodeAction, "savedctype", "") == "fixed" then
 		nTotal = DB.getValue(nodeAction, "savedcmod", 0);
     elseif DB.getValue(nodeAction, "savedctype", "") == "casterlevel" then
-		local nStat = DB.getValue(nodeAction, ".......dc.abilitymod", 0);
-		-- KEL replace DC if necessary; use getAbilityBonus to have the DC update when ability changes because replacedc.abilitymod does only get updated when save definition window is opened
-		local sReplAbil = DB.getValue(nodeAction, "replacedc.ability", "");
-		if sReplAbil ~= "" then
-			-- nStat = DB.getValue(nodeAction, "replacedc.abilitymod", 0);
-			nStat = ActorManager35E.getAbilityBonus(rActor, sReplAbil);
-		end
-		-- END
-        local nLevel = math.floor(DB.getValue(nodeAction, ".......cl", 0)/2);
+		local nClassStat = getActionAbilityBonus(nodeAction);
+		local nClassMisc = DB.getValue(nodeAction, ".......dc.misc", 0);
+        local nCasterLevel = math.floor(DB.getValue(nodeAction, ".......cl", 0)/2);
         local nMod = DB.getValue(nodeAction, "savedcmod", 0);
 
-        nTotal = 10 + nStat + nLevel + nMod;
+        nTotal = 10 + nClassStat + nClassMisc + nCasterLevel + nMod;
 	else
-		local nStat = DB.getValue(nodeAction, ".......dc.total", 0);
-		-- KEL replace DC if necessary; beware, here total, so, "different" formula (i.e the other formula is the same but simplified)
-		local sReplAbil = DB.getValue(nodeAction, "replacedc.ability", "");
-		if sReplAbil ~= "" then
-			-- nStat = nStat - DB.getValue(nodeAction, ".......dc.abilitymod", 0) + DB.getValue(nodeAction, "replacedc.abilitymod", 0);
-			nStat = nStat - DB.getValue(nodeAction, ".......dc.abilitymod", 0) + ActorManager35E.getAbilityBonus(rActor, sReplAbil);
-		end
-		-- END
-		local nLevel = DB.getValue(nodeAction, ".....level", 0);
+		local nClassStat = getActionAbilityBonus(nodeAction);
+		local nClassMisc = DB.getValue(nodeAction, ".......dc.misc", 0);
+		local nSpellLevel = DB.getValue(nodeAction, ".....level", 0);
 		local nMod = DB.getValue(nodeAction, "savedcmod", 0);
 		
-		nTotal = nStat + nLevel + nMod;
+		nTotal = 10 + nClassStat + nClassMisc + nSpellLevel + nMod;
 	end
 	
 	return nTotal;
