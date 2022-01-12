@@ -7,6 +7,7 @@
 
 <root>
 	<string name="modifier_label_DMG_ACCURACY">Accuracy</string>
+	<string name="modifier_label_ATT_CA">Combat Adv.</string>
 	<string name="modifier_category_general">General</string>
 	<string name="modifier_label_ADV">Advantage</string>
 	<string name="modifier_label_DISADV">Disadvantage</string>

@@ -216,12 +216,19 @@ function modSave(rSource, rTarget, rRoll)
 		
 		-- Determine flatfooted status
 		local bFlatfooted = false;
-		if not rRoll.bVsSave and ModifierManager.getKey("ATT_FF") then
-			bFlatfooted = true;
-		elseif EffectManager35E.hasEffect(rSource, "Flat-footed", nil, false, false, rRoll.tags) or EffectManager35E.hasEffect(rSource, "Flatfooted", nil, false, false, rRoll.tags) then
+		-- KEL add CA button and uncanny dodge
+		local bCAKel = false;
+		local bUncanny = ActorManager35E.hasSpecialAbility(rSource, "Uncanny Dodge", false, false, true);
+		if not rRoll.bVsSave then
+			local bFFbutton = ModifierManager.getKey("ATT_FF");
+			if not bUncanny then
+				bFlatfooted = bFFbutton;
+			end
+			bCAKel = ModifierManager.getKey("ATT_CA");
+		elseif ( EffectManager35E.hasEffect(rSource, "Flat-footed", nil, false, false, rRoll.tags) or EffectManager35E.hasEffect(rSource, "Flatfooted", nil, false, false, rRoll.tags) ) and not bUncanny then
 			bFlatfooted = true;
 		end
-		
+		-- END
 		-- Get effect modifiers
 		local rSaveSource = nil;
 		if rRoll.sSource then
@@ -250,10 +257,12 @@ function modSave(rSource, rTarget, rRoll)
 			-- Dodge bonuses stack (by rules)
 			if sBonusType then
 				if sBonusType == "dodge" then
-					if not bFlatfooted then
+					-- KEL CA
+					if not bFlatfooted and not bCAKel then
 						nAddMod = nAddMod + v.mod;
 						bEffects = true;
 					end
+					-- END
 				elseif aExistingBonusByType[sBonusType] then
 					if v.mod < 0 then
 						nAddMod = nAddMod + v.mod;
@@ -310,6 +319,11 @@ function modSave(rSource, rTarget, rRoll)
 		if bFlatfooted then
 			table.insert(aAddDesc, "[FF]");
 		end
+		-- KEL CA
+		if bCAKel then
+			table.insert(aAddDesc, "[CA]");
+		end
+		-- END
 
 		-- If effects, then add them
 		if bEffects then
