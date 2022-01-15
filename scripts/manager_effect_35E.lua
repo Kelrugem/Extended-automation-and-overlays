@@ -330,7 +330,7 @@ end
 
 function evalAbilityHelper(rActor, sEffectAbility, nodeSpellClass)
 	-- KEL We add DCrumbs max stuff but we do it differently (espcially min is not needed)
-	local sSign, sModifier, sNumber, sShortAbility, nMax = sEffectAbility:match("^%[([%+%-]?)([HTQd]?)([%d]?)([A-Z][A-Z][A-Z]?)(%d*)%]$");
+	local sSign, sModifier, sNumber, sShortAbility, nMax = sEffectAbility:match("^%[([%+%-]?)([HTQOd]?)([%d]?)([A-Z][A-Z][A-Z]?)(%d*)%]$");
 	-- KEL adding rollable stats (for damage especially)
 	-- local sSign, sDieSides = sEffectAbility:match("^%[([%-%+]?)[dD]([%dF]+)%]$");
 	local sDie, sDesc = sEffectAbility:match("^%[%s*(%S+)%s*(.*)%]$");
@@ -390,6 +390,8 @@ function evalAbilityHelper(rActor, sEffectAbility, nodeSpellClass)
 	if nAbility and not IsDie then
 		if sModifier == "H" then
 			nAbility = nAbility / 2;
+		elseif sModifier == "O" then
+			nAbility = math.ceil(nAbility / 2);
 		elseif sModifier == "T" then
 			nAbility = nAbility / 3;
 		elseif sModifier == "Q" then
