@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+
+<!-- 
+  Please see the license.html file included with this distribution for 
+  attribution and copyright information.
+-->
+
+<root>
+
+	<!-- Combat Tracker -->
+	<string name="ct_label_strain">Strn</string>
+	<string name="ct_label_injury">Inj</string>
+
+	<string name="ct_tooltip_strain">Strain</string>
+	<string name="ct_tooltip_injury">Injury</string>
+
+	<!-- Modifiers -->
+	<string name="modifier_label_dmginjury">Injury</string>
+
+	<!-- Character - Mini -->
+	<string name="charmini_label_strain">Strn</string>
+	<string name="charmini_label_injury">Inj</string>
+
+	<!-- Character - Main -->
+	<string name="char_label_strain">Strain</string>
+	<string name="char_label_injury">Injury</string>
+
+	<string name="char_tooltip_strain">Strain</string>
+	<string name="char_tooltip_injury">Injury</string>
+	
+	<!-- KEL AoO etc -->
+	<string name="attackofOp">AoO</string>
+	<string name="attackofOpOf">/</string>
+	<string name="option_label_FFOS">Add: Flatfooted on combat start</string>
+	<string name="option_label_SO">Save/Failure Overlay</string>
+	<string name="option_label_WO">Wound and Death Overlay</string>
+	<string name="option_header_overlays">Overlays</string>
+	<string name="option_val_standard">Standard</string>
+	<string name="power_label_school">School</string>
+	<string name="power_label_schoolnone">None</string>
+	<string name="power_label_schoolabjuration">Abjuration</string>
+	<string name="power_label_schoolconjuration">Conjuration</string>
+	<string name="power_label_schooldivination">Divination</string>
+	<string name="power_label_schoolenchantment">Enchantment</string>
+	<string name="power_label_schoolevocation">Evocation</string>
+	<string name="power_label_schoolillusion">Illusion</string>
+	<string name="power_label_schoolnecromancy">Necromancy</string>
+	<string name="power_label_schooltransmutation">Transmutation</string>
+	<string name="power_label_schooluniversal">Universal</string>
+	<string name="power_label_type">Type</string>
+	<string name="power_label_typespell">Spell</string>
+	<string name="power_label_typespelllike">Spell-Like</string>
+	<string name="power_label_othertags">Other properties and tags</string>
+	<string name="power_label_othertagsnone">none</string>
+	<string name="skill">Skill</string>
+	<string name="power_header_cast_skill">SKILL</string>
+	<string name="power_label_savedctype_roll">Opposed Roll +</string>
+	<string name="vs_skill">Opposed Skill</string>
+	<string name="replace_dc">Ability:</string>
+	<string name="replacestat">Stat:</string>
+	<string name="nom">Reset of Uses</string>
+	<string name="reset">Reset after:</string>
+	<string name="long">Long Rest</string>
+	<string name="short">Short Rest</string>
+	<string name="nomnom">Consumable (no reset by nom nom!)</string>
+	<string name="thirdcl">CL/3</string>
+	<string name="tooltip_saves_clear_toolbar">Clear Save Overlays</string>
+	<string name="tooltip_wounds_clear_toolbar">Clear Wound Overlays</string>
+	<!-- <string name="totallvl">LVL</string> -->
+	<!-- End -->
+	
+</root>

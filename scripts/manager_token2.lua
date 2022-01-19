@@ -81,18 +81,16 @@ function updateSaveOverlay(nodeField)
 
 	if tokenCT then
 		local wToken, hToken = tokenCT.getSize();
-		if UtilityManager.isClientFGU() then
-			local vImage = ImageManager.getImageControl(tokenCT, false);
-			if vImage then
-				local gridlength = vImage.getGridSize();
-				wToken = (wToken/gridlength)*100;
-				hToken = (hToken/gridlength)*100;
-			else
-				local nDU = GameSystem.getDistanceUnitsPerGrid();
-				local nSpace = math.ceil(DB.getValue(nodeCT, "space", nDU) / nDU)*100;
-				wToken = nSpace;
-				hToken = nSpace;
-			end
+		local vImage = ImageManager.getImageControl(tokenCT, false);
+		if vImage then
+			local gridlength = vImage.getGridSize();
+			wToken = (wToken/gridlength)*100;
+			hToken = (hToken/gridlength)*100;
+		else
+			local nDU = GameSystem.getDistanceUnitsPerGrid();
+			local nSpace = math.ceil(DB.getValue(nodeCT, "space", nDU) / nDU)*100;
+			wToken = nSpace;
+			hToken = nSpace;
 		end
 		widgetSuccess = tokenCT.findWidget("success1");
 		if widgetSuccess then widgetSuccess.destroy() end
@@ -168,18 +166,16 @@ function updateDeathOverlay(nodeField)
 
 	if tokenCT then
 		local wToken, hToken = tokenCT.getSize();
-		if UtilityManager.isClientFGU() then
-			local vImage = ImageManager.getImageControl(tokenCT, false);
-			if vImage then
-				local gridlength = vImage.getGridSize();
-				wToken = (wToken/gridlength)*100;
-				hToken = (hToken/gridlength)*100;
-			else
-				local nDU = GameSystem.getDistanceUnitsPerGrid();
-				local nSpace = math.ceil(DB.getValue(nodeCT, "space", nDU) / nDU)*100;
-				wToken = nSpace;
-				hToken = nSpace;
-			end
+		local vImage = ImageManager.getImageControl(tokenCT, false);
+		if vImage then
+			local gridlength = vImage.getGridSize();
+			wToken = (wToken/gridlength)*100;
+			hToken = (hToken/gridlength)*100;
+		else
+			local nDU = GameSystem.getDistanceUnitsPerGrid();
+			local nSpace = math.ceil(DB.getValue(nodeCT, "space", nDU) / nDU)*100;
+			wToken = nSpace;
+			hToken = nSpace;
 		end
 		widgetDeath = tokenCT.findWidget("death1");
 		if widgetDeath then widgetDeath.destroy() end

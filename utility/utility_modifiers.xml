@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+
+<!-- 
+  Please see the license.html file included with this distribution for 
+  attribution and copyright information.
+-->
+
+<root>
+	<string name="modifier_label_DMG_ACCURACY">Accuracy</string>
+	<string name="modifier_label_ATT_CA">Combat Adv.</string>
+	<string name="modifier_category_general">General</string>
+	<string name="modifier_label_ADV">Advantage</string>
+	<string name="modifier_label_DISADV">Disadvantage</string>
+</root>

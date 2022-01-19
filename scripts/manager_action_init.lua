@@ -118,8 +118,10 @@ function modRoll(rSource, rTarget, rRoll)
 		if not sActionStat then
 			sActionStat = "dexterity";
 		end
-		
-		local bEffects, aEffectDice, nEffectMod = getEffectAdjustments(rSource, sActionStat);
+		-- KEL adding adv
+		local bEffects, aEffectDice, nEffectMod, nAdv = getEffectAdjustments(rSource, sActionStat);
+		rRoll.adv = nAdv;
+		-- END
 		if bEffects then
 			for _,vDie in ipairs(aEffectDice) do
 				if vDie:sub(1,1) == "-" then
@@ -174,6 +176,16 @@ function getEffectAdjustments(rActor, sActionStat)
 		nEffectMod = nEffectMod + nInitMod;
 	end
 	
+	-- KEL adding (dis)advantage
+	local _, nADVATK = EffectManager35E.hasEffectCondition(rActor, "ADVINIT");
+	local _, nDISATK = EffectManager35E.hasEffectCondition(rActor, "DISINIT");
+	local nAdv = 0;
+	nAdv = nADVATK - nDISATK;
+	if nAdv ~= 0 then
+		bEffects = true;
+	end
+	-- END
+	
 	-- Get ability effect modifiers
 	local nAbilityMod, nAbilityEffects = ActorManager35E.getAbilityEffectsBonus(rActor, sActionStat);
 	if nAbilityEffects > 0 then
@@ -187,7 +199,7 @@ function getEffectAdjustments(rActor, sActionStat)
 		nEffectMod = nEffectMod - 4;
 	end
 
-	return bEffects, aEffectDice, nEffectMod;
+	return bEffects, aEffectDice, nEffectMod, nAdv;
 end
 
 function onResolve(rSource, rTarget, rRoll)
