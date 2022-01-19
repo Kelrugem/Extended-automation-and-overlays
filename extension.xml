@@ -53,5 +53,8 @@
 	<script name="SpellManager" file="scripts/manager_spell.lua" />
 	<script name="ActionSave" file="scripts/manager_action_save.lua" />
 	<script name="ActionSpell" file="scripts/manager_action_spell.lua" />
+
+	<!-- Effect Builder -->
+	<includefile source="effect_builder/editor_loader.xml" />
   </base>
 </root>

@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+
+<root>
+    <!-- Dynamic Effect editor loader -->
+    <script name="LoaderExtendedAutomationAdvantage" file="effect_builder/bundles/loaders/loader_advantage.lua" />
+    <!-- individual effect editors -->
+    <includefile source="effect_builder/effects/ADVINIT.xml" />
+    <includefile source="effect_builder/effects/ADVATK.xml" />
+    <includefile source="effect_builder/effects/ADVSAV.xml" />
+    <!-- advantage effects bundle editor -->
+    <windowclass name="editor_advantage">
+        <script file="effect_builder/bundles/scripts/subwindow_editor.lua" />
+		<margins control="0,0,0,2" />
+        <sheetdata>
+            <leftanchor />
+
+            <cycler_effect_subwindow>
+                <parameters>
+                    <dynamicinitlist>advantageEditors</dynamicinitlist>
+                </parameters>
+            </cycler_effect_subwindow>
+
+            <cycler_advantage />
+
+            <subwindow_effect_editor />
+        </sheetdata>
+    </windowclass>
+</root>

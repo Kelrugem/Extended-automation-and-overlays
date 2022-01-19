@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+
+<root>
+    <windowclass name="ADVINIT">
+        <script file="effect_builder/effects/scripts/ADVINIT.lua" />
+		<margins control="0,0,0,2" />
+        <sheetdata>
+            <leftanchor />
+
+            <spaceholder />
+        </sheetdata>
+    </windowclass>
+</root>

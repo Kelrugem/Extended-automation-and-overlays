@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<root version="3.3">
+    <!-- Strings -->
+    <includefile source="effect_builder/strings/strings_effect_editor.xml" />
+
+    <!-- Bundle Loader -->
+    <script name="LoaderExtendedAutomation" file="effect_builder/editor_loader.lua" />
+
+    <!-- Effect Editor bundles-->
+    <includefile source="effect_builder/bundles/bundle_advantage.xml" />
+</root>

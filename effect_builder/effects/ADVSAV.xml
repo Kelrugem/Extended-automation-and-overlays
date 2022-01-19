@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+
+<root>
+    <windowclass name="ADVSAV">
+        <script file="effect_builder/effects/scripts/ADVSAV.lua" />
+		<margins control="0,0,0,2" />
+        <sheetdata>
+            <leftanchor />
+
+            <combobox_saves />
+        </sheetdata>
+    </windowclass>
+</root>
