@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+
+<root>
+    <template name="cycler_advantage">
+        <stringcycler_effect name="advantage">
+            <parameters>
+                <defaultlabelres>advantage</defaultlabelres>
+                <defaultvalue>ADV</defaultvalue>
+                <labelsres>disadvantage</labelsres>
+                <values>DIS</values>
+            </parameters>
+        </stringcycler_effect>
+    </template>
+</root>
