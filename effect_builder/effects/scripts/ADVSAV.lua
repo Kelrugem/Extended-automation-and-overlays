@@ -1,7 +1,8 @@
 function createEffectString()
     local effectString = parentcontrol.window.advantage.getStringValue() .. "SAV"
-    if not save.isEmpty() then
-        effectString = effectString .. ": " .. save.getValue()
+    local save = save.getStringValue()
+    if save ~= "" then
+        effectString = effectString .. ": " .. save
     end
 
     return effectString

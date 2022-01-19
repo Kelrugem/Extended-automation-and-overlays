@@ -7,7 +7,7 @@
         <sheetdata>
             <leftanchor />
 
-            <combobox_saves />
+            <cycler_saves />
         </sheetdata>
     </windowclass>
 </root>
