@@ -834,7 +834,7 @@ function getEffectsBonus(rActor, aEffectType, bModOnly, aFilter, rFilterActor, b
 	end
 	return aTotalDice, nTotalMod, nEffectCount;
 end
--- KEL Adding tags and IFTAG to hasEffect
+-- KEL Adding tags and IFTAG to 
 function hasEffectCondition(rActor, sEffect, rEffectSpell)
 	return hasEffect(rActor, sEffect, nil, false, true, rEffectSpell);
 end
@@ -844,12 +844,18 @@ function hasEffect(rActor, sEffect, rTarget, bTargetedOnly, bIgnoreEffectTargets
 		return false, 0;
 	end
 	local sLowerEffect = sEffect:lower();
-	
+
 	-- Iterate through each effect
 	local aMatch = {};
 	for _,v in pairs(DB.getChildren(ActorManager.getCTNode(rActor), "effects")) do
 		local nActive = DB.getValue(v, "isactive", 0);
-		if (nActive ~= 0) then
+
+		-- COMPATIBILITY FOR ADVANCED EFFECTS
+		-- to add support for AE in other extensions, make this change
+		-- original line: if nActive ~= 0 then
+		if ((not AdvancedEffects and nActive ~= 0) or (AdvancedEffects and isValidCheckEffect(rActor,v))) then
+		-- END COMPATIBILITY FOR ADVANCED EFFECTS
+
 			-- Parse each effect label
 			local sLabel = DB.getValue(v, "label", "");
 			local bTargeted = EffectManager.isTargetedEffect(v);
@@ -916,7 +922,7 @@ function hasEffect(rActor, sEffect, rTarget, bTargetedOnly, bIgnoreEffectTargets
 				end
 				
 			end
-			
+
 			-- If matched, then remove one-off effects
 			if nMatch > 0 then
 				if nActive == 2 then
@@ -935,7 +941,7 @@ function hasEffect(rActor, sEffect, rTarget, bTargetedOnly, bIgnoreEffectTargets
 			end
 		end
 	end
-	
+
 	if #aMatch > 0 then
 		return true, #aMatch;
 	end
