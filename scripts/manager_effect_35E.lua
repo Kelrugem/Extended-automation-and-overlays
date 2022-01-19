@@ -21,16 +21,6 @@ end
 -- EFFECT MANAGER OVERRIDES
 --
 
--- KEL compatibility with rmilmine
--- function isAEOk(rActor, v)
-	-- if StringManager.contains(Extension.getExtensions(), "Advanced Effects for 3.5E and Pathfinder") then
-		-- return EffectManagerAE.isValidCheckEffect(rActor,v);
-	-- else
-		-- return true;
-	-- end
--- end
--- END
-
 function onEffectAddStart(rEffect)
 	rEffect.nDuration = rEffect.nDuration or 1;
 	if rEffect.sUnits == "minute" then
@@ -482,7 +472,7 @@ function getEffectsByType(rActor, sEffectType, aFilter, rFilterActor, bTargetedO
 		-- to add support for AE in other extensions, make this change
 		-- Check effect is from used weapon.
 		-- original line: if nActive ~= 0 then
-		if ((not AdvancedEffects and nActive ~= 0) or (AdvancedEffects and isValidCheckEffect(rActor,v))) then
+		if ((not AdvancedEffects and nActive ~= 0) or (AdvancedEffects and AdvancedEffects.isValidCheckEffect(rActor,v))) then
 		-- END COMPATIBILITY FOR ADVANCED EFFECTS
 
 			-- Check targeting
@@ -860,7 +850,7 @@ function hasEffect(rActor, sEffect, rTarget, bTargetedOnly, bIgnoreEffectTargets
 		-- COMPATIBILITY FOR ADVANCED EFFECTS
 		-- to add support for AE in other extensions, make this change
 		-- original line: if nActive ~= 0 then
-		if ((not AdvancedEffects and nActive ~= 0) or (AdvancedEffects and isValidCheckEffect(rActor,v))) then
+		if ((not AdvancedEffects and nActive ~= 0) or (AdvancedEffects and AdvancedEffects.isValidCheckEffect(rActor,v))) then
 		-- END COMPATIBILITY FOR ADVANCED EFFECTS
 
 			-- Parse each effect label
