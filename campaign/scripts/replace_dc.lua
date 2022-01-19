@@ -15,8 +15,10 @@ function onInit()
 		DB.addHandler(DB.getPath(nodeCreature, "wisdom"), "onUpdate", onStatUpdate);
 		DB.addHandler(DB.getPath(nodeCreature, "charisma"), "onUpdate", onStatUpdate);
 	end
-	-- DB.addHandler(nodeSpellClass.getPath() .. ".dc.ability", "onUpdate", onStatUpdate);
-	DB.addHandler(nodeSpellClass.getPath("dc.ability"), "onUpdate", onStatUpdate);
+	
+	if nodeSpellClass then
+		DB.addHandler(nodeSpellClass.getPath("dc.ability"), "onUpdate", onStatUpdate);
+	end
 end
 
 function onClose()
@@ -33,7 +35,10 @@ function onClose()
 		DB.removeHandler(DB.getPath(nodeCreature, "wisdom"), "onUpdate", onStatUpdate);
 		DB.removeHandler(DB.getPath(nodeCreature, "charisma"), "onUpdate", onStatUpdate);
 	end
-	DB.addHandler(nodeSpellClass.getPath("dc.ability"), "onUpdate", onStatUpdate);
+	
+	if nodeSpellClass then
+		DB.addHandler(nodeSpellClass.getPath("dc.ability"), "onUpdate", onStatUpdate);
+	end
 end
 
 function onStatUpdate()

@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+
+<!-- 
+  Please see the license.html file included with this distribution for 
+  attribution and copyright information.
+-->
+
+<root>
+	<template name="number_clientct_injury">
+		<number_ct_static name="injury">
+			<anchored to="healthbase" width="30" height="20">
+				<top />
+				<right />
+			</anchored>
+			<script>
+				function onValueChanged()
+					window.onHealthChanged();
+				end
+			</script>
+		</number_ct_static>
+	</template>
+	<template name="number_clientct_wounds" merge="replace">
+		<number_ct_static name="wounds">
+			<anchored to="injury" width="30" height="20">
+				<top />
+				<right anchor="left" offset="-10" />
+			</anchored>
+			<script>
+				function onValueChanged()
+					window.onHealthChanged();
+				end
+			</script>
+		</number_ct_static>
+	</template>
+	<template name="number_clientct_nonlethal" merge="delete">
+		<number_ct_static name="wounds">
+		</number_ct_static>
+	</template> 
+	<template name="number_clientct_hptemp" merge="replace">
+		<number_ct_static name="hptemp">
+			<anchored to="wounds" width="30" height="20">
+				<top />
+				<right anchor="left" offset="-10" />
+			</anchored>
+			<color>0000AA</color>
+			<script>
+				function onValueChanged()
+					window.onHealthChanged();
+				end
+			</script>
+		</number_ct_static>
+	</template>
+</root>

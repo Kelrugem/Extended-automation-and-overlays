@@ -7,12 +7,14 @@ function onInit()
 	ActionsManager.registerModHandler("heal", modHeal);
 	ActionsManager.registerResultHandler("heal", onHeal);
 end
-
-function getRoll(rActor, rAction)
+-- KEL adding tags
+function getRoll(rActor, rAction, tag)
 	local rRoll = {};
 	rRoll.sType = "heal";
 	rRoll.aDice = {};
 	rRoll.nMod = 0;
+	rRoll.tags = tag;
+-- END
 	
 	rRoll.sDesc = "[HEAL";
 	if rAction.order and rAction.order > 1 then
@@ -172,7 +174,9 @@ function onHeal(rSource, rTarget, rRoll)
 	
 	-- Apply heal to target
 	local nTotal = ActionsManager.total(rRoll);
-	ActionDamage.notifyApplyDamage(rSource, rTarget, rMessage.secret, rRoll.sType, rMessage.text, nTotal);
+	-- KEL add tags
+	ActionDamage.notifyApplyDamage(rSource, rTarget, rMessage.secret, rRoll.sType, rMessage.text, nTotal, nil, rRoll.tags);
+	-- END
 end
 
 --

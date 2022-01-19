@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+
+<!-- 
+  Please see the license.html file included with this distribution for 
+  attribution and copyright information.
+-->
+
+<root>
+	<template name="progressbar_health_d20">
+		<progressbar>
+			<noautotext />
+			<script file="common/scripts/progressbar_health_d20.lua" />
+		</progressbar>
+	</template>
+</root>
