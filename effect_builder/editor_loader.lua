@@ -1,6 +1,6 @@
 isEffectBuilderLoaded = false
 
-local kelBundles = {
+local extendedAutomationBundles = {
     {
         labelres ="editor_advantage",
         value = "editor_advantage"
@@ -17,7 +17,7 @@ function onInit()
     isEffectBuilderLoaded = checkEffectBuilderLoaded()
 
     if isEffectBuilderLoaded then
-        EditorLoader.loadEditors("editorBundles", kelBundles)
+        EditorLoader.loadEditors("editorBundles", extendedAutomationBundles)
     end
 end
 
