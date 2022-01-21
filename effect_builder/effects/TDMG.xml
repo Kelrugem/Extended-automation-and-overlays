@@ -24,7 +24,7 @@
     </windowclass>
     <script name="loader_TDMG">
         function onInit()
-            if EditorManager then
+            if ExtensionManager.shouldLoadEffects() then
                 EditorManager.addEditor(
                     "category_misc",
                     {

@@ -14,7 +14,8 @@
     </windowclass>
     <script name="loader_DC">
         function onInit()
-            if EditorManager then
+            if ExtensionManager.shouldLoadEffects() then
+                Debug.console("loading DC effect")
                 EditorManager.addEditor(
                     "category_spell",
                     {

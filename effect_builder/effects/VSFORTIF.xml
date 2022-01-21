@@ -16,7 +16,7 @@
     </windowclass>
     <script name="loader_VSFORTIF">
         function onInit()
-            if EditorManager then
+            if ExtensionManager.shouldLoadEffects() then
                 EditorManager.addEditor(
                     "category_attack",
                     {

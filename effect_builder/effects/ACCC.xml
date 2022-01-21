@@ -21,7 +21,7 @@
     </windowclass>
     <script name="loader_ACCC">
         function onInit()
-            if EditorManager then
+            if ExtensionManager.shouldLoadEffects() then
                 EditorManager.addEditor(
                     "category_defense",
                     {

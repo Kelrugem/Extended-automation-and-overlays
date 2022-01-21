@@ -22,7 +22,7 @@
     </windowclass>
     <script name="loader_COC">
         function onInit()
-            if EditorManager then
+            if ExtensionManager.shouldLoadEffects() then
                 EditorManager.addEditor(
                     "category_spell",
                     {

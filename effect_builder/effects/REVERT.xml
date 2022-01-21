@@ -12,7 +12,7 @@
     </windowclass>
     <script name="loader_REVERT">
         function onInit()
-            if EditorManager then
+            if ExtensionManager.shouldLoadEffects() then
                 EditorManager.addEditor(
                     "category_susceptibility",
                     {

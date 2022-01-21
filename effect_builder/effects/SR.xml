@@ -14,7 +14,7 @@
     </windowclass>
     <script name="loader_SR">
         function onInit()
-            if EditorManager then
+            if ExtensionManager.shouldLoadEffects() then
                 EditorManager.addEditor(
                     "category_defense",
                     {

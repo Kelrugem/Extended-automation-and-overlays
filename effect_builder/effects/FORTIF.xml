@@ -18,7 +18,7 @@
     </windowclass>
     <script name="loader_FORTIF">
         function onInit()
-            if EditorManager then
+            if ExtensionManager.shouldLoadEffects() then
                 EditorManager.addEditor(
                     "category_defense",
                     {
