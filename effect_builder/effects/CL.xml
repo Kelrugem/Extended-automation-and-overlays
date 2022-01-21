@@ -22,14 +22,16 @@
     </windowclass>
     <script name="loader_CL">
         function onInit()
-            EditorManager.addEditor(
-                "category_spell",
-                {
-                    value="CL",
-                    labelres="effect_cl",
-                    windowclass="effect_CL"
-                }
-            )
+            if EditorManager then
+                EditorManager.addEditor(
+                    "category_spell",
+                    {
+                        value="CL",
+                        labelres="effect_cl",
+                        windowclass="effect_CL"
+                    }
+                )
+            end
         end
     </script>
 </root>

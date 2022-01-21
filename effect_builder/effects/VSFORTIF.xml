@@ -16,14 +16,16 @@
     </windowclass>
     <script name="loader_VSFORTIF">
         function onInit()
-            EditorManager.addEditor(
-                "category_attack",
-                {
-                    value="VSFORTIF",
-                    labelres="effect_vsfortif",
-                    windowclass="effect_VSFORTIF"
-                }
-            )
+            if EditorManager then
+                EditorManager.addEditor(
+                    "category_attack",
+                    {
+                        value="VSFORTIF",
+                        labelres="effect_vsfortif",
+                        windowclass="effect_VSFORTIF"
+                    }
+                )
+            end
         end
     </script>
 </root>

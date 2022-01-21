@@ -14,14 +14,16 @@
     </windowclass>
     <script name="loader_ADVINIT">
         function onInit()
-            EditorManager.addEditor(
-                "category_advantage",
-                {
-                    value="ADVINIT",
-                    labelres="effect_init",
-                    windowclass="effect_ADVINIT"
-                }
-            )
+            if EditorManager then
+                EditorManager.addEditor(
+                    "category_advantage",
+                    {
+                        value="ADVINIT",
+                        labelres="effect_init",
+                        windowclass="effect_ADVINIT"
+                    }
+                )
+            end
         end
     </script>
 </root>

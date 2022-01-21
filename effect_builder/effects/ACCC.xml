@@ -21,14 +21,16 @@
     </windowclass>
     <script name="loader_ACCC">
         function onInit()
-            EditorManager.addEditor(
-                "category_defense",
-                {
-                    value="ACCC",
-                    labelres="effect_accc",
-                    windowclass="effect_ACCC"
-                }
-            )
+            if EditorManager then
+                EditorManager.addEditor(
+                    "category_defense",
+                    {
+                        value="ACCC",
+                        labelres="effect_accc",
+                        windowclass="effect_ACCC"
+                    }
+                )
+            end
         end
     </script>
 </root>

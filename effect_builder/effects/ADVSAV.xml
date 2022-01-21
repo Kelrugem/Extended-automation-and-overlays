@@ -14,14 +14,16 @@
     </windowclass>
     <script name="loader_ADVSAV">
         function onInit()
-            EditorManager.addEditor(
-                "category_advantage",
-                {
-                    value="ADVSAV",
-                    labelres="effect_save",
-                    windowclass="effect_ADVSAV"
-                }
-            )
+            if EditorManager then
+                EditorManager.addEditor(
+                    "category_advantage",
+                    {
+                        value="ADVSAV",
+                        labelres="effect_save",
+                        windowclass="effect_ADVSAV"
+                    }
+                )
+            end
         end
     </script>
 </root>

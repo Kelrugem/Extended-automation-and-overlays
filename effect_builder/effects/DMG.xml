@@ -31,22 +31,24 @@
     </windowclass>
     <script name="loader_DMG">
         function onInit()
-            EditorManager.addEditor(
-                "category_attack",
-                {
-                    value="DMG",
-                    labelres="effect_dmg",
-                    windowclass="effect_DMG"
-                }
-            )
-            EditorManager.addEditor(
-                "category_spell",
-                {
-                    value="DMGS",
-                    labelres="effect_dmgs",
-                    windowclass="effect_DMG"
-                }
-            )
+            if EditorManager then
+                EditorManager.addEditor(
+                    "category_attack",
+                    {
+                        value="DMG",
+                        labelres="effect_dmg",
+                        windowclass="effect_DMG"
+                    }
+                )
+                EditorManager.addEditor(
+                    "category_spell",
+                    {
+                        value="DMGS",
+                        labelres="effect_dmgs",
+                        windowclass="effect_DMG"
+                    }
+                )
+            end
         end
     </script>
 </root>

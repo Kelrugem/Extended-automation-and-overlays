@@ -22,14 +22,16 @@
     </windowclass>
     <script name="loader_COC">
         function onInit()
-            EditorManager.addEditor(
-                "category_spell",
-                {
-                    value="COC",
-                    labelres="effect_coc",
-                    windowclass="effect_COC"
-                }
-            )
+            if EditorManager then
+                EditorManager.addEditor(
+                    "category_spell",
+                    {
+                        value="COC",
+                        labelres="effect_coc",
+                        windowclass="effect_COC"
+                    }
+                )
+            end
         end
     </script>
 </root>

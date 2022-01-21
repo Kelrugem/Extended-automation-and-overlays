@@ -12,14 +12,16 @@
     </windowclass>
     <script name="loader_SIMMUNE">
         function onInit()
-            EditorManager.addEditor(
-                "category_susceptibility",
-                {
-                    value="SIMMUNE",
-                    labelres="effect_simmune",
-                    windowclass="effect_SIMMUNE"
-                }
-            )
+            if EditorManager then
+                EditorManager.addEditor(
+                    "category_susceptibility",
+                    {
+                        value="SIMMUNE",
+                        labelres="effect_simmune",
+                        windowclass="effect_SIMMUNE"
+                    }
+                )
+            end
         end
     </script>
 </root>

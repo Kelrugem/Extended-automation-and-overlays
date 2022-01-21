@@ -12,14 +12,16 @@
     </windowclass>
     <script name="loader_HRESIST">
         function onInit()
-            EditorManager.addEditor(
-                "category_susceptibility",
-                {
-                    value="HRESIST",
-                    labelres="effect_hresist",
-                    windowclass="effect_HRESIST"
-                }
-            )
+            if EditorManager then
+                EditorManager.addEditor(
+                    "category_susceptibility",
+                    {
+                        value="HRESIST",
+                        labelres="effect_hresist",
+                        windowclass="effect_HRESIST"
+                    }
+                )
+            end
         end
     </script>
 </root>

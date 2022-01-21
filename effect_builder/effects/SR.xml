@@ -14,14 +14,16 @@
     </windowclass>
     <script name="loader_SR">
         function onInit()
-            EditorManager.addEditor(
-                "category_defense",
-                {
-                    value="SR",
-                    labelres="effect_sr",
-                    windowclass="effect_SR"
-                }
-            )
+            if EditorManager then
+                EditorManager.addEditor(
+                    "category_defense",
+                    {
+                        value="SR",
+                        labelres="effect_sr",
+                        windowclass="effect_SR"
+                    }
+                )
+            end
         end
     </script>
 </root>

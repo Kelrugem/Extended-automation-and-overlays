@@ -17,14 +17,16 @@
     </windowclass>
     <script name="loader_KEEN">
         function onInit()
-            EditorManager.addEditor(
-                "category_attack",
-                {
-                    value="KEEN",
-                    labelres="effect_keen",
-                    windowclass="effect_KEEN"
-                }
-            )
+            if EditorManager then
+                EditorManager.addEditor(
+                    "category_attack",
+                    {
+                        value="KEEN",
+                        labelres="effect_keen",
+                        windowclass="effect_KEEN"
+                    }
+                )
+            end
         end
     </script>
 </root>

@@ -18,14 +18,16 @@
     </windowclass>
     <script name="loader_FORTIF">
         function onInit()
-            EditorManager.addEditor(
-                "category_defense",
-                {
-                    value="FORTIF",
-                    labelres="effect_fortif",
-                    windowclass="effect_FORTIF"
-                }
-            )
+            if EditorManager then
+                EditorManager.addEditor(
+                    "category_defense",
+                    {
+                        value="FORTIF",
+                        labelres="effect_fortif",
+                        windowclass="effect_FORTIF"
+                    }
+                )
+            end
         end
     </script>
 </root>

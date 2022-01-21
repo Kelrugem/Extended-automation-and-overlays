@@ -14,14 +14,16 @@
     </windowclass>
     <script name="loader_DC">
         function onInit()
-            EditorManager.addEditor(
-                "category_spell",
-                {
-                    value="DC",
-                    labelres="effect_dc",
-                    windowclass="effect_DC"
-                }
-            )
+            if EditorManager then
+                EditorManager.addEditor(
+                    "category_spell",
+                    {
+                        value="DC",
+                        labelres="effect_dc",
+                        windowclass="effect_DC"
+                    }
+                )
+            end
         end
     </script>
 </root>
