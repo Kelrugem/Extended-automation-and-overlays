@@ -6,4 +6,16 @@
     <string name="disadvantage">Disadvantage</string>
     <string name="outgoing">Outgoing</string>
     <string name="incoming">Incoming</string>
+
+    <string name="effect_accc">Critical Confirmation AC</string>
+    <string name="effect_cl">Caster Level</string>
+    <string name="effect_coc">Concentration Check</string>
+    <string name="effect_DC">Spell Difficulty Class (DC)</string>
+    <string name="effect_fortif">Fortification</string>
+    <string name="effect_keen">Keen</string>
+    <string name="effect_simmune">Spell Immunity</string>
+    <string name="effect_sr">Spell Resistance</string>
+    <string name="effect_vsfortif">Fortification Bypass</string>
+    
+    <string name="effect_iftag">Tag</string>
 </root>

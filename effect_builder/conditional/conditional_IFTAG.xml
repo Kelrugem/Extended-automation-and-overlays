@@ -24,7 +24,7 @@
                 "category_conditional",
                 {
                     value="IFTAG",
-                    labelres="iftag",
+                    labelres="effect_iftag",
                     windowclass="conditional_IFTAG"
                 }
             )
