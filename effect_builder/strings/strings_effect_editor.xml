@@ -12,6 +12,7 @@
     <string name="effect_coc">Concentration Check</string>
     <string name="effect_DC">Spell Difficulty Class (DC)</string>
     <string name="effect_fortif">Fortification</string>
+    <string name="effect_hresist">Half Resistance</string>
     <string name="effect_keen">Keen</string>
     <string name="effect_simmune">Spell Immunity</string>
     <string name="effect_sr">Spell Resistance</string>
