@@ -13,6 +13,7 @@
     <includefile source="effect_builder/effects/CL.xml" />
     <includefile source="effect_builder/effects/COC.xml" />
     <includefile source="effect_builder/effects/DC.xml" />
+    <includefile source="effect_builder/effects/DMG.xml" />
     <includefile source="effect_builder/effects/FORTIF.xml" />
     <includefile source="effect_builder/effects/KEEN.xml" />
     <includefile source="effect_builder/effects/SIMMUNE.xml" />
