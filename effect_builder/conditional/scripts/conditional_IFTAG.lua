@@ -1,3 +1,3 @@
 function createEffectString()
-    return negator.getStringValue() .. "IFTAG: " .. tag.getValue()
+    return negator.getStringValue() .. negator.getStringValue() .. "IFTAG: " .. tag.getValue()
 end

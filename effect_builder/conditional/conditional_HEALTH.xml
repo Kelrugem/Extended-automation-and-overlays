@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+
+<root>
+    <windowclass name="conditional_HEALTH">
+        <script file="effect_builder/conditional/scripts/conditional_HEALTH.lua" />
+		<margins control="0,0,0,2" />
+        <sheetdata>
+            <leftanchor />
+
+            <cycler_negation />
+            
+            <cycler_ifs />
+
+            <stringcycler_effect name="health_state">
+                <parameters mergerule="replace">
+                    <defaultlabel>Healthy</defaultlabel>
+                    <defaultvalue>Healthy</defaultvalue>
+                    <labels>Wounded|Bloodied</labels>
+                    <values>Wounded|Bloodied</values>
+                </parameters>
+            </stringcycler_effect>
+        </sheetdata>
+    </windowclass>
+    <script name="loader_conditional_HEALTH">
+        function onInit()
+            EditorManager.addEditor(
+                "category_conditional",
+                {
+                    value="HEALTH",
+                    labelres="health",
+                    windowclass="conditional_HEALTH"
+                }
+            )
+        end
+    </script>
+</root>

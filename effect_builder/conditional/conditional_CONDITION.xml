@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+
+<root>
+    <windowclass name="conditional_CONDITION">
+        <script file="effect_builder/conditional/scripts/conditional_CONDITION.lua" />
+		<margins control="0,0,0,2" />
+        <sheetdata>
+            <leftanchor />
+
+            <cycler_negation />
+            
+            <cycler_ifs />
+
+            <combobox_conditions />
+        </sheetdata>
+    </windowclass>
+    <script name="loader_conditional_CONDITION">
+        function onInit()
+            EditorManager.addEditor(
+                "category_conditional",
+                {
+                    value="CONDITION",
+                    labelres="condition",
+                    windowclass="conditional_CONDITION"
+                }
+            )
+        end
+    </script>
+</root>
