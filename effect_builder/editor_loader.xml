@@ -16,8 +16,10 @@
     <includefile source="effect_builder/effects/DMG.xml" />
     <includefile source="effect_builder/effects/FORTIF.xml" />
     <includefile source="effect_builder/effects/KEEN.xml" />
+    <includefile source="effect_builder/effects/KEEN.xml" />
     <includefile source="effect_builder/effects/SIMMUNE.xml" />
     <includefile source="effect_builder/effects/SR.xml" />
+    <includefile source="effect_builder/effects/TDMG.xml" />
     <includefile source="effect_builder/effects/VSFORTIF.xml" />
 
     <includefile source="effect_builder/conditional/conditional_IFTAG.xml" />
