@@ -18,4 +18,6 @@
     <string name="effect_vsfortif">Fortification Bypass</string>
     
     <string name="effect_iftag">Tag</string>
+    <string name="nif">Not If Self</string>
+    <string name="nift">Not If Target</string>
 </root>
