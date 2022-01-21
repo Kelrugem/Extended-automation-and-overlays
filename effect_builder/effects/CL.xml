@@ -2,7 +2,7 @@
 
 <root>
     <windowclass name="effect_CL">
-        <script file="editors/effect/scripts/CL.lua" />
+        <script file="effect_builder/effects/scripts/CL.lua" />
 		<margins control="0,0,0,2" />
         <sheetdata>
             <leftanchor />

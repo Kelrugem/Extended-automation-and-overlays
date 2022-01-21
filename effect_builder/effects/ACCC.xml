@@ -2,7 +2,7 @@
 
 <root>
     <windowclass name="effect_ACCC">
-        <script file="editors/effect/scripts/ACCC.lua" />
+        <script file="effect_builder/effects/scripts/ACCC.lua" />
 		<margins control="0,0,0,2" />
         <sheetdata>
             <leftanchor />

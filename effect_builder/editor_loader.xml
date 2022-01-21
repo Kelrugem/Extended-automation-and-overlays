@@ -19,5 +19,5 @@
     <includefile source="effect_builder/effects/SR.xml" />
     <includefile source="effect_builder/effects/VSFORTIF.xml" />
 
-    <includefile source="effect_builder/effects/conditional_IFTAG.xml" />
+    <includefile source="effect_builder/conditional/conditional_IFTAG.xml" />
 </root>

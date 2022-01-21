@@ -2,7 +2,7 @@
 
 <root>
     <windowclass name="effect_FORTIF">
-        <script file="editors/effect/scripts/FORTIF.lua" />
+        <script file="effect_builder/effects/scripts/FORTIF.lua" />
 		<margins control="0,0,0,2" />
         <sheetdata>
             <leftanchor />
