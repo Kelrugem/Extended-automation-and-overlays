@@ -11,7 +11,7 @@
     <string name="effect_accc">Critical Confirmation AC</string>
     <string name="effect_cl">Caster Level</string>
     <string name="effect_coc">Concentration Check</string>
-    <string name="effect_DC">Spell Difficulty Class (DC)</string>
+    <string name="effect_dc">Spell Difficulty Class (DC)</string>
     <string name="effect_fortif">Fortification</string>
     <string name="effect_hresist">Half Resistance</string>
     <string name="effect_keen">Keen</string>
