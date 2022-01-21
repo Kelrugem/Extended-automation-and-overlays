@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="iso-8859-1"?>
 
 <root>
-    <string name="editor_advantage">(Dis)Advantages</string>
+    <string name="category_advantage">(Dis)Advantages</string>
     <string name="advantage">Advantage</string>
     <string name="disadvantage">Disadvantage</string>
     <string name="outgoing">Outgoing</string>

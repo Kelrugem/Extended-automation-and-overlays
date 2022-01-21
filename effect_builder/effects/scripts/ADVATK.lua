@@ -1,5 +1,5 @@
 function createEffectString()
-    local effectString = direction.getStringValue() .. parentcontrol.window.advantage.getStringValue() .. "ATK"
+    local effectString = direction.getStringValue() .. advantage.getStringValue() .. "ATK"
     local descriptors = {}
     local effectRange = effect_range.getStringValue()
     if effectRange ~= "" then
@@ -12,6 +12,5 @@ function createEffectString()
     if next(descriptors) then
         effectString = effectString .. ": " .. table.concat(descriptors, ",")
     end
-
     return effectString
 end

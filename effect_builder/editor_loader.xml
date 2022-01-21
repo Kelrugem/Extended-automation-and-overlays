@@ -5,8 +5,8 @@
     <!-- Templates -->
     <includefile source="effect_builder/common/cyclers.xml" />
 
-    <!-- Bundle Loader -->
-    <script name="LoaderExtendedAutomation" file="effect_builder/editor_loader.lua" />
-    <!-- Effect Editor bundles-->
-    <includefile source="effect_builder/bundles/bundle_advantage.xml" />
+    <!-- Effect Editors -->
+    <includefile source="effect_builder/effects/ADVATK.xml" />
+    <includefile source="effect_builder/effects/ADVINIT.xml" />
+    <includefile source="effect_builder/effects/ADVSAV.xml" />
 </root>

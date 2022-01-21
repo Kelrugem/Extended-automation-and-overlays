@@ -1,11 +1,13 @@
 <?xml version="1.0" encoding="iso-8859-1"?>
 
 <root>
-    <windowclass name="ADVATK">
+    <windowclass name="effect_ADVATK">
         <script file="effect_builder/effects/scripts/ADVATK.lua" />
 		<margins control="0,0,0,2" />
         <sheetdata>
             <leftanchor />
+
+            <cycler_advantage />
 
             <stringcycler_effect name="direction">
                 <parameters>
@@ -23,4 +25,16 @@
             <checkbox_effect name="effect_opportunity"/>
         </sheetdata>
     </windowclass>
+    <script name="loader_ADVATK">
+        function onInit()
+            EditorManager.addEditor(
+                "category_advantage",
+                {
+                    value="ADVATK",
+                    labelres="effect_atk",
+                    windowclass="effect_ADVATK"
+                }
+            )
+        end
+    </script>
 </root>
