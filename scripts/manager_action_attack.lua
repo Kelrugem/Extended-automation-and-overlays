@@ -223,6 +223,9 @@ function modAttack(rSource, rTarget, rRoll)
 	-- Check defense modifiers
 	local bTouch = ModifierManager.getKey("ATT_TCH");
 	local bFlatFooted = ModifierManager.getKey("ATT_FF");
+	-- KEL add CA button
+	local bCAKel = ModifierManager.getKey("ATT_CA");
+	--END
 	local bCover = ModifierManager.getKey("DEF_COVER");
 	local bPartialCover = ModifierManager.getKey("DEF_PCOVER");
 	local bSuperiorCover = ModifierManager.getKey("DEF_SCOVER");
@@ -323,8 +326,12 @@ function modAttack(rSource, rTarget, rRoll)
 				end
 			end
 			-- END
-		elseif EffectManager35E.hasEffect(rSource, "CA", nil, false, false, rRoll.tags) then
+		end
+		if EffectManager35E.hasEffect(rSource, "CA", nil, false, false, rRoll.tags) then
 			bEffects = true;
+			table.insert(aAddDesc, "[CA]");
+		-- KEL add CA button
+		elseif bCAKel then
 			table.insert(aAddDesc, "[CA]");
 		end
 		-- END

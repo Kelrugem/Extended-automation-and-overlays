@@ -1198,6 +1198,11 @@ end
 
 function getActionAbilityBonus(nodeAction)
 	local nodeSpellClass = nodeAction.getChild(".......");
+	-- KEl comp with Zarestia
+	if not nodeSpellClass then
+		return 0;
+	end
+	-- END
 	local nodeCreature = nodeSpellClass.getChild("...");
 
 	local sAbility = DB.getValue(nodeSpellClass, "dc.ability", "");

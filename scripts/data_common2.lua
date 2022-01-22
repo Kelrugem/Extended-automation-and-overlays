@@ -152,7 +152,9 @@ function onInit()
 	table.remove(DataCommon.immunetypes, 8);
 	table.remove(DataCommon.immunetypes, 8);
 	-- KEL Modifier buttons
-	ModifierManager.addModWindowPresets({ { sCategory = "damage", tPresets = { "DMG_ACCURACY" } } });
+	ModifierManager.addModWindowPresetButton("attack", "ATT_CA", 7);
+	ModifierManager.addModWindowPresetButton("attack", "", 8);
+	ModifierManager.addModWindowPresetButton("damage", "DMG_ACCURACY", 1);
 	ModifierManager.addModWindowPresets({ { sCategory = "general", tPresets = { "ADV", "DISADV" } } });
 	ModifierManager.addKeyExclusionSets({ { "ADV", "DISADV" } });
 	

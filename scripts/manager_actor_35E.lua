@@ -681,7 +681,8 @@ function getDefenseValue(rAttacker, rDefender, rRoll)
 					bCombatAdvantage = true;
 				end
 			end
-		elseif EffectManager35E.hasEffect(rAttacker, "CA", rDefender, true, false, rRoll.tags) then
+		end
+		if EffectManager35E.hasEffect(rAttacker, "CA", rDefender, true, false, rRoll.tags) then
 			bCombatAdvantage = true;
 		elseif EffectManager35E.hasEffect(rDefender, "GRANTCA", rAttacker, false, false, rRoll.tags) then
 			bCombatAdvantage = true;
@@ -699,8 +700,10 @@ function getDefenseValue(rAttacker, rDefender, rRoll)
 		if EffectManager35E.hasEffect(rDefender, "Slowed", nil, false, false, rRoll.tags) then
 			nBonusSituational = nBonusSituational - 1;
 		end
-		if EffectManager35E.hasEffect(rDefender, "Flat-footed", nil, false, false, rRoll.tags) or 
-				EffectManager35E.hasEffect(rDefender, "Flatfooted", nil, false, false, rRoll.tags) or 
+		-- KEL adding uncanny dodge
+		if ( ( EffectManager35E.hasEffect(rDefender, "Flat-footed", nil, false, false, rRoll.tags) or 
+				EffectManager35E.hasEffect(rDefender, "Flatfooted", nil, false, false, rRoll.tags) ) and not
+				ActorManager35E.hasSpecialAbility(rDefender, "Uncanny Dodge", false, false, true) ) or 
 				EffectManager35E.hasEffect(rDefender, "Climbing", nil, false, false, rRoll.tags) or 
 				EffectManager35E.hasEffect(rDefender, "Running", nil, false, false, rRoll.tags) then
 			bCombatAdvantage = true;
