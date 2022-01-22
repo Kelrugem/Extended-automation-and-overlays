@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+
+<root>
+    <windowclass name="effect_ACCC">
+        <script file="effect_builder/effects/scripts/ACCC.lua" />
+		<margins control="0,0,0,2" />
+        <sheetdata>
+            <leftanchor />
+
+            <effect_number name="effect_modifier" />
+
+            <combobox_bonus_types name="effect_bonus_type" />
+
+            <cycler_range />
+
+            <label_effect>
+                <static textres="opportunity_bonus"/>
+            </label_effect>
+            <checkbox_effect name="effect_opportunity"/>
+        </sheetdata>
+    </windowclass>
+    <script name="loader_ACCC">
+        function onInit()
+            if ExtensionManager.shouldLoadEffects() then
+                EditorManager.addEditor(
+                    "category_defense",
+                    {
+                        value="ACCC",
+                        labelres="effect_accc",
+                        windowclass="effect_ACCC"
+                    }
+                )
+            end
+        end
+    </script>
+</root>

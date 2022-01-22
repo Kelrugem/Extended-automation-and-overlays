@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+
+<root>
+    <windowclass name="conditional_IFTAG">
+        <script file="effect_builder/conditional/scripts/conditional_IFTAG.lua" />
+		<margins control="0,0,0,2" />
+        <sheetdata>
+            <leftanchor />
+
+            <cycler_negation />
+
+            <stringfield_effects name="tag"/>
+        </sheetdata>
+    </windowclass>
+    <script name="loader_conditional_IFTAG">
+        function onInit()
+            if ExtensionManager.shouldLoadEffects() then
+                EditorManager.addEditor(
+                    "category_conditional",
+                    {
+                        value="IFTAG",
+                        labelres="effect_iftag",
+                        windowclass="conditional_IFTAG"
+                    }
+                )
+            end
+        end
+    </script>
+</root>

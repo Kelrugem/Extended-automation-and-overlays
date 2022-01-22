@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+
+<root>
+    <windowclass name="effect_DC">
+        <script file="effect_builder/effects/scripts/DC.lua" />
+		<margins control="0,0,0,2" />
+        <sheetdata>
+            <leftanchor />
+
+            <effect_number name="effect_modifier" />
+
+            <combobox_bonus_types name="effect_bonus_type" />
+        </sheetdata>
+    </windowclass>
+    <script name="loader_DC">
+        function onInit()
+            if ExtensionManager.shouldLoadEffects() then
+                Debug.console("loading DC effect")
+                EditorManager.addEditor(
+                    "category_spell",
+                    {
+                        value="DC",
+                        labelres="effect_dc",
+                        windowclass="effect_DC"
+                    }
+                )
+            end
+        end
+    </script>
+</root>

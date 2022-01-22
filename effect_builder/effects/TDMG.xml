@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+
+<root>
+    <windowclass name="effect_TDMG">
+        <script file="editors/effect/scripts/TDMG.lua" />
+		<margins control="0,0,0,2" />
+        <sheetdata>
+            <leftanchor />
+
+            <dice_effect name="effect_dice" />
+
+			<label_plus />
+
+            <effect_number name="effect_modifier">
+                <anchored>
+                    <left offset="5" />
+                </anchored>
+            </effect_number>
+
+            <combobox_damage_types name="damage_type" />
+
+            <cycler_range />
+        </sheetdata>
+    </windowclass>
+    <script name="loader_TDMG">
+        function onInit()
+            if ExtensionManager.shouldLoadEffects() then
+                EditorManager.addEditor(
+                    "category_misc",
+                    {
+                        value="TDMG",
+                        labelres="effect_tdmg",
+                        windowclass="effect_TDMG"
+                    }
+                )
+            end
+        end
+    </script>
+</root>

@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+
+<root>
+    <windowclass name="effect_KEEN">
+        <script file="effect_builder/effects/scripts/KEEN.lua" />
+		<margins control="0,0,0,2" />
+        <sheetdata>
+            <leftanchor />
+
+            <cycler_range />
+
+            <label_effect>
+                <static textres="opportunity_bonus"/>
+            </label_effect>
+            <checkbox_effect name="effect_opportunity"/>
+        </sheetdata>
+    </windowclass>
+    <script name="loader_KEEN">
+        function onInit()
+            if ExtensionManager.shouldLoadEffects() then
+                EditorManager.addEditor(
+                    "category_attack",
+                    {
+                        value="KEEN",
+                        labelres="effect_keen",
+                        windowclass="effect_KEEN"
+                    }
+                )
+            end
+        end
+    </script>
+</root>

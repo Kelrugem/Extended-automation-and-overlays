@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+
+<root>
+    <windowclass name="effect_ADVSAV">
+        <script file="effect_builder/effects/scripts/ADVSAV.lua" />
+		<margins control="0,0,0,2" />
+        <sheetdata>
+            <leftanchor />
+
+            <cycler_advantage />
+
+            <cycler_saves />
+        </sheetdata>
+    </windowclass>
+    <script name="loader_ADVSAV">
+        function onInit()
+            if ExtensionManager.shouldLoadEffects() then
+                EditorManager.addEditor(
+                    "category_advantage",
+                    {
+                        value="ADVSAV",
+                        labelres="effect_save",
+                        windowclass="effect_ADVSAV"
+                    }
+                )
+            end
+        end
+    </script>
+</root>

@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+
+<root>
+    <windowclass name="effect_SIMMUNE">
+        <script file="effect_builder/effects/scripts/SIMMUNE.lua" />
+		<margins control="0,0,0,2" />
+        <sheetdata>
+            <leftanchor />
+
+            <spaceholder />
+        </sheetdata>
+    </windowclass>
+    <script name="loader_SIMMUNE">
+        function onInit()
+            if ExtensionManager.shouldLoadEffects() then
+                EditorManager.addEditor(
+                    "category_susceptibility",
+                    {
+                        value="SIMMUNE",
+                        labelres="effect_simmune",
+                        windowclass="effect_SIMMUNE"
+                    }
+                )
+            end
+        end
+    </script>
+</root>

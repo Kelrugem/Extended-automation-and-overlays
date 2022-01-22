@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+
+<root>
+    <windowclass name="effect_DMG">
+        <script file="effect_builder/effects/scripts/DMG.lua" />
+		<margins control="0,0,0,2" />
+        <sheetdata>
+            <leftanchor />
+
+            <dice_effect name="effect_dice" />
+
+			<label_plus />
+
+            <effect_number name="effect_modifier">
+                <anchored>
+                    <left offset="5" />
+                </anchored>
+            </effect_number>
+
+            <combobox_damage_types name="damage_type" />
+
+            <combobox_bonus_types name="effect_bonus_type" />
+
+            <cycler_range />
+
+            <label_effect>
+                <static textres="accuracy_bonus"/>
+            </label_effect>
+            <checkbox_effect name="effect_accuracy"/>
+        </sheetdata>
+    </windowclass>
+</root>

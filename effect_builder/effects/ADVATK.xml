@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+
+<root>
+    <windowclass name="effect_ADVATK">
+        <script file="effect_builder/effects/scripts/ADVATK.lua" />
+		<margins control="0,0,0,2" />
+        <sheetdata>
+            <leftanchor />
+
+            <cycler_advantage />
+
+            <stringcycler_effect name="direction">
+                <parameters>
+                    <defaultlabelres>outgoing</defaultlabelres>
+                    <labelsres>incoming</labelsres>
+                    <values>GRANT</values>
+                </parameters>
+            </stringcycler_effect>
+
+            <cycler_range />
+
+            <label_effect>
+                <static textres="opportunity_bonus"/>
+            </label_effect>
+            <checkbox_effect name="effect_opportunity"/>
+        </sheetdata>
+    </windowclass>
+    <script name="loader_ADVATK">
+        function onInit()
+            if ExtensionManager.shouldLoadEffects() then
+                EditorManager.addEditor(
+                    "category_advantage",
+                    {
+                        value="ADVATK",
+                        labelres="effect_atk",
+                        windowclass="effect_ADVATK"
+                    }
+                )
+            end
+        end
+    </script>
+</root>
