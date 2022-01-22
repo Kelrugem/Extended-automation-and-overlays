@@ -21,6 +21,16 @@ end
 -- EFFECT MANAGER OVERRIDES
 --
 
+-- KEL compatibility with rmilmine
+-- function isAEOk(rActor, v)
+	-- if StringManager.contains(Extension.getExtensions(), "Advanced Effects for 3.5E and Pathfinder") then
+		-- return EffectManagerAE.isValidCheckEffect(rActor,v);
+	-- else
+		-- return true;
+	-- end
+-- end
+-- END
+
 function onEffectAddStart(rEffect)
 	rEffect.nDuration = rEffect.nDuration or 1;
 	if rEffect.sUnits == "minute" then
@@ -444,7 +454,7 @@ function getEffectsByType(rActor, sEffectType, aFilter, rFilterActor, bTargetedO
 		return {};
 	end
 	local results = {};
-
+	
 	-- Set up filters
 	local aRangeFilter = {};
 	local aOtherFilter = {};
@@ -459,28 +469,21 @@ function getEffectsByType(rActor, sEffectType, aFilter, rFilterActor, bTargetedO
 			end
 		end
 	end
-
+	
 	-- Determine effect type targeting
 	local bTargetSupport = StringManager.isWord(sEffectType, DataCommon.targetableeffectcomps);
-
+	
 	-- Iterate through effects
 	for _,v in pairs(DB.getChildren(ActorManager.getCTNode(rActor), "effects")) do
 		-- Check active
 		local nActive = DB.getValue(v, "isactive", 0);
-
-		-- COMPATIBILITY FOR ADVANCED EFFECTS
-		-- to add support for AE in other extensions, make this change
-		-- Check effect is from used weapon.
-		-- original line: if nActive ~= 0 then
-		if ((not AdvancedEffects and nActive ~= 0) or (AdvancedEffects and AdvancedEffects.isValidCheckEffect(rActor,v))) then
-		-- END COMPATIBILITY FOR ADVANCED EFFECTS
-
+		if (nActive ~= 0) then
 			-- Check targeting
 			local bTargeted = EffectManager.isTargetedEffect(v);
 			if not bTargeted or EffectManager.isEffectTarget(v, rFilterActor) then
 				local sLabel = DB.getValue(v, "label", "");
 				local aEffectComps = EffectManager.parseEffect(sLabel);
-
+				
 				-- Look for type/subtype match
 				local nMatch = 0;
 				for kEffectComp, sEffectComp in ipairs(aEffectComps) do
@@ -531,7 +534,7 @@ function getEffectsByType(rActor, sEffectType, aFilter, rFilterActor, bTargetedO
 						-- Strip energy/bonus types for subtype comparison
 						local aEffectRangeFilter = {};
 						local aEffectOtherFilter = {};
-
+						
 						local aComponents = {};
 						for _,vPhrase in ipairs(rEffectComp.remainder) do
 							local nTempIndexOR = 0;
@@ -545,7 +548,7 @@ function getEffectsByType(rActor, sEffectType, aFilter, rFilterActor, bTargetedO
 									table.insert(aPhraseOR, vPhrase:sub(nTempIndexOR));
 								end
 							until nStartOR == nil;
-
+							
 							for _,vPhraseOR in ipairs(aPhraseOR) do
 								local nTempIndexAND = 0;
 								repeat
@@ -575,7 +578,7 @@ function getEffectsByType(rActor, sEffectType, aFilter, rFilterActor, bTargetedO
 							
 							j = j + 1;
 						end
-
+					
 						-- Check for match
 						local comp_match = false;
 						if rEffectComp.type == sEffectType then
@@ -586,7 +589,7 @@ function getEffectsByType(rActor, sEffectType, aFilter, rFilterActor, bTargetedO
 							else
 								comp_match = true;
 							end
-
+						
 							-- Check filters
 							if #aEffectRangeFilter > 0 then
 								local bRangeMatch = false;
@@ -654,7 +657,7 @@ function getEffectsByType(rActor, sEffectType, aFilter, rFilterActor, bTargetedO
 			end -- END TARGET CHECK
 		end  -- END ACTIVE CHECK
 	end  -- END EFFECT LOOP
-
+	
 	return results;
 end
 -- KEL add tags
@@ -831,7 +834,7 @@ function getEffectsBonus(rActor, aEffectType, bModOnly, aFilter, rFilterActor, b
 	end
 	return aTotalDice, nTotalMod, nEffectCount;
 end
--- KEL Adding tags and IFTAG to 
+-- KEL Adding tags and IFTAG to hasEffect
 function hasEffectCondition(rActor, sEffect, rEffectSpell)
 	return hasEffect(rActor, sEffect, nil, false, true, rEffectSpell);
 end
@@ -841,18 +844,12 @@ function hasEffect(rActor, sEffect, rTarget, bTargetedOnly, bIgnoreEffectTargets
 		return false, 0;
 	end
 	local sLowerEffect = sEffect:lower();
-
+	
 	-- Iterate through each effect
 	local aMatch = {};
 	for _,v in pairs(DB.getChildren(ActorManager.getCTNode(rActor), "effects")) do
 		local nActive = DB.getValue(v, "isactive", 0);
-
-		-- COMPATIBILITY FOR ADVANCED EFFECTS
-		-- to add support for AE in other extensions, make this change
-		-- original line: if nActive ~= 0 then
-		if ((not AdvancedEffects and nActive ~= 0) or (AdvancedEffects and AdvancedEffects.isValidCheckEffect(rActor,v))) then
-		-- END COMPATIBILITY FOR ADVANCED EFFECTS
-
+		if (nActive ~= 0) then
 			-- Parse each effect label
 			local sLabel = DB.getValue(v, "label", "");
 			local bTargeted = EffectManager.isTargetedEffect(v);
@@ -919,7 +916,7 @@ function hasEffect(rActor, sEffect, rTarget, bTargetedOnly, bIgnoreEffectTargets
 				end
 				
 			end
-
+			
 			-- If matched, then remove one-off effects
 			if nMatch > 0 then
 				if nActive == 2 then
@@ -938,7 +935,7 @@ function hasEffect(rActor, sEffect, rTarget, bTargetedOnly, bIgnoreEffectTargets
 			end
 		end
 	end
-
+	
 	if #aMatch > 0 then
 		return true, #aMatch;
 	end
