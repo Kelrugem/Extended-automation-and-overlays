@@ -177,7 +177,7 @@ function parseEffectComp(s)
 		end
 		
 		if nRemainderIndex <= #aWords then
-			while nRemainderIndex <= #aWords and aWords[nRemainderIndex]:match("^%[%d?%a+%]$") do
+			while nRemainderIndex <= #aWords and aWords[nRemainderIndex]:match("^%[%-?%d?%a+%]$") do
 				table.insert(aRemainder, aWords[nRemainderIndex]);
 				nRemainderIndex = nRemainderIndex + 1;
 			end
@@ -320,7 +320,7 @@ end
 
 function evalAbilityHelper(rActor, sEffectAbility, nodeSpellClass)
 	-- KEL We add DCrumbs max stuff but we do it differently (espcially min is not needed)
-	local sSign, sModifier, sNumber, sShortAbility, nMax = sEffectAbility:match("^%[([%+%-]?)([HTQOd]?)([%d]?)([A-Z][A-Z][A-Z]?)(%d*)%]$");
+	local sSign, sModifier, sNumber, sShortAbility, nMax = sEffectAbility:match("^%[([%+%-%^]*)([HTQd]?)([%d]?)([A-Z][A-Z][A-Z]?)(%d*)%]$");
 	-- KEL adding rollable stats (for damage especially)
 	-- local sSign, sDieSides = sEffectAbility:match("^%[([%-%+]?)[dD]([%dF]+)%]$");
 	local sDie, sDesc = sEffectAbility:match("^%[%s*(%S+)%s*(.*)%]$");
@@ -380,8 +380,6 @@ function evalAbilityHelper(rActor, sEffectAbility, nodeSpellClass)
 	if nAbility and not IsDie then
 		if sModifier == "H" then
 			nAbility = nAbility / 2;
-		elseif sModifier == "O" then
-			nAbility = math.ceil(nAbility / 2);
 		elseif sModifier == "T" then
 			nAbility = nAbility / 3;
 		elseif sModifier == "Q" then
@@ -392,11 +390,14 @@ function evalAbilityHelper(rActor, sEffectAbility, nodeSpellClass)
 		elseif ((sNumber or 0) ~= 0) and (sModifier == "d") then
 			nAbility = nAbility / (tonumber(sNumber) or 1);
 		end
+		if sSign:find("^", 0, true) then  -- Round the value
+			nAbility = math.ceil(nAbility);
+		end
 		-- KEL This has to be before the sign change otherwise nMax always wins
 		if nMax then
 			nAbility = math.min(nAbility, (tonumber(nMax) or nAbility));
 		end
-		if sSign == "-" then
+		if sSign:find("-", 0, true) then
 			nAbility = 0 - nAbility;
 		end
 		-- KEL we round here for avoiding rounding errors
@@ -426,7 +427,7 @@ function evalEffect(rActor, s, nodeSpellClass)
 			-- KEL adding die possibility
 			local sDie, sDesc = rEffectComp.remainder[i]:match("^%[%s*(%S+)%s*(.*)%]$");
 			-- KEL TQD stuff
-			if rEffectComp.remainder[i]:match("^%[([%+%-]?)([HTQd]?)([%d]?)([A-Z][A-Z][A-Z]?)(%d*)%]$") or StringManager.isDiceString(sDie) then
+			if rEffectComp.remainder[i]:match("^%[([%+%-%^]*)([HTQd]?)([%d]?)([A-Z][A-Z][A-Z]?)(%d*)%]") or StringManager.isDiceString(sDie) then
 				local nAbility = evalAbilityHelper(rActor, rEffectComp.remainder[i], nodeSpellClass);
 				if nAbility then
 					rEffectComp.mod = rEffectComp.mod + nAbility;
@@ -437,7 +438,7 @@ function evalEffect(rActor, s, nodeSpellClass)
 		table.insert(aNewEffectComps, rebuildParsedEffectComp(rEffectComp));
 	end
 	local sOutput = EffectManager.rebuildParsedEffect(aNewEffectComps);
-	
+
 	return sOutput;
 end
 -- KEL add tags
@@ -482,7 +483,7 @@ function getEffectsByType(rActor, sEffectType, aFilter, rFilterActor, bTargetedO
 			if not bTargeted or EffectManager.isEffectTarget(v, rFilterActor) then
 				local sLabel = DB.getValue(v, "label", "");
 				local aEffectComps = EffectManager.parseEffect(sLabel);
-
+				
 				-- Look for type/subtype match
 				local nMatch = 0;
 				for kEffectComp, sEffectComp in ipairs(aEffectComps) do
@@ -533,7 +534,7 @@ function getEffectsByType(rActor, sEffectType, aFilter, rFilterActor, bTargetedO
 						-- Strip energy/bonus types for subtype comparison
 						local aEffectRangeFilter = {};
 						local aEffectOtherFilter = {};
-
+						
 						local aComponents = {};
 						for _,vPhrase in ipairs(rEffectComp.remainder) do
 							local nTempIndexOR = 0;
@@ -547,7 +548,7 @@ function getEffectsByType(rActor, sEffectType, aFilter, rFilterActor, bTargetedO
 									table.insert(aPhraseOR, vPhrase:sub(nTempIndexOR));
 								end
 							until nStartOR == nil;
-
+							
 							for _,vPhraseOR in ipairs(aPhraseOR) do
 								local nTempIndexAND = 0;
 								repeat
@@ -577,7 +578,7 @@ function getEffectsByType(rActor, sEffectType, aFilter, rFilterActor, bTargetedO
 							
 							j = j + 1;
 						end
-
+					
 						-- Check for match
 						local comp_match = false;
 						if rEffectComp.type == sEffectType then
@@ -588,7 +589,7 @@ function getEffectsByType(rActor, sEffectType, aFilter, rFilterActor, bTargetedO
 							else
 								comp_match = true;
 							end
-
+						
 							-- Check filters
 							if #aEffectRangeFilter > 0 then
 								local bRangeMatch = false;
@@ -656,7 +657,7 @@ function getEffectsByType(rActor, sEffectType, aFilter, rFilterActor, bTargetedO
 			end -- END TARGET CHECK
 		end  -- END ACTIVE CHECK
 	end  -- END EFFECT LOOP
-
+	
 	return results;
 end
 -- KEL add tags
@@ -843,7 +844,7 @@ function hasEffect(rActor, sEffect, rTarget, bTargetedOnly, bIgnoreEffectTargets
 		return false, 0;
 	end
 	local sLowerEffect = sEffect:lower();
-
+	
 	-- Iterate through each effect
 	local aMatch = {};
 	for _,v in pairs(DB.getChildren(ActorManager.getCTNode(rActor), "effects")) do
@@ -921,7 +922,7 @@ function hasEffect(rActor, sEffect, rTarget, bTargetedOnly, bIgnoreEffectTargets
 				end
 				
 			end
-
+			
 			-- If matched, then remove one-off effects
 			if nMatch > 0 then
 				if nActive == 2 then
@@ -940,7 +941,7 @@ function hasEffect(rActor, sEffect, rTarget, bTargetedOnly, bIgnoreEffectTargets
 			end
 		end
 	end
-
+	
 	if #aMatch > 0 then
 		return true, #aMatch;
 	end
@@ -1104,7 +1105,6 @@ end
 function checkTagConditional(aConditions, rEffectSpell)
 	if rEffectSpell then
 		local tagshelp = StringManager.parseWords(rEffectSpell);
-		
 		if not tagshelp[1] then
 			return false;
 		end
