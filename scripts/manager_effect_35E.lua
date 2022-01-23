@@ -390,8 +390,12 @@ function evalAbilityHelper(rActor, sEffectAbility, nodeSpellClass)
 		elseif ((sNumber or 0) ~= 0) and (sModifier == "d") then
 			nAbility = nAbility / (tonumber(sNumber) or 1);
 		end
-		if sSign:find("^", 0, true) then  -- Round the value
-			nAbility = math.ceil(nAbility);
+		if (nAbility ~= 0) and sSign:find("^", 0, true) then  -- Round the value
+			if nAbility > 0 then
+				nAbility = math.ceil(nAbility);
+			else
+				nAbility = math.floor(nAbility);
+			end
 		end
 		-- KEL This has to be before the sign change otherwise nMax always wins
 		if nMax then
