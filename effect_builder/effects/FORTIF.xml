@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+
+<root>
+    <windowclass name="effect_FORTIF">
+        <script file="effect_builder/effects/scripts/FORTIF.lua" />
+		<margins control="0,0,0,2" />
+        <sheetdata>
+            <leftanchor />
+
+            <effect_number name="effect_modifier">
+                <anchored width="40" />
+                <min>0</min>
+                <min>100</min>
+            </effect_number>
+
+            <combobox_damage_types />
+        </sheetdata>
+    </windowclass>
+    <script name="loader_FORTIF">
+        function onInit()
+            if ExtensionManager.shouldLoadEffects() then
+                EditorManager.addEditor(
+                    "category_defense",
+                    {
+                        value="FORTIF",
+                        labelres="effect_fortif",
+                        windowclass="effect_FORTIF"
+                    }
+                )
+            end
+        end
+    </script>
+</root>

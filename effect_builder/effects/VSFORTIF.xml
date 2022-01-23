@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+
+<root>
+    <windowclass name="effect_VSFORTIF">
+        <script file="effect_builder/effects/scripts/VSFORTIF.lua" />
+		<margins control="0,0,0,2" />
+        <sheetdata>
+            <leftanchor />
+
+            <effect_number name="effect_modifier">
+                <anchored width="40" />
+                <min>0</min>
+                <min>100</min>
+            </effect_number>
+        </sheetdata>
+    </windowclass>
+    <script name="loader_VSFORTIF">
+        function onInit()
+            if ExtensionManager.shouldLoadEffects() then
+                EditorManager.addEditor(
+                    "category_attack",
+                    {
+                        value="VSFORTIF",
+                        labelres="effect_vsfortif",
+                        windowclass="effect_VSFORTIF"
+                    }
+                )
+            end
+        end
+    </script>
+</root>

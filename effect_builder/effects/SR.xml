@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+
+<root>
+    <windowclass name="effect_SR">
+        <script file="effect_builder/effects/scripts/SR.lua" />
+		<margins control="0,0,0,2" />
+        <sheetdata>
+            <leftanchor />
+
+            <effect_number name="effect_modifier" />
+
+            <combobox_bonus_types name="effect_bonus_type" />
+        </sheetdata>
+    </windowclass>
+    <script name="loader_SR">
+        function onInit()
+            if ExtensionManager.shouldLoadEffects() then
+                EditorManager.addEditor(
+                    "category_defense",
+                    {
+                        value="SR",
+                        labelres="effect_sr",
+                        windowclass="effect_SR"
+                    }
+                )
+            end
+        end
+    </script>
+</root>

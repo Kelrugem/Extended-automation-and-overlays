@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+
+<root>
+    <windowclass name="effect_REVERT">
+        <script file="effect_builder/effects/scripts/REVERT.lua" />
+		<margins control="0,0,0,2" />
+        <sheetdata>
+            <leftanchor />
+
+            <combobox_damage_types />
+        </sheetdata>
+    </windowclass>
+    <script name="loader_REVERT">
+        function onInit()
+            if ExtensionManager.shouldLoadEffects() then
+                EditorManager.addEditor(
+                    "category_susceptibility",
+                    {
+                        value="REVERT",
+                        labelres="effect_revert",
+                        windowclass="effect_REVERT"
+                    }
+                )
+            end
+        end
+    </script>
+</root>

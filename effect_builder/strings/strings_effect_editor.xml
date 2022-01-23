@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+
+<root>
+    <string name="category_advantage">(Dis)Advantages</string>
+    <string name="advantage">Advantage</string>
+    <string name="disadvantage">Disadvantage</string>
+    <string name="outgoing">Outgoing</string>
+    <string name="incoming">Incoming</string>
+    <string name="accuracy_bonus">Is Accurate?</string>
+
+    <string name="effect_accc">Critical Confirmation AC</string>
+    <string name="effect_cl">Caster Level</string>
+    <string name="effect_coc">Concentration Check</string>
+    <string name="effect_dc">Spell Difficulty Class (DC)</string>
+    <string name="effect_fortif">Fortification</string>
+    <string name="effect_hresist">Half Resistance</string>
+    <string name="effect_keen">Keen</string>
+    <string name="effect_revert">Invert Damage</string>
+    <string name="effect_simmune">Spell Immunity</string>
+    <string name="effect_sr">Spell Resistance</string>
+    <string name="effect_tdmg">Hit Reaction Damage</string>
+    <string name="effect_vsfortif">Fortification Bypass</string>
+    
+    <string name="effect_iftag">Tag</string>
+    <string name="nif">Not If Self</string>
+    <string name="nift">Not If Target</string>
+</root>

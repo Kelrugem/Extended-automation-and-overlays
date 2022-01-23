@@ -2,7 +2,7 @@
 <root version="4.1.13.1" release="1">
   <properties>
     <name>Feature: Extended automation and overlays</name>
-    <version>4.1.13.1</version>
+    <version>4.1.13.2</version>
     <author>rhythmist, mr900rr, darrenan, tahl_liadon, bmos, DCrumb, RabidPaladin, SoxMax, Cristmo and Kelrugem</author>
     <description>Deekin ist super! (Will ever someone read that strange description?)</description>
     <ruleset>
@@ -13,7 +13,7 @@
     </ruleset>
 	<loadorder>35</loadorder>
   </properties>
-  <announcement text="Extended automation, dated at 10 January 2022, for 3.5E and PFRPG rulesets, v. 4.1.13. Copyright 2022 Smiteworks.\rBy darrenan, mr900rr, phixation, tahl_liadon, bmos, DCrumb, RabidPaladin, SoxMax, Cristmo and Kelrugem." icon="DeekinMightyBard" font="emotefont" />
+  <announcement text="Extended automation, dated at 23 January 2022, for 3.5E and PFRPG rulesets, v. 4.1.13. Copyright 2022 Smiteworks.\rBy darrenan, mr900rr, phixation, tahl_liadon, bmos, DCrumb, RabidPaladin, SoxMax, Cristmo and Kelrugem." icon="DeekinMightyBard" font="emotefont" />
   <base>
 	<icon name="DeekinMightyBard" file="DeekinMightyBard.jpg" />
 	<!-- Graphics -->
@@ -57,5 +57,8 @@
 	<script name="SpellManager" file="scripts/manager_spell.lua" />
 	<script name="ActionSave" file="scripts/manager_action_save.lua" />
 	<script name="ActionSpell" file="scripts/manager_action_spell.lua" />
+
+	<!-- Effect Builder -->
+	<includefile source="effect_builder/editor_loader.xml" />
   </base>
 </root>

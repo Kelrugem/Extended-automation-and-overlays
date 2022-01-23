@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<root version="3.3">
+    <!-- Strings -->
+    <includefile source="effect_builder/strings/strings_effect_editor.xml" />
+    <!-- Scripts -->
+    <script name="ExtensionManager" file="effect_builder/scripts/manager_extensions.lua" />
+    <!-- Templates -->
+    <includefile source="effect_builder/common/cyclers.xml" />
+
+    <!-- Effect Editors -->
+    <includefile source="effect_builder/effects/ACCC.xml" />
+    <includefile source="effect_builder/effects/ADVATK.xml" />
+    <includefile source="effect_builder/effects/ADVINIT.xml" />
+    <includefile source="effect_builder/effects/ADVSAV.xml" />
+    <includefile source="effect_builder/effects/CL.xml" />
+    <includefile source="effect_builder/effects/COC.xml" />
+    <includefile source="effect_builder/effects/DC.xml" />
+    <includefile source="effect_builder/effects/DMG.xml" />
+    <includefile source="effect_builder/effects/FORTIF.xml" />
+    <includefile source="effect_builder/effects/KEEN.xml" />
+    <includefile source="effect_builder/effects/REVERT.xml" />
+    <includefile source="effect_builder/effects/SIMMUNE.xml" />
+    <includefile source="effect_builder/effects/SR.xml" />
+    <includefile source="effect_builder/effects/TDMG.xml" />
+    <includefile source="effect_builder/effects/VSFORTIF.xml" />
+
+    <includefile source="effect_builder/conditional/conditional_IFTAG.xml" />
+</root>

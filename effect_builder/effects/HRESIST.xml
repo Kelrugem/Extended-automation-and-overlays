@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+
+<root>
+    <windowclass name="effect_HRESIST">
+        <script file="effect_builder/effects/scripts/HRESIST.lua" />
+		<margins control="0,0,0,2" />
+        <sheetdata>
+            <leftanchor />
+
+            <combobox_damage_types />
+        </sheetdata>
+    </windowclass>
+    <script name="loader_HRESIST">
+        function onInit()
+            if ExtensionManager.shouldLoadEffects() then
+                EditorManager.addEditor(
+                    "category_susceptibility",
+                    {
+                        value="HRESIST",
+                        labelres="effect_hresist",
+                        windowclass="effect_HRESIST"
+                    }
+                )
+            end
+        end
+    </script>
+</root>

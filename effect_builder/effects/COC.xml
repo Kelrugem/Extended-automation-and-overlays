@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+
+<root>
+    <windowclass name="effect_COC">
+        <script file="effect_builder/effects/scripts/COC.lua" />
+		<margins control="0,0,0,2" />
+        <sheetdata>
+            <leftanchor />
+
+            <dice_effect name="effect_dice" />
+
+			<label_plus />
+
+            <effect_number name="effect_modifier">
+                <anchored>
+                    <left offset="5" />
+                </anchored>
+            </effect_number>
+
+            <combobox_bonus_types name="effect_bonus_type" />
+        </sheetdata>
+    </windowclass>
+    <script name="loader_COC">
+        function onInit()
+            if ExtensionManager.shouldLoadEffects() then
+                EditorManager.addEditor(
+                    "category_spell",
+                    {
+                        value="COC",
+                        labelres="effect_coc",
+                        windowclass="effect_COC"
+                    }
+                )
+            end
+        end
+    </script>
+</root>

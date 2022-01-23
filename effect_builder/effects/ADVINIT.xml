@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+
+<root>
+    <windowclass name="effect_ADVINIT">
+        <script file="effect_builder/effects/scripts/ADVINIT.lua" />
+		<margins control="0,0,0,2" />
+        <sheetdata>
+            <leftanchor />
+
+            <cycler_advantage />
+
+            <spaceholder />
+        </sheetdata>
+    </windowclass>
+    <script name="loader_ADVINIT">
+        function onInit()
+            if ExtensionManager.shouldLoadEffects() then
+                EditorManager.addEditor(
+                    "category_advantage",
+                    {
+                        value="ADVINIT",
+                        labelres="effect_init",
+                        windowclass="effect_ADVINIT"
+                    }
+                )
+            end
+        end
+    </script>
+</root>

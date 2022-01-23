@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+
+<root>
+    <template name="cycler_advantage">
+        <stringcycler_effect name="advantage">
+            <parameters>
+                <defaultlabelres>advantage</defaultlabelres>
+                <defaultvalue>ADV</defaultvalue>
+                <labelsres>disadvantage</labelsres>
+                <values>DIS</values>
+            </parameters>
+        </stringcycler_effect>
+    </template>
+
+    <template name="cycler_negation">
+        <stringcycler_effect name="negator">
+            <anchored width="30" />
+            <parameters mergerule="replace">
+                <defaultlabel>-</defaultlabel>
+                <defaultvalue>IFTAG</defaultvalue>
+                <labels>Not</labels>
+                <values>NIFTAG</values>
+            </parameters>
+        </stringcycler_effect>
+    </template>
+
+    <template name="cycler_ifs">
+        <stringcycler_effect name="target">
+            <anchored width="80" />
+            <parameters mergerule="replace">
+                <defaultlabelres>if</defaultlabelres>
+                <defaultvalue>IF</defaultvalue>
+                <labelsres>nif|ift|nift</labelsres>
+                <values>NIF|IFT|NIFT</values>
+            </parameters>
+        </stringcycler_effect>
+    </template>
+</root>

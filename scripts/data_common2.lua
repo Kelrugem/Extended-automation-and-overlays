@@ -73,7 +73,7 @@ tvermintraits = {
 	"mindaffecting"
 }
 -- END
--- Adding ethereal; need to overwrite full vector for ordering
+-- Adding ethereal and (improved) evasion; need to overwrite full vector for ordering
 conditions = {
 	"blinded", 
 	"climbing",
@@ -84,6 +84,7 @@ conditions = {
 	"deafened", 
 	"entangled",
 	"ethereal",
+	"evasion",
 	"exhausted",
 	"fascinated",
 	"fatigued",
@@ -91,6 +92,7 @@ conditions = {
 	"frightened", 
 	"grappled", 
 	"helpless",
+	"improved Evasion",
 	"incorporeal", 
 	"invisible", 
 	"kneeling",
