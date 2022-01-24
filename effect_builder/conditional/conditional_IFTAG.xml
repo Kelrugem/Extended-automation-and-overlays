@@ -5,11 +5,11 @@
         <script file="effect_builder/conditional/scripts/conditional_IFTAG.lua" />
 		<margins control="0,0,0,2" />
         <sheetdata>
-            <leftanchor />
+            <leftanchor_eb />
 
-            <cycler_negation />
+            <cycler_eb_negation />
 
-            <stringfield_effects name="tag"/>
+            <stringfield_eb_valueholder name="tag"/>
         </sheetdata>
     </windowclass>
     <script name="loader_conditional_IFTAG">
