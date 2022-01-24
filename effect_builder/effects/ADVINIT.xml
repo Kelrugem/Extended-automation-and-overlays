@@ -14,7 +14,7 @@
     </windowclass>
     <script name="loader_ADVINIT">
         function onInit()
-            if ExtensionManager.shouldLoadEffects() then
+            if ExtensionManagerExtendedAutomation.shouldLoadEffects() then
                 EditorManager.addEditor(
                     "category_advantage",
                     {

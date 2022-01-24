@@ -12,7 +12,7 @@
     </windowclass>
     <script name="loader_HRESIST">
         function onInit()
-            if ExtensionManager.shouldLoadEffects() then
+            if ExtensionManagerExtendedAutomation.shouldLoadEffects() then
                 EditorManager.addEditor(
                     "category_susceptibility",
                     {
