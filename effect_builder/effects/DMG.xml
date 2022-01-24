@@ -5,28 +5,28 @@
         <script file="effect_builder/effects/scripts/DMG.lua" />
 		<margins control="0,0,0,2" />
         <sheetdata>
-            <leftanchor />
+            <leftanchor_eb />
 
-            <dice_effect name="effect_dice" />
+            <dice_eb_valueholder name="effect_dice" />
 
-			<label_plus />
+			<label_eb_plus />
 
-            <effect_number name="effect_modifier">
+            <number_eb_valueholder name="effect_modifier">
                 <anchored>
                     <left offset="5" />
                 </anchored>
-            </effect_number>
+            </number_eb_valueholder>
 
-            <combobox_damage_types name="damage_type" />
+            <combobox_eb_damage_type name="damage_type" />
 
-            <combobox_bonus_types name="effect_bonus_type" />
+            <combobox_eb_bonus_type name="effect_bonus_type" />
 
-            <cycler_range />
+            <cycler_eb_range />
 
-            <label_effect>
+            <label_eb>
                 <static textres="accuracy_bonus"/>
-            </label_effect>
-            <checkbox_effect name="effect_accuracy"/>
+            </label_eb>
+            <checkbox_eb_valueholder name="effect_accuracy"/>
         </sheetdata>
     </windowclass>
 </root>

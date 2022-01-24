@@ -5,14 +5,14 @@
         <script file="effect_builder/effects/scripts/SIMMUNE.lua" />
 		<margins control="0,0,0,2" />
         <sheetdata>
-            <leftanchor />
+            <leftanchor_eb />
 
-            <spaceholder />
+            <spaceholder_eb />
         </sheetdata>
     </windowclass>
     <script name="loader_SIMMUNE">
         function onInit()
-            if ExtensionManager.shouldLoadEffects() then
+            if ExtensionManagerExtendedAutomation.shouldLoadEffects() then
                 EditorManager.addEditor(
                     "category_susceptibility",
                     {

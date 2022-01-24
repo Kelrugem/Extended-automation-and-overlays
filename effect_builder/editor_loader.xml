@@ -3,7 +3,7 @@
     <!-- Strings -->
     <includefile source="effect_builder/strings/strings_effect_editor.xml" />
     <!-- Scripts -->
-    <script name="ExtensionManager" file="effect_builder/scripts/manager_extensions.lua" />
+    <script name="ExtensionManagerExtendedAutomation" file="effect_builder/scripts/manager_extensions.lua" />
     <!-- Templates -->
     <includefile source="effect_builder/common/cyclers.xml" />
 

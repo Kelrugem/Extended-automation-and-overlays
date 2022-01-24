@@ -5,16 +5,16 @@
         <script file="effect_builder/effects/scripts/ADVSAV.lua" />
 		<margins control="0,0,0,2" />
         <sheetdata>
-            <leftanchor />
+            <leftanchor_eb />
 
-            <cycler_advantage />
+            <cycler_eb_advantage />
 
-            <cycler_saves />
+            <cycler_eb_save />
         </sheetdata>
     </windowclass>
     <script name="loader_ADVSAV">
         function onInit()
-            if ExtensionManager.shouldLoadEffects() then
+            if ExtensionManagerExtendedAutomation.shouldLoadEffects() then
                 EditorManager.addEditor(
                     "category_advantage",
                     {

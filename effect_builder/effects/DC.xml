@@ -5,16 +5,16 @@
         <script file="effect_builder/effects/scripts/DC.lua" />
 		<margins control="0,0,0,2" />
         <sheetdata>
-            <leftanchor />
+            <leftanchor_eb />
 
-            <effect_number name="effect_modifier" />
+            <number_eb_valueholder name="effect_modifier" />
 
-            <combobox_bonus_types name="effect_bonus_type" />
+            <combobox_eb_bonus_type name="effect_bonus_type" />
         </sheetdata>
     </windowclass>
     <script name="loader_DC">
         function onInit()
-            if ExtensionManager.shouldLoadEffects() then
+            if ExtensionManagerExtendedAutomation.shouldLoadEffects() then
                 Debug.console("loading DC effect")
                 EditorManager.addEditor(
                     "category_spell",

@@ -5,18 +5,18 @@
         <script file="effect_builder/effects/scripts/VSFORTIF.lua" />
 		<margins control="0,0,0,2" />
         <sheetdata>
-            <leftanchor />
+            <leftanchor_eb />
 
-            <effect_number name="effect_modifier">
+            <number_eb_valueholder name="effect_modifier">
                 <anchored width="40" />
                 <min>0</min>
                 <min>100</min>
-            </effect_number>
+            </number_eb_valueholder>
         </sheetdata>
     </windowclass>
     <script name="loader_VSFORTIF">
         function onInit()
-            if ExtensionManager.shouldLoadEffects() then
+            if ExtensionManagerExtendedAutomation.shouldLoadEffects() then
                 EditorManager.addEditor(
                     "category_attack",
                     {

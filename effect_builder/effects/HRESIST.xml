@@ -5,14 +5,14 @@
         <script file="effect_builder/effects/scripts/HRESIST.lua" />
 		<margins control="0,0,0,2" />
         <sheetdata>
-            <leftanchor />
+            <leftanchor_eb />
 
-            <combobox_damage_types />
+            <combobox_eb_damage_type />
         </sheetdata>
     </windowclass>
     <script name="loader_HRESIST">
         function onInit()
-            if ExtensionManager.shouldLoadEffects() then
+            if ExtensionManagerExtendedAutomation.shouldLoadEffects() then
                 EditorManager.addEditor(
                     "category_susceptibility",
                     {

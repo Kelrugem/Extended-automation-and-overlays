@@ -5,24 +5,24 @@
         <script file="effect_builder/effects/scripts/COC.lua" />
 		<margins control="0,0,0,2" />
         <sheetdata>
-            <leftanchor />
+            <leftanchor_eb />
 
-            <dice_effect name="effect_dice" />
+            <dice_eb_valueholder name="effect_dice" />
 
-			<label_plus />
+			<label_eb_plus />
 
-            <effect_number name="effect_modifier">
+            <number_eb_valueholder name="effect_modifier">
                 <anchored>
                     <left offset="5" />
                 </anchored>
-            </effect_number>
+            </number_eb_valueholder>
 
-            <combobox_bonus_types name="effect_bonus_type" />
+            <combobox_eb_bonus_type name="effect_bonus_type" />
         </sheetdata>
     </windowclass>
     <script name="loader_COC">
         function onInit()
-            if ExtensionManager.shouldLoadEffects() then
+            if ExtensionManagerExtendedAutomation.shouldLoadEffects() then
                 EditorManager.addEditor(
                     "category_spell",
                     {

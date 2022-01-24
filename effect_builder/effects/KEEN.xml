@@ -5,19 +5,19 @@
         <script file="effect_builder/effects/scripts/KEEN.lua" />
 		<margins control="0,0,0,2" />
         <sheetdata>
-            <leftanchor />
+            <leftanchor_eb />
 
-            <cycler_range />
+            <cycler_eb_range />
 
-            <label_effect>
+            <label_eb>
                 <static textres="opportunity_bonus"/>
-            </label_effect>
-            <checkbox_effect name="effect_opportunity"/>
+            </label_eb>
+            <checkbox_eb_valueholder name="effect_opportunity"/>
         </sheetdata>
     </windowclass>
     <script name="loader_KEEN">
         function onInit()
-            if ExtensionManager.shouldLoadEffects() then
+            if ExtensionManagerExtendedAutomation.shouldLoadEffects() then
                 EditorManager.addEditor(
                     "category_attack",
                     {
