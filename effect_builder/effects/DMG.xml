@@ -11,7 +11,11 @@
 
             <subwindow_eb_damage_types />
 
-            <combobox_eb_bonus_type name="effect_bonus_type" />
+            <combobox_eb_bonus_type name="effect_bonus_type">
+                <anchored>
+                    <left offset="5" />
+                </anchored>
+            </combobox_eb_bonus_type>
 
             <cycler_eb_range />
 
