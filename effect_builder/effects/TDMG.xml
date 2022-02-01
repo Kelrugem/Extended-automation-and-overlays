@@ -7,17 +7,9 @@
         <sheetdata>
             <leftanchor_eb />
 
-            <dice_eb_valueholder name="effect_dice" />
+            <subwindow_eb_dice_value />
 
-			<label_eb_plus />
-
-            <number_eb_valueholder name="effect_modifier">
-                <anchored>
-                    <left offset="5" />
-                </anchored>
-            </number_eb_valueholder>
-
-            <combobox_eb_damage_type name="damage_type" />
+            <subwindow_eb_damage_types />
 
             <cycler_eb_range />
         </sheetdata>

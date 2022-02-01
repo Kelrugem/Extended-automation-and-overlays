@@ -1,5 +1,5 @@
 function createEffectString()
-    local effectString = parentcontrol.window.effect.getStringValue() .. ": " .. effect_modifier.getValue()
+    local effectString = parentcontrol.window.effect.getStringValue() .. ": " .. number_value.getStringValue()
     local descriptors = {}
     if not effect_bonus_type.isEmpty() then
         table.insert(descriptors, effect_bonus_type.getValue())
