@@ -7,7 +7,7 @@
         <sheetdata>
             <leftanchor_eb />
 
-            <number_eb_valueholder name="effect_modifier" />
+            <subwindow_eb_number_value />
 
             <combobox_eb_bonus_type name="effect_bonus_type" />
         </sheetdata>

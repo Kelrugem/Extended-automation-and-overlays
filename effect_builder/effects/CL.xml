@@ -7,15 +7,7 @@
         <sheetdata>
             <leftanchor_eb />
 
-            <dice_eb_valueholder name="effect_dice" />
-
-			<label_eb_plus />
-
-            <number_eb_valueholder name="effect_modifier">
-                <anchored>
-                    <left offset="5" />
-                </anchored>
-            </number_eb_valueholder>
+            <subwindow_eb_dice_value />
 
             <combobox_eb_bonus_type name="effect_bonus_type" />
         </sheetdata>
