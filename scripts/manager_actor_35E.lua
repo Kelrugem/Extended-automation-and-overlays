@@ -772,7 +772,8 @@ function getDefenseValue(rAttacker, rDefender, rRoll)
 			table.insert(aIgnoreEffects, "naturalsize");
 			table.insert(aIgnoreEffects, "armorenhancement");
 			table.insert(aIgnoreEffects, "shieldenhancement");
-			table.insert(aIgnoreEffects, "naturalenhancement");		end
+			table.insert(aIgnoreEffects, "naturalenhancement");
+		end
 		if bFlatFooted or bCombatAdvantage then
 			table.insert(aIgnoreEffects, "dodge");
 		end
