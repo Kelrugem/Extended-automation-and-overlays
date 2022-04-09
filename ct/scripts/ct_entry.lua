@@ -151,7 +151,7 @@ function onHealthChanged()
 	
 	local sClass,_ = link.getValue();
 	if sClass ~= "charsheet" then
-		idelete.setVisibility((sStatus == ActorHealthManager.STATUS_DYING) or (sStatus == ActorHealthManager.STATUS_DEAD));
+		idelete.setVisibility(ActorHealthManager.isDyingOrDeadStatus(sStatus));
 	end
 end
 

@@ -1223,7 +1223,7 @@ function applyStableEffect(rActor)
 	
 	local nodeCT = ActorManager.getCTNode(rActor);
 	local aEffect = { sName = "Stable", nDuration = 0 };
-	if ActorManager.getFaction(rActor) ~= "friend" then
+	if not ActorManager.isFaction(rActor, "friend") then
 		aEffect.nGMOnly = 1;
 	end
 	EffectManager.addEffect("", "", nodeCT, aEffect, true);
