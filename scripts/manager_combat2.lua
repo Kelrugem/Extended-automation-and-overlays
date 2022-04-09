@@ -613,7 +613,17 @@ function addNPC(sClass, nodeNPC, sName)
 	
 	-- KEL
 	if #sIftagcomp > 0 then
-		sTags = table.concat(sIftagcomp, ", ");
+		local sIftagcompCheck = {};
+		local sIftagcompRed = {};
+
+		for _,v in ipairs(sIftagcomp) do
+		   if (not sIftagcompCheck[v]) then
+			   sIftagcompRed[#sIftagcompRed+1] = v;
+			   sIftagcompCheck[v] = true;
+		   end
+		end
+		sTags = table.concat(sIftagcompRed, ", ");
+		
 		table.insert(aEffects, "IFTAG: " .. sTags);
 		table.insert(aEffects, "SIMMUNE");
 	end
