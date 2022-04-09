@@ -651,7 +651,12 @@ function onAttack(rSource, rTarget, rRoll)
 	if ((rRoll.sType == "critconfirm") or not rAction.bCritThreat) and (nMissChance > 0) then
 		table.insert(rAction.aMessages, "[MISS CHANCE " .. nMissChance .. "%]");
 	end
-	
+
+	--	bmos adding weapon name to chat
+	--	for compatibility with ammunition tracker, add this here in your onAttack function
+	if AmmunitionManager and AmmunitionManager.getWeaponName and OptionsManager.isOption("ATKRESULTWEAPON", "on") then table.insert(rAction.aMessages, "with " .. AmmunitionManager.getWeaponName(rRoll.sDesc)) end
+	--	end bmos adding automatic ammunition ticker and chat messaging
+
 	--	bmos adding hit margin tracking
 	--	for compatibility with ammunition tracker, add this here in your onAttack function
 	if AmmunitionManager then
@@ -763,7 +768,7 @@ function onAttack(rSource, rTarget, rRoll)
 	
 	--	bmos adding automatic ammunition ticker and chat messaging
 	--	for compatibility with ammunition tracker, add this here in your onAttack function
-	if AmmunitionManager and bIsSourcePC then AmmunitionManager.ammoTracker(rSource, rRoll.sDesc, rAction.sResult) end
+	if AmmunitionManager and ActorManager.isPC(rSource) then AmmunitionManager.ammoTracker(rSource, rRoll.sDesc, rAction.sResult) end
 	--	end bmos adding automatic ammunition ticker and chat messaging
 
 	if rTarget then
