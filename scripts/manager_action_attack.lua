@@ -30,7 +30,7 @@ function handleApplyAttack(msgOOB)
 	local rTarget = ActorManager.resolveActor(msgOOB.sTargetNode);
 	
 	local nTotal = tonumber(msgOOB.nTotal) or 0;
-	applyAttack(rSource, rTarget, (tonumber(msgOOB.nSecret) == 1), msgOOB.sAttackType, msgOOB.sDesc, nTotal, msgOOB.sResults);
+	ActionAttack.applyAttack(rSource, rTarget, (tonumber(msgOOB.nSecret) == 1), msgOOB.sAttackType, msgOOB.sDesc, nTotal, msgOOB.sResults);
 end
 
 function notifyApplyAttack(rSource, rTarget, bSecret, sAttackType, sDesc, nTotal, sResults)
@@ -90,7 +90,7 @@ function onTargeting(rSource, aTargeting, rRolls)
 end
 
 function performPartySheetVsRoll(draginfo, rActor, rAction)
-	local rRoll = getRoll(nil, rAction);
+	local rRoll = ActionAttack.getRoll(nil, rAction);
 	
 	if DB.getValue("partysheet.hiderollresults", 0) == 1 then
 		rRoll.bSecret = true;
@@ -101,7 +101,7 @@ function performPartySheetVsRoll(draginfo, rActor, rAction)
 end
 
 function performRoll(draginfo, rActor, rAction)
-	local rRoll = getRoll(rActor, rAction);
+	local rRoll = ActionAttack.getRoll(rActor, rAction);
 	
 	ActionsManager.performAction(draginfo, rActor, rRoll);
 end
@@ -169,7 +169,7 @@ function getRoll(rActor, rAction, tag)
 end
 
 function performGrappleRoll(draginfo, rActor, rAction)
-	local rRoll = getGrappleRoll(rActor, rAction);
+	local rRoll = ActionAttack.getGrappleRoll(rActor, rAction);
 	
 	ActionsManager.performAction(draginfo, rActor, rRoll);
 end
@@ -212,7 +212,7 @@ end
 -- END
 
 function modAttack(rSource, rTarget, rRoll)
-	clearCritState(rSource);
+	ActionAttack.clearCritState(rSource);
 	local aAddDesc = {};
 	local aAddDice = {};
 	local nAddMod = 0;
@@ -505,9 +505,8 @@ function onAttack(rSource, rTarget, rRoll)
 		table.insert(AttackFilter, "opportunity");
 	end
 	-- END
-	local rAction = {};
-	rAction.nTotal = ActionsManager.total(rRoll);
-	rAction.aMessages = {};
+	rRoll.nTotal = ActionsManager.total(rRoll);
+	rRoll.aMessages = {};
 	
 	-- If we have a target, then calculate the defense we need to exceed
 	-- KEL Add nAdditionalDefenseForCC and allow negative AC stuff for CC etc
@@ -520,6 +519,10 @@ function onAttack(rSource, rTarget, rRoll)
 		nMissChance = tonumber(rRoll.sDesc:match("%[MISS CHANCE (%d+)%%%]")) or 0;
 		rMessage.text = rMessage.text:gsub(" %[AC ([%-%+]?%d+)%]", "");
 		rMessage.text = rMessage.text:gsub(" %[MISS CHANCE %d+%%%]", "");
+		-- Getting rid of possible (dis)adv message parts
+		rMessage.text = rMessage.text:gsub(" %[DROPPED %d+%]", "");
+		rMessage.text = rMessage.text:gsub(" %[ADV%]", "");
+		rMessage.text = rMessage.text:gsub(" %[DISADV%]", "");
 	-- END
 	else
 		-- KEL blind fight, skipping checking effects for now (for performance and to avoid problems with On Skip etc.)
@@ -535,14 +538,14 @@ function onAttack(rSource, rTarget, rRoll)
 		end
 		-- END
 		if nAtkEffectsBonus ~= 0 then
-			rAction.nTotal = rAction.nTotal + nAtkEffectsBonus;
+			rRoll.nTotal = rRoll.nTotal + nAtkEffectsBonus;
 			local sFormat = "[" .. Interface.getString("effects_tag") .. " %+d]";
-			table.insert(rAction.aMessages, string.format(sFormat, nAtkEffectsBonus));
+			table.insert(rRoll.aMessages, string.format(sFormat, nAtkEffectsBonus));
 		end
 		if nDefEffectsBonus ~= 0 then
 			nDefenseVal = nDefenseVal + nDefEffectsBonus;
 			local sFormat = "[" .. Interface.getString("effects_def_tag") .. " %+d]";
-			table.insert(rAction.aMessages, string.format(sFormat, nDefEffectsBonus));
+			table.insert(rRoll.aMessages, string.format(sFormat, nDefEffectsBonus));
 		end
 	end
 	
@@ -551,126 +554,131 @@ function onAttack(rSource, rTarget, rRoll)
 	if MirrorImageHandler then
 		local sMisfireRange = string.match(rRoll.sDesc, "%[MISFIRE (%d+)%]");
 		if sMisfireRange then
-			rAction.nMisfire = tonumber(sMisfireRange) or 0;
+			rRoll.nMisfire = tonumber(sMisfireRange) or 0;
 		end
 	end
 	-- END
 	
 	-- Get the crit threshold
-	rAction.nCrit = 20;	
+	rRoll.nCrit = 20;	
 	local sAltCritRange = string.match(rRoll.sDesc, "%[CRIT (%d+)%]");
 	if sAltCritRange then
-		rAction.nCrit = tonumber(sAltCritRange) or 20;
-		if (rAction.nCrit <= 1) or (rAction.nCrit > 20) then
-			rAction.nCrit = 20;
+		rRoll.nCrit = tonumber(sAltCritRange) or 20;
+		if (rRoll.nCrit <= 1) or (rRoll.nCrit > 20) then
+			rRoll.nCrit = 20;
 		end
 	end
 	
-	rAction.nFirstDie = 0;
+	rRoll.nFirstDie = 0;
 	if #(rRoll.aDice) > 0 then
-		rAction.nFirstDie = rRoll.aDice[1].result or 0;
+		rRoll.nFirstDie = rRoll.aDice[1].result or 0;
 	end
-	rAction.bCritThreat = false;
-	if rAction.nFirstDie >= 20 then
-		rAction.bSpecial = true;
+	rRoll.bCritThreat = false;
+	if rRoll.nFirstDie >= 20 then
+		rRoll.bSpecial = true;
 		if rRoll.sType == "critconfirm" then
-			rAction.sResult = "crit";
-			table.insert(rAction.aMessages, "[CRITICAL HIT]");
+			rRoll.sResult = "crit";
+			table.insert(rRoll.aMessages, "[CRITICAL HIT]");
 		elseif rRoll.sType == "attack" then
 			if bAllowCC then
-				rAction.sResult = "hit";
-				rAction.bCritThreat = true;
-				table.insert(rAction.aMessages, "[AUTOMATIC HIT]");
+				rRoll.sResult = "hit";
+				rRoll.bCritThreat = true;
+				table.insert(rRoll.aMessages, "[AUTOMATIC HIT]");
 			else
-				rAction.sResult = "crit";
-				table.insert(rAction.aMessages, "[CRITICAL HIT]");
+				rRoll.sResult = "crit";
+				table.insert(rRoll.aMessages, "[CRITICAL HIT]");
 			end
 		else
-			rAction.sResult = "hit";
-			table.insert(rAction.aMessages, "[AUTOMATIC HIT]");
+			rRoll.sResult = "hit";
+			table.insert(rRoll.aMessages, "[AUTOMATIC HIT]");
 		end
-	elseif rAction.nFirstDie == 1 then
+	elseif rRoll.nFirstDie == 1 then
 		if rRoll.sType == "critconfirm" then
-			table.insert(rAction.aMessages, "[CRIT NOT CONFIRMED]");
-			rAction.sResult = "miss";
+			table.insert(rRoll.aMessages, "[CRIT NOT CONFIRMED]");
+			rRoll.sResult = "miss";
 		else
 			-- KEL compatibility with mirrorimage (I should not need the check for MirrorImageHandler because nMisfire always nil without Darrenan's extension, but I am paranoid :D)
-			if MirrorImageHandler and rAction.nMisfire and rRoll.sType == "attack" then
-				table.insert(rAction.aMessages, "[MISFIRE]");
-				rAction.sResult = "miss";
+			if MirrorImageHandler and rRoll.nMisfire and rRoll.sType == "attack" then
+				table.insert(rRoll.aMessages, "[MISFIRE]");
+				rRoll.sResult = "miss";
 			else
-				table.insert(rAction.aMessages, "[AUTOMATIC MISS]");
-				rAction.sResult = "fumble";
+				table.insert(rRoll.aMessages, "[AUTOMATIC MISS]");
+				rRoll.sResult = "fumble";
 			end
 			-- END
 		end
 	-- KEL comp with mirrorimage
-	elseif MirrorImageHandler and rAction.nMisfire and rAction.nFirstDie <= rAction.nMisfire and rRoll.sType == "attack" then
-		table.insert(rAction.aMessages, "[MISFIRE]");
-		rAction.sResult = "miss";
+	elseif MirrorImageHandler and rRoll.nMisfire and rRoll.nFirstDie <= rRoll.nMisfire and rRoll.sType == "attack" then
+		table.insert(rRoll.aMessages, "[MISFIRE]");
+		rRoll.sResult = "miss";
 	-- END
 	elseif nDefenseVal then
-		if rAction.nTotal >= nDefenseVal then
+		if rRoll.nTotal >= nDefenseVal then
 			if rRoll.sType == "critconfirm" then
-				rAction.sResult = "crit";
-				table.insert(rAction.aMessages, "[CRITICAL HIT]");
-			elseif rRoll.sType == "attack" and rAction.nFirstDie >= rAction.nCrit then
+				rRoll.sResult = "crit";
+				table.insert(rRoll.aMessages, "[CRITICAL HIT]");
+			elseif rRoll.sType == "attack" and rRoll.nFirstDie >= rRoll.nCrit then
 				if bAllowCC then
-					rAction.sResult = "hit";
-					rAction.bCritThreat = true;
-					table.insert(rAction.aMessages, "[CRITICAL THREAT]");
+					rRoll.sResult = "hit";
+					rRoll.bCritThreat = true;
+					table.insert(rRoll.aMessages, "[CRITICAL THREAT]");
 				else
-					rAction.sResult = "crit";
-					table.insert(rAction.aMessages, "[CRITICAL HIT]");
+					rRoll.sResult = "crit";
+					table.insert(rRoll.aMessages, "[CRITICAL HIT]");
 				end
 			else
-				rAction.sResult = "hit";
-				table.insert(rAction.aMessages, "[HIT]");
+				rRoll.sResult = "hit";
+				table.insert(rRoll.aMessages, "[HIT]");
 			end
 		else
-			rAction.sResult = "miss";
+			rRoll.sResult = "miss";
 			if rRoll.sType == "critconfirm" then
-				table.insert(rAction.aMessages, "[CRIT NOT CONFIRMED]");
+				table.insert(rRoll.aMessages, "[CRIT NOT CONFIRMED]");
 			else
-				table.insert(rAction.aMessages, "[MISS]");
+				table.insert(rRoll.aMessages, "[MISS]");
 			end
 		end
 	elseif rRoll.sType == "critconfirm" then
-		rAction.sResult = "crit";
-		table.insert(rAction.aMessages, "[CHECK FOR CRITICAL]");
-	elseif rRoll.sType == "attack" and rAction.nFirstDie >= rAction.nCrit then
+		rRoll.sResult = "crit";
+		table.insert(rRoll.aMessages, "[CHECK FOR CRITICAL]");
+	elseif rRoll.sType == "attack" and rRoll.nFirstDie >= rRoll.nCrit then
 		if bAllowCC then
-			rAction.sResult = "hit";
-			rAction.bCritThreat = true;
+			rRoll.sResult = "hit";
+			rRoll.bCritThreat = true;
 		else
-			rAction.sResult = "crit";
+			rRoll.sResult = "crit";
 		end
-		table.insert(rAction.aMessages, "[CHECK FOR CRITICAL]");
+		table.insert(rRoll.aMessages, "[CHECK FOR CRITICAL]");
 	end
 	
-	if ((rRoll.sType == "critconfirm") or not rAction.bCritThreat) and (nMissChance > 0) then
-		table.insert(rAction.aMessages, "[MISS CHANCE " .. nMissChance .. "%]");
+	if ((rRoll.sType == "critconfirm") or not rRoll.bCritThreat) and (nMissChance > 0) then
+		table.insert(rRoll.aMessages, "[MISS CHANCE " .. nMissChance .. "%]");
 	end
-	
+
+	--	bmos adding weapon name to chat
+	--	for compatibility with ammunition tracker, add this here in your onAttack function
+	if AmmunitionManager and AmmunitionManager.getWeaponName and OptionsManager.isOption("ATKRESULTWEAPON", "on") then table.insert(rRoll.aMessages, "with " .. AmmunitionManager.getWeaponName(rRoll.sDesc)) end
+	--	end bmos adding automatic ammunition ticker and chat messaging
+
 	--	bmos adding hit margin tracking
 	--	for compatibility with ammunition tracker, add this here in your onAttack function
 	if AmmunitionManager then
-		local nHitMargin = AmmunitionManager.calculateMargin(nDefenseVal, rAction.nTotal)
-		if nHitMargin then table.insert(rAction.aMessages, "[BY " .. nHitMargin .. "+]") end
+		local nHitMargin = AmmunitionManager.calculateMargin(nDefenseVal, rRoll.nTotal)
+		if nHitMargin then table.insert(rRoll.aMessages, "[BY " .. nHitMargin .. "+]") end
 	end
 	--	end bmos adding hit margin tracking
 
 	Comm.deliverChatMessage(rMessage);
 
-	if rAction.sResult == "crit" then
-		setCritState(rSource, rTarget);
+	if rRoll.sResult == "crit" then
+		ActionAttack.setCritState(rSource, rTarget);
 	end
 	
 	local bRollMissChance = false;
 	if rRoll.sType == "critconfirm" then
 		bRollMissChance = true;
 	else
-		if rAction.bCritThreat then
+		if rRoll.bCritThreat then
 			local rCritConfirmRoll = { sType = "critconfirm", aDice = {"d20"}, bTower = rRoll.bTower, bSecret = rRoll.bSecret };
 			
 			local nCCMod = EffectManager35E.getEffectsBonus(rSource, {"CC"}, true, nil, rTarget, false, rRoll.tags);
@@ -703,10 +711,10 @@ function onAttack(rSource, rTarget, rRoll)
 			end
 			
 			ActionsManager.roll(rSource, { rTarget }, rCritConfirmRoll, true);
-		elseif (rAction.sResult ~= "miss") and (rAction.sResult ~= "fumble") then
+		elseif (rRoll.sResult ~= "miss") and (rRoll.sResult ~= "fumble") then
 			bRollMissChance = true;
 		-- KEL compatibility test with mirror image handler
-		elseif MirrorImageHandler and (rAction.sResult == "miss") and (nDefenseVal - rAction.nTotal <= 5) then
+		elseif MirrorImageHandler and (rRoll.sResult == "miss") and (nDefenseVal - rRoll.nTotal <= 5) then
 			bRollMissChance = true;
 			nMissChance = 0;
 		end
@@ -743,34 +751,34 @@ function onAttack(rSource, rTarget, rRoll)
 	elseif MirrorImageHandler and bRollMissChance then
 		local nMirrorImageCount = MirrorImageHandler.getMirrorImageCount(rTarget);
 		if nMirrorImageCount > 0 then
-			if rAction.sResult == "hit" or rAction.sResult == "crit" then
+			if rRoll.sResult == "hit" or rRoll.sResult == "crit" then
 				local rMirrorImageRoll = MirrorImageHandler.getMirrorImageRoll(nMirrorImageCount, rRoll.sDesc);
 				ActionsManager.roll(rSource, rTarget, rMirrorImageRoll);
 			elseif rRoll.sType ~= "critconfirm" then
 				MirrorImageHandler.removeImage(rSource, rTarget);
-				table.insert(rAction.aMessages, "[MIRROR IMAGE REMOVED BY NEAR MISS]");
+				table.insert(rRoll.aMessages, "[MIRROR IMAGE REMOVED BY NEAR MISS]");
 			end
 		end
 	end
 	
 	-- KEL Save overlay
-	if (rAction.sResult == "miss" or rAction.sResult == "fumble") and bAction and rRoll.sType ~= "critconfirm" then
+	if (rRoll.sResult == "miss" or rRoll.sResult == "fumble") and bAction and rRoll.sType ~= "critconfirm" then
 		TokenManager3.setSaveOverlay(ActorManager.getCTNode(rTarget), -3);
-	elseif (rAction.sResult == "hit" or rAction.sResult == "crit") and bAction and rRoll.sType ~= "critconfirm" then
+	elseif (rRoll.sResult == "hit" or rRoll.sResult == "crit") and bAction and rRoll.sType ~= "critconfirm" then
 		TokenManager3.setSaveOverlay(ActorManager.getCTNode(rTarget), -1);
 	end
 	-- END
 	
 	--	bmos adding automatic ammunition ticker and chat messaging
 	--	for compatibility with ammunition tracker, add this here in your onAttack function
-	if AmmunitionManager and bIsSourcePC then AmmunitionManager.ammoTracker(rSource, rRoll.sDesc, rAction.sResult) end
+	if AmmunitionManager and ActorManager.isPC(rSource) then AmmunitionManager.ammoTracker(rSource, rRoll.sDesc, rRoll.sResult) end
 	--	end bmos adding automatic ammunition ticker and chat messaging
 
 	if rTarget then
-		notifyApplyAttack(rSource, rTarget, rRoll.bTower, rRoll.sType, rRoll.sDesc, rAction.nTotal, table.concat(rAction.aMessages, " "));
+		ActionAttack.notifyApplyAttack(rSource, rTarget, rRoll.bTower, rRoll.sType, rRoll.sDesc, rRoll.nTotal, table.concat(rRoll.aMessages, " "));
 		
 		-- REMOVE TARGET ON MISS OPTION
-		if (rAction.sResult == "miss" or rAction.sResult == "fumble") and rRoll.sType ~= "critconfirm" and not string.match(rRoll.sDesc, "%[FULL%]") then
+		if (rRoll.sResult == "miss" or rRoll.sResult == "fumble") and rRoll.sType ~= "critconfirm" and not string.match(rRoll.sDesc, "%[FULL%]") then
 			local bRemoveTarget = false;
 			if OptionsManager.isOption("RMMT", "on") then
 				bRemoveTarget = true;
@@ -784,19 +792,23 @@ function onAttack(rSource, rTarget, rRoll)
 		end
 	end
 	
+	ActionAttack.onPostAttackResolve(rRoll);
+end
+
+function onPostAttackResolve(rRoll)
 	-- HANDLE FUMBLE/CRIT HOUSE RULES
 	local sOptionHRFC = OptionsManager.getOption("HRFC");
-	if rAction.sResult == "fumble" and ((sOptionHRFC == "both") or (sOptionHRFC == "fumble")) then
-		notifyApplyHRFC("Fumble");
+	if rRoll.sResult == "fumble" and ((sOptionHRFC == "both") or (sOptionHRFC == "fumble")) then
+		ActionAttack.notifyApplyHRFC("Fumble");
 	end
-	if rAction.sResult == "crit" and ((sOptionHRFC == "both") or (sOptionHRFC == "criticalhit")) then
-		notifyApplyHRFC("Critical Hit");
+	if rRoll.sResult == "crit" and ((sOptionHRFC == "both") or (sOptionHRFC == "criticalhit")) then
+		ActionAttack.notifyApplyHRFC("Critical Hit");
 	end
 end
 
 function onGrapple(rSource, rTarget, rRoll)
 	if DataCommon.isPFRPG() then
-		onAttack(rSource, rTarget, rRoll);
+		ActionAttack.onAttack(rSource, rTarget, rRoll);
 	else
 		local rMessage = ActionsManager.createActionMessage(rSource, rRoll);
 		
@@ -826,7 +838,7 @@ function onMissChance(rSource, rTarget, rRoll)
 		removeVar = true;
 		if rTarget then
 			rMessage.icon = "roll_attack_miss";
-			clearCritState(rSource, rTarget);
+			ActionAttack.clearCritState(rSource, rTarget);
 			-- KEL Adding Save Overlay
 			if rRoll.actionStuffForOverlay == "true" then
 				TokenManager3.setSaveOverlay(ActorManager.getCTNode(rTarget), -3);
@@ -936,7 +948,7 @@ end
 
 function clearCritState(rSource, rTarget)
 	if rTarget then
-		isCrit(rSource, rTarget);
+		ActionAttack.isCrit(rSource, rTarget);
 		return;
 	end
 	

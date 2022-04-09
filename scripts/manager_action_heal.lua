@@ -149,7 +149,7 @@ function onHeal(rSource, rTarget, rRoll)
 			local nDieSides = tonumber(v.type:match("d(%d+)")) or 0;
 			if nDieSides > 0 then
 				v.result = nDieSides;
-				v.value = nil;
+				v.value = v.result;
 			end
 		end
 	end

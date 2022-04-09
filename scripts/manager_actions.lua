@@ -130,13 +130,14 @@ function total(rRoll)
 	local corrector = {};
 	local j = 1;
 	for _,v in ipairs(rRoll.aDice) do
-		-- KEL Removing bUseFGUDiceValues because it is always true for us (otherwise compatibility nasty)
-		if v.value then
-			corrector[j] = v.value;
-		else
-			corrector[j] = v.result;
+		if not v.dropped then
+			if v.value then
+				corrector[j] = v.value;
+			else
+				corrector[j] = v.result;
+			end
+			j = j+1;
 		end
-		j = j+1;
 	end
 	if rRoll.originaldicenumber then
 		rRoll.originaldicenumber = tonumber(rRoll.originaldicenumber);
