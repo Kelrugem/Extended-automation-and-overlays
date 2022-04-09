@@ -520,7 +520,7 @@ function onAttack(rSource, rTarget, rRoll)
 		rMessage.text = rMessage.text:gsub(" %[AC ([%-%+]?%d+)%]", "");
 		rMessage.text = rMessage.text:gsub(" %[MISS CHANCE %d+%%%]", "");
 		-- Getting rid of possible (dis)adv message parts
-		rMessage.text = rMessage.text:gsub(" %[DROPPED (%d+)%]", "");
+		rMessage.text = rMessage.text:gsub(" %[DROPPED %d+%]", "");
 		rMessage.text = rMessage.text:gsub(" %[ADV%]", "");
 		rMessage.text = rMessage.text:gsub(" %[DISADV%]", "");
 	-- END
