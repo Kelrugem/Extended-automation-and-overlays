@@ -751,7 +751,7 @@ function onAttack(rSource, rTarget, rRoll)
 	elseif MirrorImageHandler and bRollMissChance then
 		local nMirrorImageCount = MirrorImageHandler.getMirrorImageCount(rTarget);
 		if nMirrorImageCount > 0 then
-			if rRoll.sResult == "hit" or rRoll.sResult == "crit" then
+			if rRoll.sResult == "hit" or rRoll.sResult == "crit" or rRoll.sType == "critconfirm" then
 				local rMirrorImageRoll = MirrorImageHandler.getMirrorImageRoll(nMirrorImageCount, rRoll.sDesc);
 				ActionsManager.roll(rSource, rTarget, rMirrorImageRoll);
 			elseif rRoll.sType ~= "critconfirm" then
@@ -919,6 +919,10 @@ function applyAttack(rSource, rTarget, bSecret, sAttackType, sDesc, nTotal, sRes
 		msgLong.icon = "roll_attack_hit";
 	elseif string.match(sResults, "MISS%]") then
 		msgLong.icon = "roll_attack_miss";
+	-- KEL MirrorImageHandler compatibility
+	elseif string.match(sResults, "%[MISFIRE%]") then
+		msgLong.icon = "roll_attack_miss";
+	-- END
 	elseif string.match(sResults, "CRITICAL THREAT%]") then
 		msgLong.icon = "roll_attack_hit";
 	else
