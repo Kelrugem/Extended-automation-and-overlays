@@ -13,6 +13,16 @@
 			<subroll>save</subroll>
 		</string_spellactionview>
 	</template>
+	<template name="spell_action_healtype">
+		<button_stringcycler name="healtype">
+			<anchored position="insidetopright" offset="40,2" width="40" />
+			<parameters>
+				<defaultlabelres>power_label_healtypenormal</defaultlabelres>
+				<labelsres>power_label_healtypetemp|power_label_healtypenonlethal</labelsres>
+				<values>temp|nl</values>
+			</parameters>
+		</button_stringcycler>
+	</template>
 	<!-- KEL commented out until automated -->
 	<!-- <template name="spell_action_skillbutton"> -->
 		<!-- <button_spellaction name="skillbutton"> -->

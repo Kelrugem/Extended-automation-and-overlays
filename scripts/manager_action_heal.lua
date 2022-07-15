@@ -41,6 +41,13 @@ function getRoll(rActor, rAction, tag)
 		rRoll.sDesc = rRoll.sDesc .. " [TEMP]";
 	end
 
+-- KEL and bmos adding nonlethal healing
+	-- Handle nonlethal hit points
+	if rAction.subtype == "nl" then
+		rRoll.sDesc = rRoll.sDesc .. " [NL]";
+	end
+-- END
+
 	-- Encode meta tags
 	if rAction.meta then
 		if rAction.meta == "empower" then
