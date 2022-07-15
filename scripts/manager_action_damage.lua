@@ -1977,6 +1977,11 @@ function decodeDamageText(nDamage, sDamageDesc)
 		if string.match(sDamageDesc, "%[TEMP%]") then
 			rDamageOutput.sType = "temphp";
 			rDamageOutput.sTypeOutput = "Temporary hit points";
+ -- KEL and bmos adding nonlethal healing
+		elseif string.match(sDamageDesc, "%[NL%]") then
+			rDamageOutput.sType = "nlhp";
+			rDamageOutput.sTypeOutput = "Nonlethal hit points";
+-- END
 		else
 			rDamageOutput.sType = "heal";
 			rDamageOutput.sTypeOutput = "Heal";
@@ -2168,6 +2173,10 @@ function applyDamage(rSource, rTarget, bSecret, sRollType, sDamage, nTotal, bImm
 	-- Temporary hit points
 	elseif rDamageOutput.sType == "temphp" then
 		nTempHP = nTempHP + rDamageOutput.nVal;
+
+	-- Nonlethal hit points
+	elseif rDamageOutput.sType == "nlhp" then
+		nNonlethal = nNonlethal + rDamageOutput.nVal;
 
 	-- Damage
 	else
