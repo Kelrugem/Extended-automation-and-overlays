@@ -126,6 +126,10 @@ function resolveAction(rSource, rTarget, rRoll)
 end
 
 function total(rRoll)
+	if Utility.getDiceTotal then
+		return Utility.getDiceTotal(rRoll.aDice) + rRoll.nMod;
+	end
+	
 	local nTotal = 0;
 	local corrector = {};
 	local j = 1;
