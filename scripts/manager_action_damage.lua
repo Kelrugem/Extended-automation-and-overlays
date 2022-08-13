@@ -177,7 +177,7 @@ function handleApplyDamage(msgOOB)
 		ActionDamage.applyDamage(rSource, rTarget, (tonumber(msgOOB.nSecret) == 1), msgOOB.sRollType, msgOOB.sDamage, nTotal, bSImmune, bSFortif, msgOOB.tags);
 	else
 		local aRollFortif = { sType = "fortification", aDice = bDice, nMod = 0, aType = msgOOB.sRollType, aMessagetext = msgOOB.sDamage, aTotal = nTotal, aTags = msgOOB.tags};
-		rDamageOutput = ActionDamage.decodeDamageText(nTotal, msgOOB.sDamage);
+		-- rDamageOutput = ActionDamage.decodeDamageText(nTotal, msgOOB.sDamage);
 		if tonumber(msgOOB.nSecret) == 1 then
 			aRollFortif.bTower = "true";
 		else
@@ -1734,7 +1734,7 @@ function getDamageAdjust(rSource, rTarget, nDamage, rDamageOutput, bImmune, bFor
 				end
 
 				-- KEL REVERT
-				if not bRevHeal and not bRevApplied then -- bRevApplied isn't defined yet!
+				if not bRevHeal then
 					if aRevert["all"] then
 						nLocalRevert = nLocalRevert + v + nLocalDamageAdjust;
 						nLocalDamageAdjust = - v;
@@ -1977,7 +1977,7 @@ function decodeDamageText(nDamage, sDamageDesc)
 -- KEL and bmos adding nonlethal healing
 		elseif string.match(sDamageDesc, "%[NL%]") then
 			rDamageOutput.sType = "nlhp";
-			rDamageOutput.sTypeOutput = "Nonlethal hit points";
+			rDamageOutput.sTypeOutput = "Nonlethal heal";
 -- END
 
 		else
@@ -2427,7 +2427,7 @@ function messageDamage(rSource, rTarget, bSecret, sDamageType, sDamageDesc, sTot
 
 -- KEL and bmos adding nonlethal hit points
 	--if sDamageType == "Heal" or sDamageType == "Temporary hit points" then
-	if sDamageType == "Heal" or sDamageType == "Temporary hit points" or sDamageType == "Nonlethal hit points" then
+	if sDamageType == "Heal" or sDamageType == "Temporary hit points" or sDamageType == "Nonlethal heal" then
 -- END
 
 		msgShort.icon = "roll_heal";
