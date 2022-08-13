@@ -139,7 +139,7 @@ function addSpell(nodeSource, nodeSpellClass, nLevel)
 		return nil;
 	end
 	local nodeNewSpell = nodeTargetLevelSpells.createChild();
-	-- KEL Hier eventuell schon ansetzen für tagparser?
+	-- KEL Hier eventuell schon ansetzen fÃ¼r tagparser?
 	if not nodeNewSpell then
 		return nil;
 	end
@@ -170,7 +170,7 @@ function addSpell(nodeSource, nodeSpellClass, nLevel)
 	end
 	
 	-- Parse spell details to create actions
-	-- KEL Here tag parsing separate such that it is always parsed? Ursprüngliche tags mitnehmen? Mit Option?
+	-- KEL Here tag parsing separate such that it is always parsed? UrsprÃ¼ngliche tags mitnehmen? Mit Option?
 	if DB.getChildCount(nodeNewSpell, "actions") == 0 then
 		parseSpell(nodeNewSpell);
 	else
@@ -455,8 +455,8 @@ function parseSpell(nodeSpell)
 	
 	-- Get the description minos some problem characters and in lowercase
 	local sDesc = string.lower(DB.getValue(nodeSpell, "description", ""));
-	sDesc = string.gsub(sDesc, "’", "'");
-	sDesc = string.gsub(sDesc, "–", "-");
+	sDesc = string.gsub(sDesc, "â€™", "'");
+	sDesc = string.gsub(sDesc, "â€“", "-");
 	
 	local aWords = StringManager.parseWords(sDesc);
 	
@@ -1505,6 +1505,10 @@ function getActionHealText(nodeAction)
 	local sHeal = StringManager.convertDiceToString(aHealDice, nHealMod);
 	if DB.getValue(nodeAction, "healtype", "") == "temp" then
 		sHeal = sHeal .. " temporary";
+-- KEL and bmos adding nonlethal healing
+	elseif DB.getValue(nodeAction, "healtype", "") == "nl" then
+		sHeal = sHeal .. " nonlethal";
+-- END
 	end
 	
 	local sMeta = DB.getValue(nodeAction, "meta", "");
