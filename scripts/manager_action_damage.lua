@@ -106,7 +106,7 @@ function handleApplyDamage(msgOOB)
 				bSImmune[k] = false;
 				-- bFortif[k] = false;
 				bSFortif[k] = false;
-				local bVorpal;
+				local bVorpal = false;
 				for _,sDmgType in pairs(aSrcDmgClauseTypes) do
 					-- KEL adding vorpal ability, ignoring crit immunity
 					if (sDmgType == "vorpal") then
