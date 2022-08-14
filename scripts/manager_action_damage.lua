@@ -543,7 +543,10 @@ function onStabilization(rSource, rTarget, rRoll)
 	Comm.deliverChatMessage(rMessage);
 
 	if bSuccess then
-		ActorManager35E.applyStableEffect(rSource);
+		EffectManager.addCondition(rSource, "Stable");
+		-- KEL Need to update overlay here after stable effect was applied
+		local _,_,_ = ActorManager35E.getWoundPercent(rSource);
+		-- END
 	else
 		ActionDamage.applyFailedStabilization(rSource);
 	end
@@ -2389,12 +2392,21 @@ function applyDamage(rSource, rTarget, bSecret, sRollType, sDamage, nTotal, bImm
 	-- Manage Stable effect add/remove when healed
 	if ActorHealthManager.isDyingOrDeadStatus(sOriginalStatus) then
 		if not ActorHealthManager.isDyingOrDeadStatus(sNewStatus) then
-			ActorManager35E.removeStableEffect(rTarget);
+			EffectManager.removeCondition(rTarget, "Stable");
+			-- KEL Need to update overlay here after stable effect was applied
+			local _,_,_ = ActorManager35E.getWoundPercent(rTarget);
+			-- END
 		else
 			if ((rDamageOutput.sType == "heal") or (rDamageOutput.sType == "fheal") or (rDamageOutput.sType == "regen")) and (rDamageOutput.nVal > 0) then
-				ActorManager35E.applyStableEffect(rTarget);
+				EffectManager.addCondition(rTarget, "Stable");
+				-- KEL Need to update overlay here after stable effect was applied
+				local _,_,_ = ActorManager35E.getWoundPercent(rTarget);
+				-- END
 			elseif (rDamageOutput.sType == "damage") and (rDamageOutput.nVal > 0) then
-				ActorManager35E.removeStableEffect(rTarget);
+				EffectManager.removeCondition(rTarget, "Stable");
+				-- KEL Need to update overlay here after stable effect was applied
+				local _,_,_ = ActorManager35E.getWoundPercent(rTarget);
+				-- END
 			end
 		end
 	end

@@ -6,13 +6,13 @@
 function onInit()
 	CombatManager.setCustomSort(CombatManager.sortfuncDnD);
 
-	CombatManager.setCustomAddNPC(addNPC);
-	CombatManager.setCustomNPCSpaceReach(getNPCSpaceReach);
-
 	CombatManager.setCustomRoundStart(onRoundStart);
 	-- CombatManager.setCustomTurnStart(onTurnStart);
 	CombatManager.setCustomTurnEnd(onTurnEnd);
 	CombatManager.setCustomCombatReset(resetInit);
+	
+	ActorCommonManager.setRecordTypeSpaceReachCallback("npc", ActorCommonManager.getSpaceReachDnD3Legacy);
+	CombatRecordManager.setRecordTypePostAddCallback("npc", onNPCPostAdd);
 end
 
 --
@@ -49,7 +49,7 @@ function onTurnEnd(nodeEntry)
 			local rActor = ActorManager.resolveActor(nodeEntry);
 			local sStatus = ActorHealthManager.getHealthStatus(rActor);
 			if sStatus == ActorHealthManager.STATUS_DYING then
-				if not EffectManager35E.hasEffectCondition(rActor, "Stable") then
+				if not EffectManager.hasCondition(rActor, "Stable") then
 					ActionDamage.performStabilizationRoll(rActor);
 				end
 			end
@@ -60,20 +60,6 @@ end
 --
 -- ADD FUNCTIONS
 --
-
-function getNPCSpaceReach(nodeNPC)
-	local nSpace = GameSystem.getDistanceUnitsPerGrid();
-	local nReach = nSpace;
-	
-	local sSpaceReach = DB.getValue(nodeNPC, "spacereach", "");
-	local sSpace, sReach = string.match(sSpaceReach, "(%d+)%D*/?(%d+)%D*");
-	if sSpace then
-		nSpace = tonumber(sSpace) or nSpace;
-		nReach = tonumber(sReach) or nReach;
-	end
-	
-	return nSpace, nReach;
-end
 -- KEL for NPC parsing
 function tableConcat(origTable, addTable)
 	for _,v in pairs(addTable) do
@@ -83,10 +69,15 @@ function tableConcat(origTable, addTable)
 	end
 end
 -- END
-function addNPC(sClass, nodeNPC, sName)
-	local nodeEntry, nodeLastMatch = CombatManager.addNPCHelper(nodeNPC, sName);
+function onNPCPostAdd(tCustom)
+	-- Parameter validation
+	if not tCustom.nodeRecord or not tCustom.nodeCT then
+		return;
+	end
 
+	-- Setup
 	local bPFMode = DataCommon.isPFRPG();
+	local nodeNPC = tCustom.nodeRecord;
 	
 	-- KEL for IFTAG SIMMUNE parsing
 	local sIftagcomp = {};
@@ -101,17 +92,17 @@ function addNPC(sClass, nodeNPC, sName)
 	elseif sOptHRNH == "random" and sHD ~= "" then
 		nHP = math.max(StringManager.evalDiceString(sHD, true), 1);
 	end
-	DB.setValue(nodeEntry, "hp", "number", nHP);
+	DB.setValue(tCustom.nodeCT, "hp", "number", nHP);
 
 	-- Defensive properties
 	local sAC = DB.getValue(nodeNPC, "ac", "10");
-	DB.setValue(nodeEntry, "ac_final", "number", tonumber(string.match(sAC, "^(%d+)")) or 10);
-	DB.setValue(nodeEntry, "ac_touch", "number", tonumber(string.match(sAC, "touch (%d+)")) or 10);
+	DB.setValue(tCustom.nodeCT, "ac_final", "number", tonumber(string.match(sAC, "^(%d+)")) or 10);
+	DB.setValue(tCustom.nodeCT, "ac_touch", "number", tonumber(string.match(sAC, "touch (%d+)")) or 10);
 	local sFlatFooted = string.match(sAC, "flat[%-–]footed (%d+)");
 	if not sFlatFooted then
 		sFlatFooted = string.match(sAC, "flatfooted (%d+)");
 	end
-	DB.setValue(nodeEntry, "ac_flatfooted", "number", tonumber(sFlatFooted) or 10);
+	DB.setValue(tCustom.nodeCT, "ac_flatfooted", "number", tonumber(sFlatFooted) or 10);
 	
 	-- Handle BAB / Grapple / CM Field
 	local sBABGrp = DB.getValue(nodeNPC, "babgrp", "");
@@ -119,24 +110,24 @@ function addNPC(sClass, nodeNPC, sName)
 	
 	local sMatch = string.match(sBABGrp, "CMB ([+-]%d+)");
 	if sMatch then
-		DB.setValue(nodeEntry, "grapple", "number", tonumber(sMatch) or 0);
+		DB.setValue(tCustom.nodeCT, "grapple", "number", tonumber(sMatch) or 0);
 	else
 		if aSplitBABGrp[2] then
-			DB.setValue(nodeEntry, "grapple", "number", tonumber(aSplitBABGrp[2]) or 0);
+			DB.setValue(tCustom.nodeCT, "grapple", "number", tonumber(aSplitBABGrp[2]) or 0);
 		end
 	end
 
 	sMatch = string.match(sBABGrp, "CMD ([+-]?%d+)");
 	if sMatch then
-		DB.setValue(nodeEntry, "cmd", "number", tonumber(sMatch) or 0);
+		DB.setValue(tCustom.nodeCT, "cmd", "number", tonumber(sMatch) or 0);
 	else
 		if aSplitBABGrp[3] then
-			DB.setValue(nodeEntry, "cmd", "number", tonumber(aSplitBABGrp[3]) or 0);
+			DB.setValue(tCustom.nodeCT, "cmd", "number", tonumber(aSplitBABGrp[3]) or 0);
 		end
 	end
 
 	-- Offensive properties
-	local nodeAttacks = nodeEntry.createChild("attacks");
+	local nodeAttacks = DB.createChild(tCustom.nodeCT, "attacks");
 	if nodeAttacks then
 		for _,v in pairs(nodeAttacks.getChildren()) do
 			v.delete();
@@ -176,7 +167,7 @@ function addNPC(sClass, nodeNPC, sName)
 		if (dex > 11) then
 			aoo = aoo + math.floor((dex - 10) / 2 );
 		end
-		DB.setValue(nodeEntry, "aoomax", "number", aoo);
+		DB.setValue(tCustom.nodeCT, "aoomax", "number", aoo);
 	end
 	-- END
 
@@ -382,7 +373,7 @@ function addNPC(sClass, nodeNPC, sName)
 			
 			if StringManager.isNumberString(aSQWords[i+1]) then
 				i = i + 1;
-				DB.setValue(nodeEntry, "sr", "number", tonumber(aSQWords[i]) or 0);
+				DB.setValue(tCustom.nodeCT, "sr", "number", tonumber(aSQWords[i]) or 0);
 			end
 		
 		-- FAST HEALING
@@ -420,7 +411,7 @@ function addNPC(sClass, nodeNPC, sName)
 				local sRegenEffect = "REGEN: " .. sRegenAmount;
 				if #aRegenTypes > 0 then
 					sRegenEffect = sRegenEffect .. " " .. table.concat(aRegenTypes, " ");
-					EffectManager.addEffect("", "", nodeEntry, { sName = sRegenEffect, nDuration = 0, nGMOnly = 1 }, false);
+					EffectManager.addEffect("", "", tCustom.nodeCT, { sName = sRegenEffect, nDuration = 0, nGMOnly = 1 }, false);
 				else
 					table.insert(aEffects, sRegenEffect);
 				end
@@ -631,56 +622,11 @@ function addNPC(sClass, nodeNPC, sName)
 	
 	-- ADD DECODED EFFECTS
 	if #aEffects > 0 then
-		EffectManager.addEffect("", "", nodeEntry, { sName = table.concat(aEffects, "; "), nDuration = 0, nGMOnly = 1 }, false);
+		EffectManager.addEffect("", "", tCustom.nodeCT, { sName = table.concat(aEffects, "; "), nDuration = 0, nGMOnly = 1 }, false);
 	end
 
 	-- Roll initiative and sort
-	local sOptINIT = OptionsManager.getOption("INIT");
-	-- KEL FFOS, only NPCs here
-	local nCurrent = DB.getValue("combattracker.round", 0);
-	local sOptFFOS = OptionsManager.getOption("FFOS");
-	local bHasUncDodge = false;
-	if (sOptFFOS == "on") and (nCurrent == 0) then
-		local sAbilityname = string.lower(DB.getValue(nodeEntry, "specialqualities", ""));
-		if string.match(sAbilityname, "improved uncanny dodge") or string.match(sAbilityname, "uncanny dodge") then
-			bHasUncDodge = true;
-		end
-	end
-	-- END
-	-- KEL compatibility with rmilmine
-	-- if StringManager.contains(Extension.getExtensions(), "Advanced Effects for 3.5E and Pathfinder") then
-		-- EffectManagerAE.updateCharEffects(nodeNPC,nodeEntry);
-	-- end
-	-- END
-	if sOptINIT == "group" then
-		if nodeLastMatch then
-			local nLastInit = DB.getValue(nodeLastMatch, "initresult", 0);
-			DB.setValue(nodeEntry, "initresult", "number", nLastInit);
-			-- KEL FFOS
-			if (sOptFFOS == "on") and (nCurrent == 0) and not bHasUncDodge then
-				EffectManager.addEffect("", "", nodeEntry, { sName = "Flatfooted", nDuration = 1, nInit = nLastInit, nGMOnly = 1 }, false);
-			end
-			-- END
-		else
-			local nInitResult = math.random(20) + DB.getValue(nodeEntry, "init", 0);
-			DB.setValue(nodeEntry, "initresult", "number", nInitResult);
-			-- KEL FFOS
-			if (sOptFFOS == "on") and (nCurrent == 0) and not bHasUncDodge then
-				EffectManager.addEffect("", "", nodeEntry, { sName = "Flatfooted", nDuration = 1, nInit = nInitResult, nGMOnly = 1 }, false);
-			end
-			--END
-		end
-	elseif sOptINIT == "on" then
-		local nInitResult = math.random(20) + DB.getValue(nodeEntry, "init", 0);
-		DB.setValue(nodeEntry, "initresult", "number", nInitResult);
-		-- KEL FFOS
-		if (sOptFFOS == "on") and (nCurrent == 0) and not bHasUncDodge then
-			EffectManager.addEffect("", "", nodeEntry, { sName = "Flatfooted", nDuration = 1, nInit = nInitResult, nGMOnly = 1 }, false);
-		end
-		-- END
-	end
-
-	return nodeEntry;
+	CombatRecordManager.handleCombatAddInitDnD(tCustom);
 end
 
 --
