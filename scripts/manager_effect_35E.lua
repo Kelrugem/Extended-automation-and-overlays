@@ -991,17 +991,17 @@ function checkConditional(rActor, nodeEffect, aConditions, rTarget, aIgnore, rEf
 			local sTypeCheck = sLower:match("^type%s*%(([^)]+)%)$");
 			local sCustomCheck = sLower:match("^custom%s*%(([^)]+)%)$");
 			if sAlignCheck then
-				if not ActorManager35E.isAlignment(rActor, sAlignCheck) then
+				if not ActorCommonManager.isCreatureAlignmentDnD(rActor, sAlignCheck) then
 					bReturn = false;
 					break;
 				end
 			elseif sSizeCheck then
-				if not ActorManager35E.isSize(rActor, sSizeCheck) then
+				if not ActorCommonManager.isCreatureSizeDnD3(rActor, sSizeCheck) then
 					bReturn = false;
 					break;
 				end
 			elseif sTypeCheck then
-				if not ActorManager35E.isCreatureType(rActor, sTypeCheck) then
+				if not ActorCommonManager.isCreatureTypeDnD(rActor, sTypeCheck) then
 					bReturn = false;
 					break;
 				end

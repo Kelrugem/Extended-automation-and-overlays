@@ -1,8 +1,8 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<root version="4.1.13.1" release="1">
+<root version="4.2.2.1" release="1">
   <properties>
     <name>Feature: Extended automation and alternative overlays</name>
-    <version>4.1.13.2</version>
+    <version>4.2.2.1</version>
     <author>rhythmist, mr900rr, darrenan, tahl_liadon, bmos, DCrumb, RabidPaladin, SoxMax, Cristmo and Kelrugem</author>
     <description>Deekin ist super! (Will ever someone read that strange description?)</description>
     <ruleset>
@@ -13,7 +13,7 @@
     </ruleset>
 	<loadorder>35</loadorder>
   </properties>
-  <announcement text="Extended automation, dated at 9 April 2022, for 3.5E and PFRPG rulesets, v. 4.1.16. Copyright 2022 Smiteworks.\rBy darrenan, mr900rr, phixation, tahl_liadon, bmos, DCrumb, RabidPaladin, SoxMax, Cristmo and Kelrugem." icon="DeekinMightyBard" font="emotefont" />
+  <announcement text="Extended automation, dated at 14 August 2022, for 3.5E and PFRPG rulesets, v. 4.1.16. Copyright 2022 Smiteworks.\rBy darrenan, mr900rr, phixation, tahl_liadon, bmos, DCrumb, RabidPaladin, SoxMax, Cristmo and Kelrugem." icon="DeekinMightyBard" font="emotefont" />
   <base>
 	<icon name="DeekinMightyBard" file="DeekinMightyBard.jpg" />
 	<!-- Graphics -->
@@ -43,6 +43,7 @@
     <!-- High-level scripts -->
 	<script name="ActionsManagerKel" file="scripts/manager_actions.lua" />
     <script name="CombatManagerKel" file="scripts/manager_combat.lua" />
+	<script name="CombatRecordManagerKel" file="scripts/manager_combat_record.lua" />
     <script name="OptionsInit" file="scripts/data_options_init.lua" />
 	<script name="DataCommon2" file="scripts/data_common2.lua" />
 	<script name="GameSystem2" file="scripts/manager_gamesystem2.lua" />
