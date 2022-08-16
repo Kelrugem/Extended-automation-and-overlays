@@ -3,978 +3,1146 @@
 -- attribution and copyright information.
 --
 
-OOB_MSGTYPE_APPLYATK = "applyatk";
-OOB_MSGTYPE_APPLYHRFC = "applyhrfc";
--- KEL AoO
-OOB_MSGTYPE_APPLYAOO = "applyaoo";
--- END
 function onInit()
-	OOBManager.registerOOBMsgHandler(OOB_MSGTYPE_APPLYATK, handleApplyAttack);
-	OOBManager.registerOOBMsgHandler(OOB_MSGTYPE_APPLYHRFC, handleApplyHRFC);
-	-- KEL AoO
-	OOBManager.registerOOBMsgHandler(OOB_MSGTYPE_APPLYAOO, handleApplyAoO);
-	-- END
-	ActionsManager.registerTargetingHandler("attack", onTargeting);
-
-	ActionsManager.registerModHandler("attack", modAttack);
-	ActionsManager.registerModHandler("grapple", modAttack);
+	EffectManager.registerEffectVar("sUnits", { sDBType = "string", sDBField = "unit", bSkipAdd = true });
+	EffectManager.registerEffectVar("sApply", { sDBType = "string", sDBField = "apply", sDisplay = "[%s]" });
+	EffectManager.registerEffectVar("sTargeting", { sDBType = "string", bClearOnUntargetedDrop = true });
 	
-	ActionsManager.registerResultHandler("attack", onAttack);
-	ActionsManager.registerResultHandler("critconfirm", onAttack);
-	ActionsManager.registerResultHandler("misschance", onMissChance);
-	ActionsManager.registerResultHandler("grapple", onGrapple);
+	EffectManager.setCustomOnEffectAddStart(onEffectAddStart);
+	
+	EffectManager.setCustomOnEffectRollEncode(onEffectRollEncode);
+	EffectManager.setCustomOnEffectTextEncode(onEffectTextEncode);
+	EffectManager.setCustomOnEffectTextDecode(onEffectTextDecode);
+
+	EffectManager.setCustomOnEffectActorStartTurn(onEffectActorStartTurn);
 end
 
-function handleApplyAttack(msgOOB)
-	local rSource = ActorManager.resolveActor(msgOOB.sSourceNode);
-	local rTarget = ActorManager.resolveActor(msgOOB.sTargetNode);
-	
-	local nTotal = tonumber(msgOOB.nTotal) or 0;
-	ActionAttack.applyAttack(rSource, rTarget, (tonumber(msgOOB.nSecret) == 1), msgOOB.sAttackType, msgOOB.sDesc, nTotal, msgOOB.sResults);
-end
+--
+-- EFFECT MANAGER OVERRIDES
+--
 
-function notifyApplyAttack(rSource, rTarget, bSecret, sAttackType, sDesc, nTotal, sResults)
-	if not rTarget then
-		return;
+function onEffectAddStart(rEffect)
+	rEffect.nDuration = rEffect.nDuration or 1;
+	if rEffect.sUnits == "minute" then
+		rEffect.nDuration = rEffect.nDuration * 10;
+	elseif rEffect.sUnits == "hour" or rEffect.sUnits == "day" then
+		rEffect.nDuration = 0;
 	end
+	rEffect.sUnits = "";
+end
 
-	local msgOOB = {};
-	msgOOB.type = OOB_MSGTYPE_APPLYATK;
-	
-	if bSecret then
-		msgOOB.nSecret = 1;
-	else
-		msgOOB.nSecret = 0;
+function onEffectRollEncode(rRoll, rEffect)
+	if rEffect.sTargeting and rEffect.sTargeting == "self" then
+		rRoll.bSelfTarget = true;
 	end
-	msgOOB.sAttackType = sAttackType;
-	msgOOB.nTotal = nTotal;
-	msgOOB.sDesc = sDesc;
-	msgOOB.sResults = sResults;
-
-	msgOOB.sSourceNode = ActorManager.getCreatureNodeName(rSource);
-	msgOOB.sTargetNode = ActorManager.getCreatureNodeName(rTarget);
-
-	Comm.deliverOOBMessage(msgOOB, "");
 end
 
-function handleApplyHRFC(msgOOB)
-	TableManager.processTableRoll("", msgOOB.sTable);
-end
-
-function notifyApplyHRFC(sTable)
-	local msgOOB = {};
-	msgOOB.type = OOB_MSGTYPE_APPLYHRFC;
+function onEffectTextEncode(rEffect)
+	local aMessage = {};
 	
-	msgOOB.sTable = sTable;
+	if rEffect.sUnits and rEffect.sUnits ~= "" then
+		local sOutputUnits = nil;
+		if rEffect.sUnits == "minute" then
+			sOutputUnits = "MIN";
+		elseif rEffect.sUnits == "hour" then
+			sOutputUnits = "HR";
+		elseif rEffect.sUnits == "day" then
+			sOutputUnits = "DAY";
+		end
 
-	Comm.deliverOOBMessage(msgOOB, "");
+		if sOutputUnits then
+			table.insert(aMessage, "[UNITS " .. sOutputUnits .. "]");
+		end
+	end
+	if rEffect.sTargeting and rEffect.sTargeting ~= "" then
+		table.insert(aMessage, "[" .. rEffect.sTargeting:upper() .. "]");
+	end
+	if rEffect.sApply and rEffect.sApply ~= "" then
+		table.insert(aMessage, "[" .. rEffect.sApply:upper() .. "]");
+	end
+	
+	return table.concat(aMessage, " ");
 end
 
-function onTargeting(rSource, aTargeting, rRolls)
-	if OptionsManager.isOption("RMMT", "multi") then
-		local aTargets = {};
-		for _,vTargetGroup in ipairs(aTargeting) do
-			for _,vTarget in ipairs(vTargetGroup) do
-				table.insert(aTargets, vTarget);
+function onEffectTextDecode(sEffect, rEffect)
+	local s = sEffect;
+	
+	local sUnits = s:match("%[UNITS ([^]]+)]");
+	if sUnits then
+		s = s:gsub("%[UNITS ([^]]+)]", "");
+		if sUnits == "MIN" then
+			rEffect.sUnits = "minute";
+		elseif sUnits == "HR" then
+			rEffect.sUnits = "hour";
+		elseif sUnits == "DAY" then
+			rEffect.sUnits = "day";
+		end
+	end
+	if s:match("%[SELF%]") then
+		s = s:gsub("%[SELF%]", "");
+		rEffect.sTargeting = "self";
+	end
+	if s:match("%[ACTION%]") then
+		s = s:gsub("%[ACTION%]", "");
+		rEffect.sApply = "action";
+	elseif s:match("%[ROLL%]") then
+		s = s:gsub("%[ROLL%]", "");
+		rEffect.sApply = "roll";
+	elseif s:match("%[SINGLE%]") then
+		s = s:gsub("%[SINGLE%]", "");
+		rEffect.sApply = "single";
+	end
+	
+	return s;
+end
+
+function onEffectActorStartTurn(nodeActor, nodeEffect)
+	local sEffName = DB.getValue(nodeEffect, "label", "");
+	local aEffectComps = EffectManager.parseEffect(sEffName);
+	for _,sEffectComp in ipairs(aEffectComps) do
+		local rEffectComp = parseEffectComp(sEffectComp);
+		-- Conditionals
+		-- KEL Adding TAG (tags not combined with these effects, dots, hots...)
+		-- KEL adding negation
+		if rEffectComp.type == "IFT" then
+			break;
+		elseif rEffectComp.type == "NIFT" then
+			break;
+		elseif rEffectComp.type == "IFTAG" then
+			break;
+		elseif rEffectComp.type == "NIFTAG" then
+			break;
+		elseif rEffectComp.type == "IF" then
+			local rActor = ActorManager.resolveActor(nodeActor);
+			if not checkConditional(rActor, nodeEffect, rEffectComp.remainder) then
+				break;
+			end
+		elseif rEffectComp.type == "NIF" then
+			local rActor = ActorManager.resolveActor(nodeActor);
+			if checkConditional(rActor, nodeEffect, rEffectComp.remainder) then
+				break;
+			end
+		
+		-- Ongoing damage, fast healing and regeneration
+		elseif rEffectComp.type == "DMGO" or rEffectComp.type == "FHEAL" or rEffectComp.type == "REGEN" then
+			local nActive = DB.getValue(nodeEffect, "isactive", 0);
+			if nActive == 2 then
+				DB.setValue(nodeEffect, "isactive", "number", 1);
+			else
+				applyOngoingDamageAdjustment(nodeActor, nodeEffect, rEffectComp);
+			end
+		-- KEL ROLLON
+		elseif rEffectComp.type == "ROLLON" then
+			local nActive = DB.getValue(nodeEffect, "isactive", 0);
+			if nActive == 2 then
+				DB.setValue(nodeEffect, "isactive", "number", 1);
+			else
+				applyRollon(rEffectComp);
 			end
 		end
-		if #aTargets > 1 then
-			for _,vRoll in ipairs(rRolls) do
-				if not string.match(vRoll.sDesc, "%[FULL%]") then
-					vRoll.bRemoveOnMiss = "true";
+	end
+end
+
+--
+-- CUSTOM FUNCTIONS
+--
+
+function parseEffectComp(s)
+	local sType = nil;
+	local aDice = {};
+	local nMod = 0;
+	local aRemainder = {};
+	local nRemainderIndex = 1;
+	
+	local aWords, aWordStats = StringManager.parseWords(s, "/\\%.%[%]%(%):{}");
+	if #aWords > 0 then
+		sType = aWords[1]:match("^([^:]+):");
+		if sType then
+			nRemainderIndex = 2;
+			
+			local sValueCheck = aWords[1]:sub(#sType + 2);
+			if sValueCheck ~= "" then
+				table.insert(aWords, 2, sValueCheck);
+				table.insert(aWordStats, 2, { startpos = aWordStats[1].startpos + #sType + 1, endpos = aWordStats[1].endpos });
+				aWords[1] = aWords[1]:sub(1, #sType + 1);
+				aWordStats[1].endpos = #sType + 1;
+			end
+			
+			if #aWords > 1 then
+				if StringManager.isDiceString(aWords[2]) then
+					aDice, nMod = StringManager.convertStringToDice(aWords[2]);
+					nRemainderIndex = 3;
 				end
 			end
 		end
-	end
-	return aTargeting;
-end
-
-function performPartySheetVsRoll(draginfo, rActor, rAction)
-	local rRoll = ActionAttack.getRoll(nil, rAction);
-	
-	if DB.getValue("partysheet.hiderollresults", 0) == 1 then
-		rRoll.bSecret = true;
-		rRoll.bTower = true;
-	end
-	
-	ActionsManager.actionDirect(nil, "attack", { rRoll }, { { rActor } });
-end
-
-function performRoll(draginfo, rActor, rAction)
-	local rRoll = ActionAttack.getRoll(rActor, rAction);
-	
-	ActionsManager.performAction(draginfo, rActor, rRoll);
-end
--- KEL add tag argument
-function getRoll(rActor, rAction, tag)
-	local rRoll = {};
-	if rAction.cm then
-		rRoll.sType = "grapple";
-	else
-		rRoll.sType = "attack";
-	end
-	rRoll.aDice = { "d20" };
-	rRoll.nMod = rAction.modifier or 0;
-	
-	if rAction.cm then
-		rRoll.sDesc = "[CMB";
-		if rAction.order and rAction.order > 1 then
-			rRoll.sDesc = rRoll.sDesc .. " #" .. rAction.order;
+		
+		if nRemainderIndex <= #aWords then
+			while nRemainderIndex <= #aWords and aWords[nRemainderIndex]:match("^%[%d?%a+%]$") do
+				table.insert(aRemainder, aWords[nRemainderIndex]);
+				nRemainderIndex = nRemainderIndex + 1;
+			end
 		end
-		rRoll.sDesc = rRoll.sDesc .. "] " .. rAction.label;
-	else
-		rRoll.sDesc = "[ATTACK";
-		if rAction.order and rAction.order > 1 then
-			rRoll.sDesc = rRoll.sDesc .. " #" .. rAction.order;
-		end
-		if rAction.range then
-			rRoll.sDesc = rRoll.sDesc .. " (" .. rAction.range .. ")";
-		end
-		rRoll.sDesc = rRoll.sDesc .. "] " .. rAction.label;
-	end
-	
-	-- Add ability modifiers
-	if rAction.stat then
-		if (rAction.range == "M" and rAction.stat ~= "strength") or (rAction.range == "R" and rAction.stat ~= "dexterity") then
-			local sAbilityEffect = DataCommon.ability_ltos[rAction.stat];
-			if sAbilityEffect then
-				rRoll.sDesc = rRoll.sDesc .. " [MOD:" .. sAbilityEffect .. "]";
+		
+		if nRemainderIndex <= #aWords then
+			local sRemainder = s:sub(aWordStats[nRemainderIndex].startpos);
+			local nStartRemainderPhrase = 1;
+			local i = 1;
+			while i < #sRemainder do
+				local sCheck = sRemainder:sub(i, i);
+				if sCheck == "," then
+					local sRemainderPhrase = sRemainder:sub(nStartRemainderPhrase, i - 1);
+					if sRemainderPhrase and sRemainderPhrase ~= "" then
+						sRemainderPhrase = StringManager.trim(sRemainderPhrase);
+						table.insert(aRemainder, sRemainderPhrase);
+					end
+					nStartRemainderPhrase = i + 1;
+				elseif sCheck == "(" then
+					while i < #sRemainder do
+						if sRemainder:sub(i, i) == ")" then
+							break;
+						end
+						i = i + 1;
+					end
+				elseif sCheck == "[" then
+					while i < #sRemainder do
+						if sRemainder:sub(i, i) == "]" then
+							break;
+						end
+						i = i + 1;
+					end
+				end
+				i = i + 1;
+			end
+			local sRemainderPhrase = sRemainder:sub(nStartRemainderPhrase, #sRemainder);
+			if sRemainderPhrase and sRemainderPhrase ~= "" then
+				sRemainderPhrase = StringManager.trim(sRemainderPhrase);
+				table.insert(aRemainder, sRemainderPhrase);
 			end
 		end
 	end
-	
-	-- Add other modifiers
-	-- KEL compatibility with KEEN and iftag stuff; EDIT: Moving KEEN stuff such that it is targetable. Hence, saving crit value
-	rRoll.tags = tag;
-	rRoll.crit = rAction.crit;
-	-- END
-	
-	if rAction.touch then
-		rRoll.sDesc = rRoll.sDesc .. " [TOUCH]";
-	end
-	
-	-- KEL Compatibility with mirrorimage
-	if MirrorImageHandler and rAction.misfire then
-		rRoll.sDesc = rRoll.sDesc .. " [MISFIRE " .. rAction.misfire .. "]";
-	end
-	-- END
-	
-	-- KEL Save overlay only for spell actions
-	if rAction.spell then
-		rRoll.sDesc = rRoll.sDesc .. " [ACTION]";
-	end
-	-- END
-	
-	return rRoll;
+
+	return  {
+		type = sType or "", 
+		mod = nMod, 
+		dice = aDice, 
+		remainder = aRemainder, 
+		original = StringManager.trim(s)
+	};
 end
 
-function performGrappleRoll(draginfo, rActor, rAction)
-	local rRoll = ActionAttack.getGrappleRoll(rActor, rAction);
+function rebuildParsedEffectComp(rComp)
+	if not rComp then
+		return "";
+	end
 	
-	ActionsManager.performAction(draginfo, rActor, rRoll);
+	local aComp = {};
+	if rComp.type ~= "" then
+		table.insert(aComp, rComp.type .. ":");
+	end
+	local sDiceString = StringManager.convertDiceToString(rComp.dice, rComp.mod);
+	if sDiceString ~= "" then
+		table.insert(aComp, sDiceString);
+	end
+	if #(rComp.remainder) > 0 then
+		table.insert(aComp, table.concat(rComp.remainder, ","));
+	end
+	return table.concat(aComp, " ");
 end
-
-function getGrappleRoll(rActor, rAction)
-	local rRoll = {};
-	rRoll.sType = "grapple";
-	rRoll.aDice = { "d20" };
-	rRoll.nMod = rAction.modifier or 0;
-	
-	if DataCommon.isPFRPG() then
-		rRoll.sDesc = "[CMB]";
-	else
-		rRoll.sDesc = "[GRAPPLE]";
+-- KEL ROLLON
+function applyRollon(rEffectComp)
+	local nNumberPrefix = "";
+	if rEffectComp.mod ~= 0 then
+		nNumberPrefix = tostring(rEffectComp.mod);
 	end
-	if rAction.label and rAction.label ~= "" then
-		rRoll.sDesc = rRoll.sDesc .. " " .. rAction.label;
-	end
-	
-	-- Add ability modifiers
-	if rAction.stat then
-		if rAction.stat ~= "strength" then
-			local sAbilityEffect = DataCommon.ability_ltos[rAction.stat];
-			if sAbilityEffect then
-				rRoll.sDesc = rRoll.sDesc .. " [MOD:" .. sAbilityEffect .. "]";
-			end
-		end
-	end
-	
-	return rRoll;
-end
-
--- KEL AoO
-function handleApplyAoO(msgOOB)
-	-- local rSource = ActorManager.resolveActor(msgOOB.sSourceNode);
-	local rSourceCTNode = ActorManager.getCTNode(msgOOB.sSourceNode);
-	local aoo = DB.getValue(rSourceCTNode, "aoo", 0) + 1;
-	DB.setValue(rSourceCTNode, "aoo", "number", aoo);
+	TableManager.processTableRoll("rollon", nNumberPrefix .. " " .. rEffectComp.remainder[1]);
 end
 -- END
 
-function modAttack(rSource, rTarget, rRoll)
-	ActionAttack.clearCritState(rSource);
-	local aAddDesc = {};
-	local aAddDice = {};
-	local nAddMod = 0;
+function applyOngoingDamageAdjustment(nodeActor, nodeEffect, rEffectComp)
+	-- KEL ROLLON stuff
+	if rEffectComp.type == "ROLLON" then
+		-- Debug.console(rEffectComp.remainder);
+		-- local nodeTable = TableManager.findTable(rEffectComp.remainder);
+		-- if nodeTable then
+		local nNumberPrefix = "";
+		if rEffectComp.mod ~= 0 then
+			nNumberPrefix = tostring(rEffectComp.mod);
+		end
+		TableManager.processTableRoll("rollon", nNumberPrefix .. " " .. rEffectComp.remainder[1]);
+		-- end	
+	end
+	-- END
+	if #(rEffectComp.dice) == 0 and rEffectComp.mod == 0 then
+		return;
+	end
 	
-	-- Check for opportunity attack
-	local bOpportunity = ModifierManager.getKey("ATT_OPP") or Input.isShiftPressed();
+	local rTarget = ActorManager.resolveActor(nodeActor);
+	
+	local aResults = {};
+	if rEffectComp.type == "FHEAL" then
+		local sStatus = ActorHealthManager.getHealthStatus(rTarget);
+		if sStatus == ActorHealthManager.STATUS_DEAD then
+			return;
+		end
+		if DB.getValue(nodeActor, "wounds", 0) == 0 and DB.getValue(nodeActor, "nonlethal", 0) == 0 then
+			return;
+		end
+		
+		table.insert(aResults, "[FHEAL] Fast Heal");
 
-	-- Check defense modifiers
-	local bTouch = ModifierManager.getKey("ATT_TCH");
-	local bFlatFooted = ModifierManager.getKey("ATT_FF");
-	-- KEL add CA button
-	local bCAKel = ModifierManager.getKey("ATT_CA");
-	--END
-	local bCover = ModifierManager.getKey("DEF_COVER");
-	local bPartialCover = ModifierManager.getKey("DEF_PCOVER");
-	local bSuperiorCover = ModifierManager.getKey("DEF_SCOVER");
-	local bConceal = ModifierManager.getKey("DEF_CONC");
-	local bTotalConceal = ModifierManager.getKey("DEF_TCONC");
-	
-	if bOpportunity then
-		table.insert(aAddDesc, "[OPPORTUNITY]");
-		-- KEL AoO
-		if Session.IsHost then
-			local rSourceCTNode = ActorManager.getCTNode(rSource);
-			local aoo = DB.getValue(rSourceCTNode, "aoo", 0) + 1;
-			DB.setValue(rSourceCTNode, "aoo", "number", aoo);
+	elseif rEffectComp.type == "REGEN" then
+		local bPFMode = DataCommon.isPFRPG();
+		if bPFMode then
+			if DB.getValue(nodeActor, "wounds", 0) == 0 and DB.getValue(nodeActor, "nonlethal", 0) == 0 then
+				return;
+			end
 		else
-			local msgOOB = {};
-			msgOOB.sSourceNode = ActorManager.getCreatureNodeName(rSource);
-			msgOOB.type = OOB_MSGTYPE_APPLYAOO;
-			Comm.deliverOOBMessage(msgOOB, "");
-		end
-		--END
-	end
-	if bTouch then
-		if not string.match(rRoll.sDesc, "%[TOUCH%]") then
-			table.insert(aAddDesc, "[TOUCH]");
-		end
-	end
-	-- KEL adding uncanny dodge
-	if bFlatFooted and not ActorManager35E.hasSpecialAbility(rTarget, "Uncanny Dodge", false, false, true) then
-		table.insert(aAddDesc, "[FF]");
-	end
-	if bSuperiorCover then
-		table.insert(aAddDesc, "[COVER -8]");
-	elseif bCover then
-		table.insert(aAddDesc, "[COVER -4]");
-	elseif bPartialCover then
-		table.insert(aAddDesc, "[COVER -2]");
-	end
-	if bConceal then
-		table.insert(aAddDesc, "[CONCEAL]");
-	end
-	if bTotalConceal then
-		table.insert(aAddDesc, "[TOTAL CONC]");
-	end
-	
-	if rSource then
-		-- Determine attack type
-		local sAttackType = nil;
-		if rRoll.sType == "attack" then
-			sAttackType = string.match(rRoll.sDesc, "%[ATTACK.*%((%w+)%)%]");
-			if not sAttackType then
-				sAttackType = "M";
+			if DB.getValue(nodeActor, "nonlethal", 0) == 0 then
+				return;
 			end
-		elseif rRoll.sType == "grapple" then
-			sAttackType = "M";
 		end
+		
+		table.insert(aResults, "[REGEN] Regeneration");
 
-		-- Determine ability used
-		local sActionStat = nil;
-		local sModStat = string.match(rRoll.sDesc, "%[MOD:(%w+)%]");
-		if sModStat then
-			sActionStat = DataCommon.ability_stol[sModStat];
+	else
+		table.insert(aResults, "[DAMAGE] Ongoing Damage");
+		if #(rEffectComp.remainder) > 0 then
+			table.insert(aResults, "[TYPE: " .. table.concat(rEffectComp.remainder, ","):lower() .. "]");
 		end
-		if not sActionStat then
-			if sAttackType == "M" then
-				sActionStat = "strength";
-			elseif sAttackType == "R" then
-				sActionStat = "dexterity";
-			end
-		end
+	end
 
-		-- Build attack filter
-		local aAttackFilter = {};
-		if sAttackType == "M" then
-			table.insert(aAttackFilter, "melee");
-		elseif sAttackType == "R" then
-			table.insert(aAttackFilter, "ranged");
-		end
-		if bOpportunity then
-			table.insert(aAttackFilter, "opportunity");
-		end
-		
-		-- Get condition modifiers; KEL moved it here for nodex automation later (not yet done) such that following effects can profit from it; similar for bEffects; adding ethereal
-		local bEffects = false;
-		if EffectManager35E.hasEffect(rSource, "Ethereal", nil, false, false, rRoll.tags) then
-			bEffects = true;
-			nAddMod = nAddMod + 2;
-			if not ActorManager35E.hasSpecialAbility(rTarget, "Uncanny Dodge", false, false, true) then
-				table.insert(aAddDesc, "[CA]");
-			end
-		elseif EffectManager35E.hasEffect(rSource, "Invisible", nil, false, false, rRoll.tags) then
-			-- KEL blind fight, skipping checking effects for now (for performance and to avoid problems with On Skip etc.)
-			local bBlindFight = ActorManager35E.hasSpecialAbility(rTarget, "Blind-Fight", true, false, false);
-			if sAttackType == "R" or not bBlindFight then
-				bEffects = true;
-				nAddMod = nAddMod + 2;
-				if not ActorManager35E.hasSpecialAbility(rTarget, "Uncanny Dodge", false, false, true) then
-					table.insert(aAddDesc, "[CA]");
-				end
-			end
-			-- END
-		end
-		if EffectManager35E.hasEffect(rSource, "CA", nil, false, false, rRoll.tags) then
-			bEffects = true;
-			table.insert(aAddDesc, "[CA]");
-		-- KEL add CA button
-		elseif bCAKel then
-			table.insert(aAddDesc, "[CA]");
-		end
-		-- END
-		-- Get attack effect modifiers
-		-- KEL New KEEN code for allowing several new configurations
-		local rActionCrit = tonumber(rRoll.crit) or 20;
-		local aKEEN = EffectManager35E.getEffectsByType(rSource, "KEEN", aAttackFilter, rTarget, false, rRoll.tags);
-		if (#aKEEN > 0) or EffectManager35E.hasEffect(rSource, "KEEN", rTarget, false, false, rRoll.tags) then
-			rActionCrit = 20 - ((20 - rActionCrit + 1) * 2) + 1;
-			bEffects = true;
-		end
-		if rActionCrit < 20 then
-			table.insert(aAddDesc, "[CRIT " .. rActionCrit .. "]");
-		end
-		-- END
-		-- KEL add tags, and relabel nAddMod to nAddModi to avoid overwriting the previous nAddMod
-		local nEffectCount;
-		aAddDice, nAddModi, nEffectCount = EffectManager35E.getEffectsBonus(rSource, {"ATK"}, false, aAttackFilter, rTarget, false, rRoll.tags);
-		nAddMod = nAddMod + nAddModi;
-		-- END
-		if (nEffectCount > 0) then
-			bEffects = true;
-		end
-		-- KEL (DIS)ADV; also add total amount of all dis/adv effects which are then compared with kel(dis)advantage numbers
-		local aADVATK = EffectManager35E.getEffectsByType(rSource, "ADVATK", aAttackFilter, rTarget, false, rRoll.tags);
-		local aDISATK = EffectManager35E.getEffectsByType(rSource, "DISATK", aAttackFilter, rTarget, false, rRoll.tags);
-		local aGRANTADVATK = EffectManager35E.getEffectsByType(rTarget, "GRANTADVATK", aAttackFilter, rSource, false, rRoll.tags);
-		local aGRANTDISATK = EffectManager35E.getEffectsByType(rTarget, "GRANTDISATK", aAttackFilter, rSource, false, rRoll.tags);
-		local _, nADVATK = EffectManager35E.hasEffect(rSource, "ADVATK", rTarget, false, false, rRoll.tags);
-		local _, nDISATK = EffectManager35E.hasEffect(rSource, "DISATK", rTarget, false, false, rRoll.tags);
-		local _, nGRANTADVATK = EffectManager35E.hasEffect(rTarget, "GRANTADVATK", rSource, false, false, rRoll.tags);
-		local _, nGRANTDISATK = EffectManager35E.hasEffect(rTarget, "GRANTDISATK", rSource, false, false, rRoll.tags);
-		
-		rRoll.adv = #aADVATK + #aGRANTADVATK + nADVATK + nGRANTADVATK - (#aDISATK + #aGRANTDISATK + nDISATK + nGRANTDISATK);
-		-- END
-		if rRoll.sType == "grapple" then
-			local aPFDice, nPFMod, nPFCount = EffectManager35E.getEffectsBonus(rSource, {"CMB"}, false, aAttackFilter, rTarget, false, rRoll.tags);
-			if nPFCount > 0 then
-				bEffects = true;
-				for k, v in ipairs(aPFDice) do
-					table.insert(aAddDice, v);
-				end
-				nAddMod = nAddMod + nPFMod;
-			end
-		end
-		
-		if EffectManager35E.hasEffect(rSource, "Blinded", nil, false, false, rRoll.tags) then
-			bEffects = true;
-			table.insert(aAddDesc, "[BLINDED]");
-		end
-		if not DataCommon.isPFRPG() then
-			if EffectManager35E.hasEffect(rSource, "Incorporeal", nil, false, false, rRoll.tags) and sAttackType == "M" and not string.match(string.lower(rRoll.sDesc), "incorporeal touch") then
-				bEffects = true;
-				table.insert(aAddDesc, "[INCORPOREAL]");
-			end
-		end
-		if EffectManager35E.hasEffectCondition(rSource, "Dazzled", rRoll.tags) then
-			bEffects = true;
-			nAddMod = nAddMod - 1;
-		end
-		if EffectManager35E.hasEffectCondition(rSource, "Slowed", rRoll.tags) then
-			bEffects = true;
-			nAddMod = nAddMod - 1;
-		end
-		if EffectManager35E.hasEffectCondition(rSource, "Entangled", rRoll.tags) then
-			bEffects = true;
-			nAddMod = nAddMod - 2;
-		end
-		if rRoll.sType == "attack" and 
-				(EffectManager35E.hasEffectCondition(rSource, "Pinned", rRoll.tags) or
-				EffectManager35E.hasEffectCondition(rSource, "Grappled", rRoll.tags)) then
-			bEffects = true;
-			nAddMod = nAddMod - 2;
-		end
-		if EffectManager35E.hasEffectCondition(rSource, "Frightened", rRoll.tags) or 
-				EffectManager35E.hasEffectCondition(rSource, "Panicked", rRoll.tags) or
-				EffectManager35E.hasEffectCondition(rSource, "Shaken", rRoll.tags) then
-			bEffects = true;
-			nAddMod = nAddMod - 2;
-		end
-		if EffectManager35E.hasEffectCondition(rSource, "Sickened", rRoll.tags) then
-			bEffects = true;
-			nAddMod = nAddMod - 2;
-		end
-
-		-- Get other effect modifiers
-		if EffectManager35E.hasEffectCondition(rSource, "Squeezing", rRoll.tags) then
-			bEffects = true;
-			nAddMod = nAddMod - 4;
-		end
-		-- KEL see https://www.fantasygrounds.com/forums/showthread.php?74770-EffectManager-for-condition-in-3-5E
-		if EffectManager.hasCondition(rSource, "Prone") then
-			if sAttackType == "M" then
-				bEffects = true;
-				nAddMod = nAddMod - 4;
-			end
-		end
-		
-		-- Get ability modifiers
-		local nBonusStat, nBonusEffects = ActorManager35E.getAbilityEffectsBonus(rSource, sActionStat, rRoll.tags);
-		if nBonusEffects > 0 then
-			bEffects = true;
-			nAddMod = nAddMod + nBonusStat;
-		end
-		
-		-- Get negative levels
-		local nNegLevelMod, nNegLevelCount = EffectManager35E.getEffectsBonus(rSource, {"NLVL"}, true, nil, nil, false, rRoll.tags);
-		if nNegLevelCount > 0 then
-			bEffects = true;
-			nAddMod = nAddMod - nNegLevelMod;
-		end
-
-		-- If effects, then add them
-		if bEffects then
-			local sEffects = "";
-			local sMod = StringManager.convertDiceToString(aAddDice, nAddMod, true);
-			if sMod ~= "" then
-				sEffects = "[" .. Interface.getString("effects_tag") .. " " .. sMod .. "]";
-			else
-				sEffects = "[" .. Interface.getString("effects_tag") .. "]";
-			end
-			table.insert(aAddDesc, sEffects);
-		end
+	local rRoll = { sType = "damage", sDesc = table.concat(aResults, " "), aDice = rEffectComp.dice, nMod = rEffectComp.mod };
+	if EffectManager.isGMEffect(nodeActor, nodeEffect) then
+		rRoll.bSecret = true;
 	end
-	
-	if bSuperiorCover then
-		nAddMod = nAddMod - 8;
-	elseif bCover then
-		nAddMod = nAddMod - 4;
-	elseif bPartialCover then
-		nAddMod = nAddMod - 2;
-	end
-	
-	if #aAddDesc > 0 then
-		rRoll.sDesc = rRoll.sDesc .. " " .. table.concat(aAddDesc, " ");
-	end
-	for _,vDie in ipairs(aAddDice) do
-		if vDie:sub(1,1) == "-" then
-			table.insert(rRoll.aDice, "-p" .. vDie:sub(3));
-		else
-			table.insert(rRoll.aDice, "p" .. vDie:sub(2));
-		end
-	end
-	rRoll.nMod = rRoll.nMod + nAddMod;
+	ActionsManager.roll(nil, rTarget, rRoll);
 end
 
-function onAttack(rSource, rTarget, rRoll)
-	local rMessage = ActionsManager.createActionMessage(rSource, rRoll);
-
-	local bIsSourcePC = ActorManager.isPC(rSource);
-	local bAllowCC = OptionsManager.isOption("HRCC", "on") or (not bIsSourcePC and OptionsManager.isOption("HRCC", "npc"));
-	
-	if rRoll.sDesc:match("%[CMB") then
-		rRoll.sType = "grapple";
-	end
-	
-	-- KEL We need the attack filter here 
-	-- DETERMINE ATTACK TYPE AND DEFENSE
-	local AttackType = "M";
-	if rRoll.sType == "attack" then
-		AttackType = string.match(rRoll.sDesc, "%[ATTACK.*%((%w+)%)%]");
-	end
-	local Opportunity = string.match(rRoll.sDesc, "%[OPPORTUNITY%]");
-	-- BUILD ATTACK FILTER 
-	local AttackFilter = {};
-	if AttackType == "M" then
-		table.insert(AttackFilter, "melee");
-	elseif AttackType == "R" then
-		table.insert(AttackFilter, "ranged");
-	end
-	if Opportunity then
-		table.insert(AttackFilter, "opportunity");
-	end
-	-- END
-	rRoll.nTotal = ActionsManager.total(rRoll);
-	rRoll.aMessages = {};
-	
-	-- If we have a target, then calculate the defense we need to exceed
-	if rRoll.sType == "critconfirm" then
-		local sDefenseVal = rRoll.sDesc:match(" %[AC ([%-%+]?%d+)%]");
-		if sDefenseVal then
-			rRoll.nDefenseVal = tonumber(sDefenseVal);
-		end
-		rRoll.nMissChance = tonumber(rRoll.sDesc:match("%[MISS CHANCE (%d+)%%%]")) or 0;
-		rMessage.text = rMessage.text:gsub(" %[AC ([%-%+]?%d+)%]", "");
-		rMessage.text = rMessage.text:gsub(" %[MISS CHANCE %d+%%%]", "");
-		-- Getting rid of possible (dis)adv message parts
-		rMessage.text = rMessage.text:gsub(" %[DROPPED %d+%]", "");
-		rMessage.text = rMessage.text:gsub(" %[ADV%]", "");
-		rMessage.text = rMessage.text:gsub(" %[DISADV%]", "");
-	-- END
-	else
-		-- KEL Add nAdditionalDefenseForCC and allow negative AC stuff for CC etc
-		-- KEL blind fight, skipping checking effects for now (for performance and to avoid problems with On Skip etc.)
-		rRoll.nDefenseVal, rRoll.nAtkEffectsBonus, rRoll.nDefEffectsBonus, rRoll.nMissChance, rRoll.nAdditionalDefenseForCC = ActorManager35E.getDefenseValue(rSource, rTarget, rRoll);
-		-- KEL CONC on Attacker
-		local aVConcealEffect, aVConcealCount = EffectManager35E.getEffectsBonusByType(rSource, "TVCONC", true, AttackFilter, rTarget, false, rRoll.tags);
-		
-		if aVConcealCount > 0 then
-			rMessage.text = rMessage.text .. " [VCONC]";
-			for _,v in  pairs(aVConcealEffect) do
-				rRoll.nMissChance = math.max(v.mod,rRoll.nMissChance);
-			end
-		end
-		-- END
-		if rRoll.nAtkEffectsBonus ~= 0 then
-			rRoll.nTotal = rRoll.nTotal + rRoll.nAtkEffectsBonus;
-			local sFormat = "[" .. Interface.getString("effects_tag") .. " %+d]";
-			table.insert(rRoll.aMessages, string.format(sFormat, rRoll.nAtkEffectsBonus));
-		end
-		if rRoll.nDefEffectsBonus ~= 0 then
-			rRoll.nDefenseVal = rRoll.nDefenseVal + rRoll.nDefEffectsBonus;
-			local sFormat = "[" .. Interface.getString("effects_def_tag") .. " %+d]";
-			table.insert(rRoll.aMessages, string.format(sFormat, rRoll.nDefEffectsBonus));
-		end
-	end
-	
-	-- KEL Compatibility with mirrorimage
-	-- Get the misfire threshold
-	if MirrorImageHandler then
-		local sMisfireRange = string.match(rRoll.sDesc, "%[MISFIRE (%d+)%]");
-		if sMisfireRange then
-			rRoll.nMisfire = tonumber(sMisfireRange) or 0;
-		end
-	end
-	-- END
-	
-	-- Get the crit threshold
-	rRoll.nCrit = 20;	
-	local sAltCritRange = string.match(rRoll.sDesc, "%[CRIT (%d+)%]");
-	if sAltCritRange then
-		rRoll.nCrit = tonumber(sAltCritRange) or 20;
-		if (rRoll.nCrit <= 1) or (rRoll.nCrit > 20) then
-			rRoll.nCrit = 20;
-		end
-	end
-	
-	rRoll.nFirstDie = 0;
-	if #(rRoll.aDice) > 0 then
-		rRoll.nFirstDie = rRoll.aDice[1].result or 0;
-	end
-	rRoll.bCritThreat = false;
-	if rRoll.nFirstDie >= 20 then
-		rRoll.bSpecial = true;
-		if rRoll.sType == "critconfirm" then
-			rRoll.sResult = "crit";
-			table.insert(rRoll.aMessages, "[CRITICAL HIT]");
-		elseif rRoll.sType == "attack" then
-			if bAllowCC then
-				rRoll.sResult = "hit";
-				rRoll.bCritThreat = true;
-				table.insert(rRoll.aMessages, "[AUTOMATIC HIT]");
-			else
-				rRoll.sResult = "crit";
-				table.insert(rRoll.aMessages, "[CRITICAL HIT]");
-			end
-		else
-			rRoll.sResult = "hit";
-			table.insert(rRoll.aMessages, "[AUTOMATIC HIT]");
-		end
-	elseif rRoll.nFirstDie == 1 then
-		if rRoll.sType == "critconfirm" then
-			table.insert(rRoll.aMessages, "[CRIT NOT CONFIRMED]");
-			rRoll.sResult = "miss";
-		else
-			-- KEL compatibility with mirrorimage (I should not need the check for MirrorImageHandler because nMisfire always nil without Darrenan's extension, but I am paranoid :D)
-			if MirrorImageHandler and rRoll.nMisfire and rRoll.sType == "attack" then
-				table.insert(rRoll.aMessages, "[MISFIRE]");
-				rRoll.sResult = "miss";
-			else
-				table.insert(rRoll.aMessages, "[AUTOMATIC MISS]");
-				rRoll.sResult = "fumble";
-			end
-			-- END
-		end
-	-- KEL comp with mirrorimage
-	elseif MirrorImageHandler and rRoll.nMisfire and rRoll.nFirstDie <= rRoll.nMisfire and rRoll.sType == "attack" then
-		table.insert(rRoll.aMessages, "[MISFIRE]");
-		rRoll.sResult = "miss";
-	-- END
-	elseif rRoll.nDefenseVal then
-		if rRoll.nTotal >= rRoll.nDefenseVal then
-			if rRoll.sType == "critconfirm" then
-				rRoll.sResult = "crit";
-				table.insert(rRoll.aMessages, "[CRITICAL HIT]");
-			elseif rRoll.sType == "attack" and rRoll.nFirstDie >= rRoll.nCrit then
-				if bAllowCC then
-					rRoll.sResult = "hit";
-					rRoll.bCritThreat = true;
-					table.insert(rRoll.aMessages, "[CRITICAL THREAT]");
+function evalAbilityHelper(rActor, sEffectAbility, nodeSpellClass)
+	-- KEL We add DCrumbs max stuff but we do it differently (espcially min is not needed)
+	local sSign, sModifier, sNumber, sShortAbility, nMax = sEffectAbility:match("^%[([%+%-]?)([HTQd]?)([%d]?)([A-Z][A-Z][A-Z]?)(%d*)%]$");
+	-- KEL adding rollable stats (for damage especially)
+	-- local sSign, sDieSides = sEffectAbility:match("^%[([%-%+]?)[dD]([%dF]+)%]$");
+	local sDie, sDesc = sEffectAbility:match("^%[%s*(%S+)%s*(.*)%]$");
+	local aDice, nMod = StringManager.convertStringToDice(sDie);
+	local IsDie = StringManager.isDiceString(sDie);
+	if IsDie then
+		for k,v in ipairs(aDice) do
+			local aSign, sDieSides = v:match("^([%-%+]?)[dD]([%dF]+)");
+			if sDieSides then
+				local nResult = 0;
+				if sDieSides == "F" then
+					local nRandom = math.random(3);
+					if nRandom == 1 then
+						nResult = -1;
+					elseif nRandom == 3 then
+						nResult = 1;
+					end
 				else
-					rRoll.sResult = "crit";
-					table.insert(rRoll.aMessages, "[CRITICAL HIT]");
+					local nDieSides = tonumber(sDieSides) or 0;
+					nResult = math.random(nDieSides);
 				end
+				
+				if aSign == "-" then
+					nResult = 0 - nResult;
+				end
+				
+				nMod = nMod + nResult;
+			end
+		end
+	end
+	-- KEL Adding Effects to these attributes
+	local nAbility = nil;
+	if sShortAbility == "STR" then
+		nAbility = ActorManager35E.getAbilityBonus(rActor, "strength") + ActorManager35E.getAbilityEffectsBonus(rActor, "strength");
+	elseif sShortAbility == "DEX" then
+		nAbility = ActorManager35E.getAbilityBonus(rActor, "dexterity") + ActorManager35E.getAbilityEffectsBonus(rActor, "dexterity");
+	elseif sShortAbility == "CON" then
+		nAbility = ActorManager35E.getAbilityBonus(rActor, "constitution") + ActorManager35E.getAbilityEffectsBonus(rActor, "constitution");
+	elseif sShortAbility == "INT" then
+		nAbility = ActorManager35E.getAbilityBonus(rActor, "intelligence") + ActorManager35E.getAbilityEffectsBonus(rActor, "intelligence");
+	elseif sShortAbility == "WIS" then
+		nAbility = ActorManager35E.getAbilityBonus(rActor, "wisdom") + ActorManager35E.getAbilityEffectsBonus(rActor, "wisdom");
+	elseif sShortAbility == "CHA" then
+		nAbility = ActorManager35E.getAbilityBonus(rActor, "charisma") + ActorManager35E.getAbilityEffectsBonus(rActor, "charisma");
+	elseif sShortAbility == "LVL" then
+		nAbility = ActorManager35E.getAbilityBonus(rActor, "level");
+	elseif sShortAbility == "BAB" then
+		nAbility = ActorManager35E.getAbilityBonus(rActor, "bab");
+	elseif sShortAbility == "CL" then
+		if nodeSpellClass then
+			nAbility = DB.getValue(nodeSpellClass, "cl", 0);
+		end
+	elseif IsDie then
+		nAbility = nMod;
+	end
+	
+	if nAbility and not IsDie then
+		if sModifier == "H" then
+			nAbility = nAbility / 2;
+		elseif sModifier == "T" then
+			nAbility = nAbility / 3;
+		elseif sModifier == "Q" then
+			nAbility = nAbility / 4;
+		end
+		if sNumber and not (sModifier == "d") then
+			nAbility = nAbility * (tonumber(sNumber) or 1);
+		elseif ((sNumber or 0) ~= 0) and (sModifier == "d") then
+			nAbility = nAbility / (tonumber(sNumber) or 1);
+		end
+		-- KEL This has to be before the sign change otherwise nMax always wins
+		if nMax then
+			nAbility = math.min(nAbility, (tonumber(nMax) or nAbility));
+		end
+		if sSign == "-" then
+			nAbility = 0 - nAbility;
+		end
+		-- KEL we round here for avoiding rounding errors
+		if nAbility > 0 then
+			nAbility = math.floor(nAbility);
+		else
+			nAbility = math.ceil(nAbility);
+		end
+	end
+	
+	return nAbility;
+end
+
+function evalEffect(rActor, s, nodeSpellClass)
+	if not s then
+		return "";
+	end
+	if not rActor then
+		return s;
+	end
+	
+	local aNewEffectComps = {};
+	local aEffectComps = EffectManager.parseEffect(s);
+	for _,sComp in ipairs(aEffectComps) do
+		local rEffectComp = parseEffectComp(sComp);
+		for i = #(rEffectComp.remainder), 1, -1 do
+			-- KEL adding die possibility
+			local sDie, sDesc = rEffectComp.remainder[i]:match("^%[%s*(%S+)%s*(.*)%]$");
+			-- KEL TQD stuff
+			if rEffectComp.remainder[i]:match("^%[([%+%-]?)([HTQd]?)([%d]?)([A-Z][A-Z][A-Z]?)(%d*)%]$") or StringManager.isDiceString(sDie) then
+				local nAbility = evalAbilityHelper(rActor, rEffectComp.remainder[i], nodeSpellClass);
+				if nAbility then
+					rEffectComp.mod = rEffectComp.mod + nAbility;
+					table.remove(rEffectComp.remainder, i);
+				end
+			end
+		end
+		table.insert(aNewEffectComps, rebuildParsedEffectComp(rEffectComp));
+	end
+	local sOutput = EffectManager.rebuildParsedEffect(aNewEffectComps);
+	
+	return sOutput;
+end
+-- KEL add tags
+function getEffectsByType(rActor, sEffectType, aFilter, rFilterActor, bTargetedOnly, rEffectSpell)
+	if not rActor then
+		return {};
+	end
+	local rEffectSpell = rEffectSpell
+	if not rEffectSpell then
+		rEffectSpell = rActor.tags
+	end
+	local results = {};
+
+	-- Set up filters
+	local aRangeFilter = {};
+	local aOtherFilter = {};
+	if aFilter then
+		for _,v in pairs(aFilter) do
+			if type(v) ~= "string" then
+				table.insert(aOtherFilter, v);
+			elseif StringManager.contains(DataCommon.rangetypes, v) then
+				table.insert(aRangeFilter, v);
 			else
-				rRoll.sResult = "hit";
-				table.insert(rRoll.aMessages, "[HIT]");
+				table.insert(aOtherFilter, v);
 			end
-		else
-			rRoll.sResult = "miss";
-			if rRoll.sType == "critconfirm" then
-				table.insert(rRoll.aMessages, "[CRIT NOT CONFIRMED]");
+		end
+	end
+
+	-- Iterate through effects
+	for _,v in pairs(DB.getChildren(ActorManager.getCTNode(rActor), "effects")) do
+		-- Check active
+		local nActive = DB.getValue(v, "isactive", 0);
+
+		-- COMPATIBILITY FOR ADVANCED EFFECTS
+		-- to add support for AE in other extensions, make this change
+		-- Check effect is from used weapon.
+		-- original line: if nActive ~= 0 then
+		if ((not AdvancedEffects and nActive ~= 0) or (AdvancedEffects and AdvancedEffects.isValidCheckEffect(rActor,v))) then
+		-- END COMPATIBILITY FOR ADVANCED EFFECTS
+
+			-- Check targeting
+			local bTargeted = EffectManager.isTargetedEffect(v);
+			if not bTargeted or EffectManager.isEffectTarget(v, rFilterActor) then
+				local sLabel = DB.getValue(v, "label", "");
+				local aEffectComps = EffectManager.parseEffect(sLabel);
+
+				-- Look for type/subtype match
+				local nMatch = 0;
+				for kEffectComp, sEffectComp in ipairs(aEffectComps) do
+					local rEffectComp = parseEffectComp(sEffectComp);
+					-- Handle conditionals
+					-- KEL adding TAG for SAVE
+					if rEffectComp.type == "IF" then
+						if not checkConditional(rActor, v, rEffectComp.remainder, rFilterActor, false, rEffectSpell) then
+							break;
+						end
+					elseif rEffectComp.type == "NIF" then
+						if checkConditional(rActor, v, rEffectComp.remainder, rFilterActor, false, rEffectSpell) then
+							break;
+						end
+					elseif rEffectComp.type == "IFTAG" then
+						if not rEffectSpell then
+							break;
+						elseif not checkTagConditional(rEffectComp.remainder, rEffectSpell) then
+							break;
+						end
+					elseif rEffectComp.type == "NIFTAG" then
+						if checkTagConditional(rEffectComp.remainder, rEffectSpell) then
+							break;
+						end
+					elseif rEffectComp.type == "IFT" then
+						if not rFilterActor then
+							break;
+						end
+						if not checkConditional(rFilterActor, v, rEffectComp.remainder, rActor, false, rEffectSpell) then
+							break;
+						end
+						bTargeted = true;
+					elseif rEffectComp.type == "NIFT" then
+						if rActor.aTargets and not rFilterActor then
+							-- if ( #rActor.aTargets[1] > 0 ) and not rFilterActor then
+							break;
+							-- end
+						end
+						if checkConditional(rFilterActor, v, rEffectComp.remainder, rActor, false, rEffectSpell) then
+							break;
+						end
+						if rFilterActor then
+							bTargeted = true;
+						end
+					
+					-- Compare other attributes
+					else
+						-- Strip energy/bonus types for subtype comparison
+						local aEffectRangeFilter = {};
+						local aEffectOtherFilter = {};
+
+						local aComponents = {};
+						for _,vPhrase in ipairs(rEffectComp.remainder) do
+							local nTempIndexOR = 0;
+							local aPhraseOR = {};
+							repeat
+								local nStartOR, nEndOR = vPhrase:find("%s+or%s+", nTempIndexOR);
+								if nStartOR then
+									table.insert(aPhraseOR, vPhrase:sub(nTempIndexOR, nStartOR - nTempIndexOR));
+									nTempIndexOR = nEndOR;
+								else
+									table.insert(aPhraseOR, vPhrase:sub(nTempIndexOR));
+								end
+							until nStartOR == nil;
+
+							for _,vPhraseOR in ipairs(aPhraseOR) do
+								local nTempIndexAND = 0;
+								repeat
+									local nStartAND, nEndAND = vPhraseOR:find("%s+and%s+", nTempIndexAND);
+									if nStartAND then
+										local sInsert = StringManager.trim(vPhraseOR:sub(nTempIndexAND, nStartAND - nTempIndexAND));
+										table.insert(aComponents, sInsert);
+										nTempIndexAND = nEndAND;
+									else
+										local sInsert = StringManager.trim(vPhraseOR:sub(nTempIndexAND));
+										table.insert(aComponents, sInsert);
+									end
+								until nStartAND == nil;
+							end
+						end
+						local j = 1;
+						while aComponents[j] do
+							if StringManager.contains(DataCommon.dmgtypes, aComponents[j]) or 
+									StringManager.contains(DataCommon.bonustypes, aComponents[j]) or
+									aComponents[j] == "all" then
+								-- Skip
+							elseif StringManager.contains(DataCommon.rangetypes, aComponents[j]) then
+								table.insert(aEffectRangeFilter, aComponents[j]);
+							else
+								table.insert(aEffectOtherFilter, aComponents[j]);
+							end
+							
+							j = j + 1;
+						end
+
+						-- Check for match
+						local comp_match = false;
+						if rEffectComp.type == sEffectType then
+
+							-- Check effect targeting
+							if bTargetedOnly and not bTargeted then
+								comp_match = false;
+							else
+								comp_match = true;
+							end
+
+							-- Check filters
+							if #aEffectRangeFilter > 0 then
+								local bRangeMatch = false;
+								for _,v2 in pairs(aRangeFilter) do
+									if StringManager.contains(aEffectRangeFilter, v2) then
+										bRangeMatch = true;
+										break;
+									end
+								end
+								if not bRangeMatch then
+									comp_match = false;
+								end
+							end
+							if #aEffectOtherFilter > 0 then
+								local bOtherMatch = false;
+								for _,v2 in pairs(aOtherFilter) do
+									if type(v2) == "table" then
+										local bOtherTableMatch = true;
+										for k3, v3 in pairs(v2) do
+											if not StringManager.contains(aEffectOtherFilter, v3) then
+												bOtherTableMatch = false;
+												break;
+											end
+										end
+										if bOtherTableMatch then
+											bOtherMatch = true;
+											break;
+										end
+									elseif StringManager.contains(aEffectOtherFilter, v2) then
+										bOtherMatch = true;
+										break;
+									end
+								end
+								if not bOtherMatch then
+									comp_match = false;
+								end
+							end
+						end
+
+						-- Match!
+						if comp_match then
+							nMatch = kEffectComp;
+							if nActive == 1 then
+								table.insert(results, rEffectComp);
+							end
+						end
+					end
+				end -- END EFFECT COMPONENT LOOP
+
+				-- Remove one shot effects
+				if nMatch > 0 then
+					if nActive == 2 then
+						DB.setValue(v, "isactive", "number", 1);
+					else
+						local sApply = DB.getValue(v, "apply", "");
+						if sApply == "action" then
+							EffectManager.notifyExpire(v, 0);
+						elseif sApply == "roll" then
+							EffectManager.notifyExpire(v, 0, true);
+						elseif sApply == "single" then
+							EffectManager.notifyExpire(v, nMatch, true);
+						end
+					end
+				end
+			end -- END TARGET CHECK
+		end  -- END ACTIVE CHECK
+	end  -- END EFFECT LOOP
+
+	return results;
+end
+-- KEL add tags
+function getEffectsBonusByType(rActor, aEffectType, bAddEmptyBonus, aFilter, rFilterActor, bTargetedOnly, rEffectSpell)
+	if not rActor or not aEffectType then
+		return {}, 0;
+	end
+	local rEffectSpell = rEffectSpell
+	if not rEffectSpell then
+		rEffectSpell = rActor.tags
+	end
+	
+	-- MAKE BONUS TYPE INTO TABLE, IF NEEDED
+	if type(aEffectType) ~= "table" then
+		aEffectType = { aEffectType };
+	end
+	
+	-- PER EFFECT TYPE VARIABLES
+	local results = {};
+	local bonuses = {};
+	local penalties = {};
+	local nEffectCount = 0;
+	
+	for k, v in pairs(aEffectType) do
+		-- LOOK FOR EFFECTS THAT MATCH BONUSTYPE
+		local aEffectsByType = getEffectsByType(rActor, v, aFilter, rFilterActor, bTargetedOnly, rEffectSpell);
+
+		-- ITERATE THROUGH EFFECTS THAT MATCHED
+		for k2,v2 in pairs(aEffectsByType) do
+			-- LOOK FOR ENERGY OR BONUS TYPES
+			local dmg_type = nil;
+			local mod_type = nil;
+			for _,v3 in pairs(v2.remainder) do
+				-- KEL DataCommon.immunetypes check actually not needed in this extension
+				if StringManager.contains(DataCommon.dmgtypes, v3) or v3 == "all" then
+					-- KEL fix damage type distribution to allow chains of damage types
+					-- dmg_type = v3;
+					-- break;
+					if dmg_type then
+						dmg_type = dmg_type .. ", " .. v3;
+					else
+						dmg_type = v3;
+					end
+					-- END
+				elseif StringManager.contains(DataCommon.bonustypes, v3) then
+					mod_type = v3;
+					break;
+				end
+			end
+			
+			-- IF MODIFIER TYPE IS UNTYPED, THEN APPEND MODIFIERS
+			-- (SUPPORTS DICE)
+			if dmg_type or not mod_type then
+				-- ADD EFFECT RESULTS 
+				local new_key = dmg_type or "";
+				local new_results = results[new_key] or {dice = {}, mod = 0, remainder = {}};
+
+				-- BUILD THE NEW RESULT
+				for _,v3 in pairs(v2.dice) do
+					table.insert(new_results.dice, v3); 
+				end
+				if bAddEmptyBonus then
+					new_results.mod = new_results.mod + v2.mod;
+				else
+					new_results.mod = math.max(new_results.mod, v2.mod);
+				end
+				for _,v3 in pairs(v2.remainder) do
+					table.insert(new_results.remainder, v3);
+				end
+
+				-- SET THE NEW DICE RESULTS BASED ON ENERGY TYPE
+				results[new_key] = new_results;
+
+			-- OTHERWISE, TRACK BONUSES AND PENALTIES BY MODIFIER TYPE 
+			-- (IGNORE DICE, ONLY TAKE BIGGEST BONUS AND/OR PENALTY FOR EACH MODIFIER TYPE)
 			else
-				table.insert(rRoll.aMessages, "[MISS]");
+				local bStackable = StringManager.contains(DataCommon.stackablebonustypes, mod_type);
+				if v2.mod >= 0 then
+					if bStackable then
+						bonuses[mod_type] = (bonuses[mod_type] or 0) + v2.mod;
+					else
+						bonuses[mod_type] = math.max(v2.mod, bonuses[mod_type] or 0);
+					end
+				elseif v2.mod < 0 then
+					if bStackable then
+						penalties[mod_type] = (penalties[mod_type] or 0) + v2.mod;
+					else
+						penalties[mod_type] = math.min(v2.mod, penalties[mod_type] or 0);
+					end
+				end
+
 			end
-		end
-	elseif rRoll.sType == "critconfirm" then
-		rRoll.sResult = "crit";
-		table.insert(rRoll.aMessages, "[CHECK FOR CRITICAL]");
-	elseif rRoll.sType == "attack" and rRoll.nFirstDie >= rRoll.nCrit then
-		if bAllowCC then
-			rRoll.sResult = "hit";
-			rRoll.bCritThreat = true;
-		else
-			rRoll.sResult = "crit";
-		end
-		table.insert(rRoll.aMessages, "[CHECK FOR CRITICAL]");
-	end
-	
-	if ((rRoll.sType == "critconfirm") or not rRoll.bCritThreat) and (rRoll.nMissChance > 0) then
-		table.insert(rRoll.aMessages, "[MISS CHANCE " .. rRoll.nMissChance .. "%]");
-	end
-	
-	ActionAttack.onPreAttackResolve(rSource, rTarget, rRoll, rMessage);
-	ActionAttack.onAttackResolve(rSource, rTarget, rRoll, rMessage);
-	ActionAttack.onPostAttackResolve(rSource, rTarget, rRoll, rMessage);
-end
-
-function onPreAttackResolve(rSource, rTarget, rRoll, rMessage)
-	-- Do nothing; location to override
-end
-
-function onAttackResolve(rSource, rTarget, rRoll, rMessage)
-	Comm.deliverChatMessage(rMessage);
-
-	if rRoll.sResult == "crit" then
-		ActionAttack.setCritState(rSource, rTarget);
-	end
-	
-	local bRollMissChance = false;
-	if rRoll.sType == "critconfirm" then
-		bRollMissChance = true;
-	else
-		if rRoll.bCritThreat then
-			local rCritConfirmRoll = { sType = "critconfirm", aDice = {"d20"}, bTower = rRoll.bTower, bSecret = rRoll.bSecret };
 			
-			local nCCMod = EffectManager35E.getEffectsBonus(rSource, {"CC"}, true, nil, rTarget, false, rRoll.tags);
-			if nCCMod ~= 0 then
-				rCritConfirmRoll.sDesc = string.format("%s [CONFIRM %+d]", rRoll.sDesc, nCCMod);
+			-- INCREMENT EFFECT COUNT
+			nEffectCount = nEffectCount + 1;
+		end
+	end
+
+	-- COMBINE BONUSES AND PENALTIES FOR NON-ENERGY TYPED MODIFIERS
+	for k2,v2 in pairs(bonuses) do
+		if results[k2] then
+			results[k2].mod = results[k2].mod + v2;
+		else
+			results[k2] = {dice = {}, mod = v2, remainder = {}};
+		end
+	end
+	for k2,v2 in pairs(penalties) do
+		if results[k2] then
+			results[k2].mod = results[k2].mod + v2;
+		else
+			results[k2] = {dice = {}, mod = v2, remainder = {}};
+		end
+	end
+
+	return results, nEffectCount;
+end
+-- KEL add tags
+function getEffectsBonus(rActor, aEffectType, bModOnly, aFilter, rFilterActor, bTargetedOnly, rEffectSpell)
+	if not rActor or not aEffectType then
+		if bModOnly then
+			return 0, 0;
+		end
+		return {}, 0, 0;
+	end
+	local rEffectSpell = rEffectSpell
+	if not rEffectSpell then
+		rEffectSpell = rActor.tags
+	end
+	
+	-- MAKE BONUS TYPE INTO TABLE, IF NEEDED
+	if type(aEffectType) ~= "table" then
+		aEffectType = { aEffectType };
+	end
+	
+	-- START WITH AN EMPTY MODIFIER TOTAL
+	local aTotalDice = {};
+	local nTotalMod = 0;
+	local nEffectCount = 0;
+	
+	-- ITERATE THROUGH EACH BONUS TYPE
+	local masterbonuses = {};
+	local masterpenalties = {};
+	for k, v in pairs(aEffectType) do
+		-- GET THE MODIFIERS FOR THIS MODIFIER TYPE
+		local effbonusbytype, nEffectSubCount = getEffectsBonusByType(rActor, v, true, aFilter, rFilterActor, bTargetedOnly, rEffectSpell);
+		
+		-- ITERATE THROUGH THE MODIFIERS
+		for k2, v2 in pairs(effbonusbytype) do
+			-- IF MODIFIER TYPE IS UNTYPED, THEN APPEND TO TOTAL MODIFIER
+			-- (SUPPORTS DICE)
+			if k2 == "" or StringManager.contains(DataCommon.dmgtypes, k2) then
+				for k3, v3 in pairs(v2.dice) do
+					table.insert(aTotalDice, v3);
+				end
+				nTotalMod = nTotalMod + v2.mod;
+			
+			-- OTHERWISE, WE HAVE A NON-ENERGY MODIFIER TYPE, WHICH MEANS WE NEED TO INTEGRATE
+			-- (IGNORE DICE, ONLY TAKE BIGGEST BONUS AND/OR PENALTY FOR EACH MODIFIER TYPE)
 			else
-				rCritConfirmRoll.sDesc = rRoll.sDesc .. " [CONFIRM]";
+				if v2.mod >= 0 then
+					masterbonuses[k2] = math.max(v2.mod, masterbonuses[k2] or 0);
+				elseif v2.mod < 0 then
+					masterpenalties[k2] = math.min(v2.mod, masterpenalties[k2] or 0);
+				end
 			end
-			if rRoll.nMissChance > 0 then
-				rCritConfirmRoll.sDesc = rCritConfirmRoll.sDesc .. " [MISS CHANCE " .. rRoll.nMissChance .. "%]";
-			end
-			rCritConfirmRoll.nMod = rRoll.nMod + nCCMod;
-			-- KEL ACCC stuff
-			local nNewDefenseVal = 0;
-			if rRoll.nAdditionalDefenseForCC ~= 0 and rRoll.nDefenseVal then
-				nNewDefenseVal = rRoll.nAdditionalDefenseForCC;
-				rCritConfirmRoll.sDesc = rCritConfirmRoll.sDesc .. " [CC DEF EFFECTS " .. rRoll.nAdditionalDefenseForCC .. "]";
-			end
-			-- END
-			if rRoll.nDefenseVal then
-				--KEL
-				rRoll.nDefenseVal = nNewDefenseVal + rRoll.nDefenseVal;
-				rCritConfirmRoll.sDesc = rCritConfirmRoll.sDesc .. " [AC " .. rRoll.nDefenseVal .. "]";
-				--END
-			end
-			
-			if (rRoll.nAtkEffectsBonus or 0) ~= 0 then
-				local sFormat = "[" .. Interface.getString("effects_tag") .. " %+d]";
-				rCritConfirmRoll.sDesc = rCritConfirmRoll.sDesc .. " " .. string.format(sFormat, rRoll.nAtkEffectsBonus);
-			end
-			
-			ActionsManager.roll(rSource, { rTarget }, rCritConfirmRoll, true);
-		elseif (rRoll.sResult ~= "miss") and (rRoll.sResult ~= "fumble") then
-			bRollMissChance = true;
-		-- KEL compatibility test with mirror image handler
-		elseif MirrorImageHandler and (rRoll.sResult == "miss") and (rRoll.nDefenseVal - rRoll.nTotal <= 5) then
-			bRollMissChance = true;
-			rRoll.nMissChance = 0;
 		end
+
+		-- ADD TO EFFECT COUNT
+		nEffectCount = nEffectCount + nEffectSubCount;
 	end
-	-- KEL Adding informations about Full attack to avoid loosing target on misschance, similar for action type
-	local FullAttack = "";
-	local ActionStuffForOverlay = "";
-	if string.match(rRoll.sDesc, "%[FULL%]") then
-		FullAttack = "true";
-	else
-		FullAttack = "false";
+
+	-- ADD INTEGRATED BONUSES AND PENALTIES FOR NON-ENERGY TYPED MODIFIERS
+	for k,v in pairs(masterbonuses) do
+		nTotalMod = nTotalMod + v;
 	end
-	local bAction = string.match(rRoll.sDesc, "%[ACTION%]");
-	if bAction then
-		ActionStuffForOverlay = "true";
-	else
-		ActionStuffForOverlay = "false";
-	end
-	-- END
-	if bRollMissChance and (rRoll.nMissChance > 0) then
-		local aMissChanceDice = { "d100" };
-		local sMissChanceText = rMessage.text:gsub(" %[CRIT %d+%]", ""):gsub(" %[CONFIRM%]", "");
-		-- KEL overlay stuff
-		local rMissChanceRoll = { sType = "misschance", sDesc = sMissChanceText .. " [MISS CHANCE " .. rRoll.nMissChance .. "%]", aDice = aMissChanceDice, nMod = 0, fullattack = FullAttack, actionStuffForOverlay = ActionStuffForOverlay };
-		-- KEL Blind fight
-		local AttackType = "M";
-		if rRoll.sType == "attack" then
-			AttackType = string.match(rRoll.sDesc, "%[ATTACK.*%((%w+)%)%]");
-		end
-		if ActorManager35E.hasSpecialAbility(rSource, "Blind-Fight", true, false, false) and AttackType == "M" then
-			rMissChanceRoll.adv = ( rMissChanceRoll.adv or 0 ) + 1;
-			rMissChanceRoll.sDesc = rMissChanceRoll.sDesc .. " [BLIND-FIGHT]";
-		end
-		-- END
-		ActionsManager.roll(rSource, rTarget, rMissChanceRoll);
-	-- KEL compatibility test with mirror image handler
-	elseif MirrorImageHandler and bRollMissChance then
-		local nMirrorImageCount = MirrorImageHandler.getMirrorImageCount(rTarget);
-		if nMirrorImageCount > 0 then
-			if rRoll.sResult == "hit" or rRoll.sResult == "crit" or rRoll.sType == "critconfirm" then
-				local rMirrorImageRoll = MirrorImageHandler.getMirrorImageRoll(nMirrorImageCount, rRoll.sDesc);
-				ActionsManager.roll(rSource, rTarget, rMirrorImageRoll);
-			elseif rRoll.sType ~= "critconfirm" then
-				MirrorImageHandler.removeImage(rSource, rTarget);
-				table.insert(rRoll.aMessages, "[MIRROR IMAGE REMOVED BY NEAR MISS]");
-			end
-		end
+	for k,v in pairs(masterpenalties) do
+		nTotalMod = nTotalMod + v;
 	end
 	
-	-- KEL Save overlay
-	if (rRoll.sResult == "miss" or rRoll.sResult == "fumble") and bAction and rRoll.sType ~= "critconfirm" then
-		TokenManager3.setSaveOverlay(ActorManager.getCTNode(rTarget), -3);
-	elseif (rRoll.sResult == "hit" or rRoll.sResult == "crit") and bAction and rRoll.sType ~= "critconfirm" then
-		TokenManager3.setSaveOverlay(ActorManager.getCTNode(rTarget), -1);
+	if bModOnly then
+		return nTotalMod, nEffectCount;
 	end
-	-- END
+	return aTotalDice, nTotalMod, nEffectCount;
+end
+-- KEL Adding tags and IFTAG to 
+function hasEffectCondition(rActor, sEffect, rEffectSpell)
+	local rEffectSpell = rEffectSpell
+	if not rEffectSpell then
+		rEffectSpell = rActor.tags
+	end
+	return hasEffect(rActor, sEffect, nil, false, true, rEffectSpell);
+end
+-- KEL add counter to hasEffect needed for dis/adv
+function hasEffect(rActor, sEffect, rTarget, bTargetedOnly, bIgnoreEffectTargets, rEffectSpell)
+	if not sEffect or not rActor then
+		return false, 0;
+	end
+	local rEffectSpell = rEffectSpell
+	if not rEffectSpell then
+		rEffectSpell = rActor.tags
+	end
+	local sLowerEffect = sEffect:lower();
 
-	if rTarget then
-		ActionAttack.notifyApplyAttack(rSource, rTarget, rRoll.bTower, rRoll.sType, rRoll.sDesc, rRoll.nTotal, table.concat(rRoll.aMessages, " "));
-		
-		-- REMOVE TARGET ON MISS OPTION
-		if (rRoll.sResult == "miss" or rRoll.sResult == "fumble") and rRoll.sType ~= "critconfirm" and not string.match(rRoll.sDesc, "%[FULL%]") then
-			local bRemoveTarget = false;
-			if OptionsManager.isOption("RMMT", "on") then
-				bRemoveTarget = true;
-			elseif rRoll.bRemoveOnMiss then
-				bRemoveTarget = true;
+	-- Iterate through each effect
+	local aMatch = {};
+	for _,v in pairs(DB.getChildren(ActorManager.getCTNode(rActor), "effects")) do
+		local nActive = DB.getValue(v, "isactive", 0);
+
+		-- COMPATIBILITY FOR ADVANCED EFFECTS
+		-- to add support for AE in other extensions, make this change
+		-- original line: if nActive ~= 0 then
+		if ((not AdvancedEffects and nActive ~= 0) or (AdvancedEffects and AdvancedEffects.isValidCheckEffect(rActor,v))) then
+		-- END COMPATIBILITY FOR ADVANCED EFFECTS
+
+			-- Parse each effect label
+			local sLabel = DB.getValue(v, "label", "");
+			local bTargeted = EffectManager.isTargetedEffect(v);
+			-- KEL making conditions work with IFT etc.
+			local bIFT = false;
+			local aEffectComps = EffectManager.parseEffect(sLabel);
+
+			-- Iterate through each effect component looking for a type match
+			local nMatch = 0;
+			for kEffectComp, sEffectComp in ipairs(aEffectComps) do
+				local rEffectComp = parseEffectComp(sEffectComp);
+				-- Check conditionals
+				-- KEL Adding TAG for SIMMUNE
+				if rEffectComp.type == "IF" then
+					if not checkConditional(rActor, v, rEffectComp.remainder, rTarget, false, rEffectSpell) then
+						break;
+					end
+				elseif rEffectComp.type == "NIF" then
+					if checkConditional(rActor, v, rEffectComp.remainder, rTarget, false, rEffectSpell) then
+						break;
+					end
+				elseif rEffectComp.type == "IFT" then
+					if not rTarget then
+						break;
+					end
+					if not checkConditional(rTarget, v, rEffectComp.remainder, rActor, false, rEffectSpell) then
+						break;
+					end
+					bIFT = true;
+				elseif rEffectComp.type == "NIFT" then
+					if rActor.aTargets and not rTarget then
+						-- if ( #rActor.aTargets[1] > 0 ) and not rTarget then
+						break;
+						-- end
+					end
+					if checkConditional(rTarget, v, rEffectComp.remainder, rActor, false, rEffectSpell) then
+						break;
+					end
+					if rTarget then
+						bIFT = true;
+					end
+				elseif rEffectComp.type == "IFTAG" then
+					if not rEffectSpell then
+						break;
+					elseif not checkTagConditional(rEffectComp.remainder, rEffectSpell) then
+						break;
+					end
+				elseif rEffectComp.type == "NIFTAG" then
+					if checkTagConditional(rEffectComp.remainder, rEffectSpell) then
+						break;
+					end
+				
+				-- Check for match
+				elseif rEffectComp.original:lower() == sLowerEffect then
+					if bTargeted and not bIgnoreEffectTargets then
+						if EffectManager.isEffectTarget(v, rTarget) then
+							nMatch = kEffectComp;
+						end
+					elseif bTargetedOnly and bIFT then
+						nMatch = kEffectComp;
+					elseif not bTargetedOnly then
+						nMatch = kEffectComp;
+					end
+				end
+				
 			end
-			
-			if bRemoveTarget then
-				TargetingManager.removeTarget(ActorManager.getCTNodeName(rSource), ActorManager.getCTNodeName(rTarget));
+
+			-- If matched, then remove one-off effects
+			if nMatch > 0 then
+				if nActive == 2 then
+					DB.setValue(v, "isactive", "number", 1);
+				else
+					table.insert(aMatch, v);
+					local sApply = DB.getValue(v, "apply", "");
+					if sApply == "action" then
+						EffectManager.notifyExpire(v, 0);
+					elseif sApply == "roll" then
+						EffectManager.notifyExpire(v, 0, true);
+					elseif sApply == "single" then
+						EffectManager.notifyExpire(v, nMatch, true);
+					end
+				end
 			end
 		end
 	end
+
+	if #aMatch > 0 then
+		return true, #aMatch;
+	end
+	return false, 0;
 end
 
-function onPostAttackResolve(rRoll)
-	-- HANDLE FUMBLE/CRIT HOUSE RULES
-	local sOptionHRFC = OptionsManager.getOption("HRFC");
-	if rRoll.sResult == "fumble" and ((sOptionHRFC == "both") or (sOptionHRFC == "fumble")) then
-		ActionAttack.notifyApplyHRFC("Fumble");
+function checkConditional(rActor, nodeEffect, aConditions, rTarget, aIgnore, rEffectSpell)
+	local rEffectSpell = rEffectSpell
+	if not rEffectSpell then
+		rEffectSpell = rActor.tags
 	end
-	if rRoll.sResult == "crit" and ((sOptionHRFC == "both") or (sOptionHRFC == "criticalhit")) then
-		ActionAttack.notifyApplyHRFC("Critical Hit");
+	local bReturn = true;
+	
+	if not aIgnore then
+		aIgnore = {};
 	end
-end
-
-function onGrapple(rSource, rTarget, rRoll)
-	if DataCommon.isPFRPG() then
-		ActionAttack.onAttack(rSource, rTarget, rRoll);
-	else
-		local rMessage = ActionsManager.createActionMessage(rSource, rRoll);
-		
-		if rTarget then
-			rMessage.text = rMessage.text .. " [at " .. ActorManager.getDisplayName(rTarget) .. "]";
-		end
-		
-		if not rSource then
-			rMessage.sender = nil;
-		end
-		Comm.deliverChatMessage(rMessage);
-	end
-end
-
-function onMissChance(rSource, rTarget, rRoll)
-	local rMessage = ActionsManager.createActionMessage(rSource, rRoll);
-	-- KEL adding variable for automated targeting removal
-	local removeVar = false;
-	--END
-	local nTotal = ActionsManager.total(rRoll);
-	local nMissChance = tonumber(string.match(rMessage.text, "%[MISS CHANCE (%d+)%%%]")) or 0;
-	-- KEL Mirror image handler variable
-	local bHit = false;
-	-- END
-	if nTotal <= nMissChance then
-		rMessage.text = rMessage.text .. " [MISS]";
-		removeVar = true;
-		if rTarget then
-			rMessage.icon = "roll_attack_miss";
-			ActionAttack.clearCritState(rSource, rTarget);
-			-- KEL Adding Save Overlay
-			if rRoll.actionStuffForOverlay == "true" then
-				TokenManager3.setSaveOverlay(ActorManager.getCTNode(rTarget), -3);
+	table.insert(aIgnore, nodeEffect.getPath());
+	
+	for _,v in ipairs(aConditions) do
+		local sLower = v:lower();
+		if sLower == DataCommon.healthstatusfull then
+			-- KEL Add true as second argument to avoid that effect icons check the stable effect all the time
+			local _,_,nPercentLethal = ActorManager35E.getWoundPercent(rActor, true);
+			if nPercentLethal > 0 then
+				bReturn = false;
+				break;
 			end
-			-- END
+		elseif sLower == DataCommon.healthstatushalf then
+			local _,_,nPercentLethal = ActorManager35E.getWoundPercent(rActor, true);
+			if nPercentLethal < .5 then
+				bReturn = false;
+				break;
+			end
+		elseif sLower == DataCommon.healthstatuswounded then
+			local _,_,nPercentLethal = ActorManager35E.getWoundPercent(rActor, true);
+			if nPercentLethal == 0 then
+				bReturn = false;
+				break;
+			end
+		elseif StringManager.contains(DataCommon.conditions, sLower) then
+			if not checkConditionalHelper(rActor, sLower, rTarget, aIgnore, rEffectSpell) then
+				bReturn = false;
+				break;
+			end
+		-- KEL nodex handle
+		elseif StringManager.contains(DataCommon.conditionaltags, sLower) or (sLower == "nodex") then
+			if not checkConditionalHelper(rActor, sLower, rTarget, aIgnore, rEffectSpell) then
+				bReturn = false;
+				break;
+			end
 		else
-			rMessage.icon = "roll_attack";
-		end
-	else
-		bHit = true;
-		rMessage.text = rMessage.text .. " [HIT]";
-		removeVar = false;
-		if rTarget then
-			rMessage.icon = "roll_attack_hit";
-			-- KEL Adding Save Overlay
-			if rRoll.actionStuffForOverlay == "true" then
-				TokenManager3.setSaveOverlay(ActorManager.getCTNode(rTarget), -1);
-			end
-			-- END
-		else
-			rMessage.icon = "roll_attack";
-		end
-	end
-	-- KEL Remove TARGET
-	if rTarget and rRoll.fullattack == "false" then		
-		-- REMOVE TARGET ON MISS OPTION
-		if removeVar then
-			local bRemoveTarget = false;
-			if OptionsManager.isOption("RMMT", "on") then
-				bRemoveTarget = true;
-			elseif rRoll.bRemoveOnMiss then
-				bRemoveTarget = true;
-			end
-			
-			if bRemoveTarget then
-				TargetingManager.removeTarget(ActorManager.getCTNodeName(rSource), ActorManager.getCTNodeName(rTarget));
+			local sAlignCheck = sLower:match("^align%s*%(([^)]+)%)$");
+			local sSizeCheck = sLower:match("^size%s*%(([^)]+)%)$");
+			local sTypeCheck = sLower:match("^type%s*%(([^)]+)%)$");
+			local sCustomCheck = sLower:match("^custom%s*%(([^)]+)%)$");
+			if sAlignCheck then
+				if not ActorCommonManager.isCreatureAlignmentDnD(rActor, sAlignCheck) then
+					bReturn = false;
+					break;
+				end
+			elseif sSizeCheck then
+				if not ActorCommonManager.isCreatureSizeDnD3(rActor, sSizeCheck) then
+					bReturn = false;
+					break;
+				end
+			elseif sTypeCheck then
+				if not ActorCommonManager.isCreatureTypeDnD(rActor, sTypeCheck) then
+					bReturn = false;
+					break;
+				end
+			elseif sCustomCheck then
+				if not checkConditionalHelper(rActor, sCustomCheck, rTarget, aIgnore, rEffectSpell) then
+					bReturn = false;
+					break;
+				end
 			end
 		end
 	end
 	
-	Comm.deliverChatMessage(rMessage);
+	table.remove(aIgnore);
 	
-	-- KEL Compatibility to mirror image handler
-	if MirrorImageHandler and bHit then
-		local nMirrorImageCount = MirrorImageHandler.getMirrorImageCount(rTarget);
-		if nMirrorImageCount > 0 then
-			local rMirrorImageRoll = MirrorImageHandler.getMirrorImageRoll(nMirrorImageCount, rRoll.sDesc);
-			ActionsManager.roll(rSource, rTarget, rMirrorImageRoll);
-		end
-	end
-	-- END
+	return bReturn;
 end
 
-function applyAttack(rSource, rTarget, bSecret, sAttackType, sDesc, nTotal, sResults)
-	local msgShort = {font = "msgfont"};
-	local msgLong = {font = "msgfont"};
-	
-	if sAttackType == "grapple" then
-		msgShort.text = "Combat Man. ->";
-		msgLong.text = "Combat Man. [" .. nTotal .. "] ->";
-	else
-		msgShort.text = "Attack ->";
-		msgLong.text = "Attack [" .. nTotal .. "] ->";
-	end
-	if rTarget then
-		local sName = ActorManager.getDisplayName(rTarget);
-		msgShort.text = msgShort.text .. " [at " .. sName .. "]";
-		msgLong.text = msgLong.text .. " [at " .. sName .. "]";
-	end
-	if sResults ~= "" then
-		msgLong.text = msgLong.text .. " " .. sResults;
-	end
-	
-	msgShort.icon = "roll_attack";
-	if string.match(sResults, "%[CRITICAL HIT%]") then
-		msgLong.icon = "roll_attack_crit";
-	elseif string.match(sResults, "HIT%]") then
-		msgLong.icon = "roll_attack_hit";
-	elseif string.match(sResults, "MISS%]") then
-		msgLong.icon = "roll_attack_miss";
-	-- KEL MirrorImageHandler compatibility
-	elseif string.match(sResults, "%[MISFIRE%]") then
-		msgLong.icon = "roll_attack_miss";
-	-- END
-	elseif string.match(sResults, "CRITICAL THREAT%]") then
-		msgLong.icon = "roll_attack_hit";
-	else
-		msgLong.icon = "roll_attack";
-	end
-		
-	ActionsManager.outputResult(bSecret, rSource, rTarget, msgLong, msgShort);
-end
-
-aCritState = {};
-
-function setCritState(rSource, rTarget)
-	local sSourceCT = ActorManager.getCreatureNodeName(rSource);
-	if sSourceCT == "" then
-		return;
-	end
-	local sTargetCT = "";
-	if rTarget then
-		sTargetCT = ActorManager.getCTNodeName(rTarget);
-	end
-	
-	if not aCritState[sSourceCT] then
-		aCritState[sSourceCT] = {};
-	end
-	table.insert(aCritState[sSourceCT], sTargetCT);
-end
-
-function clearCritState(rSource, rTarget)
-	if rTarget then
-		ActionAttack.isCrit(rSource, rTarget);
-		return;
-	end
-	
-	local sSourceCT = ActorManager.getCreatureNodeName(rSource);
-	if sSourceCT ~= "" then
-		aCritState[sSourceCT] = nil;
-	end
-end
-
-function isCrit(rSource, rTarget)
-	local sSourceCT = ActorManager.getCreatureNodeName(rSource);
-	if sSourceCT == "" then
-		return;
-	end
-	local sTargetCT = "";
-	if rTarget then
-		sTargetCT = ActorManager.getCTNodeName(rTarget);
-	end
-
-	if not aCritState[sSourceCT] then
+function checkConditionalHelper(rActor, sEffect, rTarget, aIgnore, rEffectSpell)
+	if not rActor then
 		return false;
 	end
-	
-	for k,v in ipairs(aCritState[sSourceCT]) do
-		if v == sTargetCT then
-			table.remove(aCritState[sSourceCT], k);
-			return true;
+	local rEffectSpell = rEffectSpell
+	if not rEffectSpell then
+		rEffectSpell = rActor.tags
+	end
+
+	for _,v in pairs(DB.getChildren(ActorManager.getCTNode(rActor), "effects")) do
+		local nActive = DB.getValue(v, "isactive", 0);
+		if nActive ~= 0 and not StringManager.contains(aIgnore, v.getPath()) then
+			-- Parse each effect label
+			local sLabel = DB.getValue(v, "label", "");
+			local aEffectComps = EffectManager.parseEffect(sLabel);
+
+			-- Iterate through each effect component looking for a type match
+			for _,sEffectComp in ipairs(aEffectComps) do
+				local rEffectComp = parseEffectComp(sEffectComp);
+				--Check conditionals
+				if rEffectComp.type == "IF" then
+					if not checkConditional(rActor, v, rEffectComp.remainder, rTarget, aIgnore, rEffectSpell) then
+						break;
+					end
+				elseif rEffectComp.type == "NIF" then
+					if checkConditional(rActor, v, rEffectComp.remainder, rTarget, aIgnore, rEffectSpell) then
+						break;
+					end
+				elseif rEffectComp.type == "IFTAG" then
+					break;
+				elseif rEffectComp.type == "NIFTAG" then
+					break;
+				elseif rEffectComp.type == "IFT" then
+					if not rTarget then
+						break;
+					end
+					if not checkConditional(rTarget, v, rEffectComp.remainder, rActor, aIgnore, rEffectSpell) then
+						break;
+					end
+				elseif rEffectComp.type == "NIFT" then
+					if rActor.aTargets and not rTarget then
+						-- if ( #rActor.aTargets[1] > 0 ) and not rTarget then
+						break;
+						-- end
+					end
+					if checkConditional(rTarget, v, rEffectComp.remainder, rActor, aIgnore, rEffectSpell) then
+						break;
+					end
+				
+				-- Check for match
+				-- KEL ignore effects which are on skip
+				elseif rEffectComp.original:lower() == sEffect and nActive == 1 then
+					if EffectManager.isTargetedEffect(v) then
+						if EffectManager.isEffectTarget(v, rTarget) then
+							-- if nActive == 1 then
+							return true;
+							-- end
+						end
+					else
+						-- if nActive == 1 then
+						return true;
+						-- end
+					end
+				-- KEL Flatfooted improved
+				elseif sEffect == "nodex" and nActive == 1 then
+					local sLowerKel = rEffectComp.original:lower();
+					if StringManager.contains(DataCommon2.tnodex, sLowerKel) then
+						if EffectManager.isTargetedEffect(v) then
+							if EffectManager.isEffectTarget(v, rTarget) then
+								return true;
+							end
+						else
+							return true;
+						end
+					end
+				-- END
+				end
+			end
 		end
 	end
 	
+	return false;
+end
+-- KEL TAG
+function checkTagConditional(aConditions, rEffectSpell)
+	if rEffectSpell then
+		local tagshelp = StringManager.parseWords(rEffectSpell);
+		
+		if not tagshelp[1] then
+			return false;
+		end
+		
+		local i = 1;
+		
+		for _,v in ipairs(aConditions) do	
+			while tagshelp[i] do
+				if tagshelp[i] == v then
+					return true;
+				end
+				i = i + 1;
+			end
+			i = 1;
+		end
+	end
 	return false;
 end
