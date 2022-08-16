@@ -70,9 +70,9 @@ local function modAttack(rSource, rTarget, rRoll, ...)
 
 	if bOpportunity then
 		-- KEL AoO
-			local msgOOB = {};
-			msgOOB.sSourceNode = ActorManager.getCreatureNodeName(rSource);
-			msgOOB.type = OOB_MSGTYPE_APPLYAOO;
+		local msgOOB = {};
+		msgOOB.sSourceNode = ActorManager.getCreatureNodeName(rSource);
+		msgOOB.type = OOB_MSGTYPE_APPLYAOO;
 		if Session.IsHost then
 			handleApplyAoO(msgOOB)
 		else
@@ -148,14 +148,6 @@ local function modAttack(rSource, rTarget, rRoll, ...)
 			table.insert(aAddDesc, "[CRIT " .. rActionCrit .. "]");
 		end
 		-- END
-		-- KEL add tags, and relabel nAddMod to nAddModi to avoid overwriting the previous nAddMod
-		local nEffectCount, nAddModi;
-		aAddDice, nAddModi, nEffectCount = EffectManager35E.getEffectsBonus(rSource, {"ATK"}, false, aAttackFilter, rTarget, false);
-		nAddMod = nAddMod + nAddModi;
-		-- END
-		if (nEffectCount > 0) then
-			bEffects = true;
-		end
 
 		-- If effects, then add them
 		if bEffects then
