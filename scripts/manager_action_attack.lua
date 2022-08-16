@@ -70,15 +70,12 @@ local function modAttack(rSource, rTarget, rRoll, ...)
 
 	if bOpportunity then
 		-- KEL AoO
-		if Session.IsHost then
 			local msgOOB = {};
 			msgOOB.sSourceNode = ActorManager.getCreatureNodeName(rSource);
 			msgOOB.type = OOB_MSGTYPE_APPLYAOO;
+		if Session.IsHost then
 			handleApplyAoO(msgOOB)
 		else
-			local msgOOB = {};
-			msgOOB.sSourceNode = ActorManager.getCreatureNodeName(rSource);
-			msgOOB.type = OOB_MSGTYPE_APPLYAOO;
 			Comm.deliverOOBMessage(msgOOB, "");
 		end
 		--END
