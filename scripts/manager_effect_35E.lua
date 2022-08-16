@@ -443,6 +443,10 @@ function getEffectsByType(rActor, sEffectType, aFilter, rFilterActor, bTargetedO
 	if not rActor then
 		return {};
 	end
+	local rEffectSpell = rEffectSpell
+	if not rEffectSpell then
+		rEffectSpell = rActor.tags
+	end
 	local results = {};
 
 	-- Set up filters
@@ -662,6 +666,10 @@ function getEffectsBonusByType(rActor, aEffectType, bAddEmptyBonus, aFilter, rFi
 	if not rActor or not aEffectType then
 		return {}, 0;
 	end
+	local rEffectSpell = rEffectSpell
+	if not rEffectSpell then
+		rEffectSpell = rActor.tags
+	end
 	
 	-- MAKE BONUS TYPE INTO TABLE, IF NEEDED
 	if type(aEffectType) ~= "table" then
@@ -775,6 +783,10 @@ function getEffectsBonus(rActor, aEffectType, bModOnly, aFilter, rFilterActor, b
 		end
 		return {}, 0, 0;
 	end
+	local rEffectSpell = rEffectSpell
+	if not rEffectSpell then
+		rEffectSpell = rActor.tags
+	end
 	
 	-- MAKE BONUS TYPE INTO TABLE, IF NEEDED
 	if type(aEffectType) ~= "table" then
@@ -833,12 +845,20 @@ function getEffectsBonus(rActor, aEffectType, bModOnly, aFilter, rFilterActor, b
 end
 -- KEL Adding tags and IFTAG to 
 function hasEffectCondition(rActor, sEffect, rEffectSpell)
+	local rEffectSpell = rEffectSpell
+	if not rEffectSpell then
+		rEffectSpell = rActor.tags
+	end
 	return hasEffect(rActor, sEffect, nil, false, true, rEffectSpell);
 end
 -- KEL add counter to hasEffect needed for dis/adv
 function hasEffect(rActor, sEffect, rTarget, bTargetedOnly, bIgnoreEffectTargets, rEffectSpell)
 	if not sEffect or not rActor then
 		return false, 0;
+	end
+	local rEffectSpell = rEffectSpell
+	if not rEffectSpell then
+		rEffectSpell = rActor.tags
 	end
 	local sLowerEffect = sEffect:lower();
 
@@ -946,6 +966,10 @@ function hasEffect(rActor, sEffect, rTarget, bTargetedOnly, bIgnoreEffectTargets
 end
 
 function checkConditional(rActor, nodeEffect, aConditions, rTarget, aIgnore, rEffectSpell)
+	local rEffectSpell = rEffectSpell
+	if not rEffectSpell then
+		rEffectSpell = rActor.tags
+	end
 	local bReturn = true;
 	
 	if not aIgnore then
@@ -1023,7 +1047,11 @@ function checkConditionalHelper(rActor, sEffect, rTarget, aIgnore, rEffectSpell)
 	if not rActor then
 		return false;
 	end
-	
+	local rEffectSpell = rEffectSpell
+	if not rEffectSpell then
+		rEffectSpell = rActor.tags
+	end
+
 	for _,v in pairs(DB.getChildren(ActorManager.getCTNode(rActor), "effects")) do
 		local nActive = DB.getValue(v, "isactive", 0);
 		if nActive ~= 0 and not StringManager.contains(aIgnore, v.getPath()) then
