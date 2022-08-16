@@ -4,6 +4,7 @@
 --
 -- luacheck: globals excessAoOMessage onAttack MirrorImageHandler onAttackResolve onMissChance
 
+-- Send Check whether AoO limit has been exceeded and send chat message, if so.
 function excessAoOMessage(nodeCT)
 	local nAOO = DB.getValue(nodeCT, "aoo", 0);
 	local nMaxAOO = DB.getValue(nodeCT, "aoomax", 0);
@@ -17,7 +18,6 @@ function excessAoOMessage(nodeCT)
 	end
 end
 
--- KEL AoO
 OOB_MSGTYPE_APPLYAOO = "applyaoo";
 function handleApplyAoO(msgOOB)
 	local nodeCT = ActorManager.getCTNode(msgOOB.sSourceNode);
@@ -27,15 +27,12 @@ function handleApplyAoO(msgOOB)
 
 	excessAoOMessage(nodeCT)
 end
--- END
 
--- KEL add tag argument
 local getRoll_old;
 local function getRoll(rActor, rAction, tag, ...)
 	local rRoll = getRoll_old(rActor, rAction, ...);
 
-	-- Add other modifiers
-	-- KEL compatibility with KEEN and iftag stuff; EDIT: Moving KEEN stuff such that it is targetable. Hence, saving crit value
+	-- KEL save tags and crit value
 	rRoll.tags = tag;
 	rRoll.crit = rAction.crit;
 	-- END
@@ -58,10 +55,10 @@ local function modAttack(rSource, rTarget, rRoll, ...)
 	local aAddDice = {};
 	local nAddMod = 0;
 
-	-- Check for opportunity attack
+	-- Check for opportunity attack already found by modAttack_old
 	local bOpportunity = rRoll.sDesc:match('%s*%[OPPORTUNITY%]') ~= nil;
 
-	-- Check defense modifiers
+	-- Check defense modifiers already found by modAttack_old
 	local bFlatFooted = rRoll.sDesc:match('%s*%[FF%]') ~= nil;
 
 	-- KEL add CA button
@@ -69,7 +66,7 @@ local function modAttack(rSource, rTarget, rRoll, ...)
 	--END
 
 	if bOpportunity then
-		-- KEL AoO
+		-- KEL AoO messaging
 		local msgOOB = {};
 		msgOOB.sSourceNode = ActorManager.getCreatureNodeName(rSource);
 		msgOOB.type = OOB_MSGTYPE_APPLYAOO;
@@ -80,7 +77,7 @@ local function modAttack(rSource, rTarget, rRoll, ...)
 		end
 		--END
 	end
-	-- KEL adding uncanny dodge
+	-- KEL remove [FF] tag added to sDesc by modAttack_old if target is flat-footed but has uncanny dodge
 	if bFlatFooted and ActorManager35E.hasSpecialAbility(rTarget, "Uncanny Dodge", false, false, true) then
 		rRoll.sDesc = rRoll.sDesc:gsub('%s*%[FF%]', '');
 	end
@@ -97,22 +94,11 @@ local function modAttack(rSource, rTarget, rRoll, ...)
 			sAttackType = "M";
 		end
 
-		-- Build attack filter
-		local aAttackFilter = {};
-		if sAttackType == "M" then
-			table.insert(aAttackFilter, "melee");
-		elseif sAttackType == "R" then
-			table.insert(aAttackFilter, "ranged");
-		end
-		if bOpportunity then
-			table.insert(aAttackFilter, "opportunity");
-		end
-
 		-- Get condition modifiers; KEL moved it here for nodex automation later (not yet done) such that
 		-- following effects can profit from it; similar for bEffects; adding ethereal
 		local bEffects = false;
 
-		local function addCA() -- otherwise redundant code to add [CA] description and increase modifier
+		local function addCA() -- moved to function as it was being used in two places (just below here)
 			bEffects = true;
 			nAddMod = nAddMod + 2;
 			if not ActorManager35E.hasSpecialAbility(rTarget, "Uncanny Dodge", false, false, true) then
@@ -135,6 +121,18 @@ local function modAttack(rSource, rTarget, rRoll, ...)
 		if (bCAKel or EffectManager35E.hasEffect(rSource, "CA", nil, false, false)) and not rRoll.sDesc:match('%[CA%]') then
 			table.insert(aAddDesc, "[CA]");
 		end
+
+		-- Build attack filter
+		local aAttackFilter = {};
+		if sAttackType == "M" then
+			table.insert(aAttackFilter, "melee");
+		elseif sAttackType == "R" then
+			table.insert(aAttackFilter, "ranged");
+		end
+		if bOpportunity then
+			table.insert(aAttackFilter, "opportunity");
+		end
+
 		-- END
 		-- Get attack effect modifiers
 		-- KEL New KEEN code for allowing several new configurations
@@ -566,7 +564,6 @@ function onInit()
 	ActionAttack.modAttack = modAttack
 
 	ActionAttack.onAttackResolve = onAttackResolve
-
 
 	ActionsManager.registerResultHandler("attack", onAttack);
 	ActionsManager.registerResultHandler("critconfirm", onAttack);
