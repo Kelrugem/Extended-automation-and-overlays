@@ -51,7 +51,7 @@
 	<script name="ActionInit" file="scripts/manager_action_init.lua" />
 	<script name="ActorManager35E" file="scripts/manager_actor_35E.lua" />
 	<script name="TokenManager3" file="scripts/manager_token2.lua" />
-	<script name="ActionAttack" file="scripts/manager_action_attack.lua" />
+	<script name="ActionAttackKel" file="scripts/manager_action_attack.lua" />
     <script name="ActionDamage" file="scripts/manager_action_damage.lua" />
 	<script name="ActionHeal" file="scripts/manager_action_heal.lua" />
 	<script name="EffectManager35E" file="scripts/manager_effect_35E.lua" />
