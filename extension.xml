@@ -13,7 +13,7 @@
     </ruleset>
 	<loadorder>35</loadorder>
   </properties>
-  <announcement text="Extended automation, dated at 14 August 2022, for 3.5E and PFRPG rulesets, v. 4.1.16. Copyright 2022 Smiteworks.\rBy darrenan, mr900rr, phixation, tahl_liadon, bmos, DCrumb, RabidPaladin, SoxMax, Cristmo and Kelrugem." icon="DeekinMightyBard" font="emotefont" />
+  <announcement text="Extended automation, dated at 4 September 2022, for 3.5E and PFRPG rulesets, v. 4.1.16. Copyright 2022 Smiteworks.\rBy darrenan, mr900rr, phixation, tahl_liadon, bmos, DCrumb, RabidPaladin, SoxMax, Cristmo and Kelrugem." icon="DeekinMightyBard" font="emotefont" />
   <base>
 	<icon name="DeekinMightyBard" file="DeekinMightyBard.jpg" />
 	<!-- Graphics -->
@@ -26,7 +26,7 @@
 	<includefile source="utility/utility_modifiers.xml" />
 	
 	<!-- Combat Tracker -->
-	<includefile source="ct/ct_host.xml" />
+	<includefile source="ct/ct_host_entry.xml" />
 	
 	<!-- Common -->
 	<includefile source="common/template_toolbar.xml" />

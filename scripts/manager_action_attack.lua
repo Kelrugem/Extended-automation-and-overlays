@@ -788,7 +788,7 @@ function onAttackResolve(rSource, rTarget, rRoll, rMessage)
 	end
 end
 
-function onPostAttackResolve(rRoll)
+function onPostAttackResolve(rSource, rTarget, rRoll, rMessage)
 	-- HANDLE FUMBLE/CRIT HOUSE RULES
 	local sOptionHRFC = OptionsManager.getOption("HRFC");
 	if rRoll.sResult == "fumble" and ((sOptionHRFC == "both") or (sOptionHRFC == "fumble")) then
