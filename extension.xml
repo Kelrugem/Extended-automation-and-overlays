@@ -15,7 +15,7 @@
     <loadorder>35</loadorder>
   </properties>
 
-  <announcement text="Extended automation, dated at 4 September 2022, for 3.5E and PFRPG rulesets, v. 4.1.16. Copyright 2022 Smiteworks.\rBy darrenan, mr900rr, phixation, tahl_liadon, bmos, DCrumb, RabidPaladin, SoxMax, Cristmo and Kelrugem." icon="DeekinMightyBard" font="emotefont" />
+  <announcement text="Extended automation, dated at 4 September 2022, for 3.5E and PFRPG rulesets, v. 4.2.2.2. Copyright 2022 Smiteworks.\rBy darrenan, mr900rr, phixation, rhythmist, tahl_liadon, bmos, DCrumb, RabidPaladin, SoxMax, Cristmo and Kelrugem." icon="DeekinMightyBard" font="emotefont" />
 
   <base>
     <icon name="DeekinMightyBard" file="DeekinMightyBard.jpg" />
