@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 
-<root version="4.2.2.1" release="1">
+<root version="3.0">
   <properties>
     <name>Feature: Extended automation and overlays</name>
     <version>4.2.2.2</version>
