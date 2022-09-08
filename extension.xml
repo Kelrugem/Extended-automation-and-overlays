@@ -29,6 +29,7 @@
     <includefile source="utility/utility_modifiers.xml" />
 
     <!-- Combat Tracker -->
+    <includefile source="ct/ct_host_entry.xml" />
     <includefile source="ct/ct_host_entry_section.xml" />
 
     <!-- Common -->
