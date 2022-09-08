@@ -9,7 +9,7 @@
 <root>
 	<windowclass name="ct_entry" merge="join">
 		<sheetdata>
-			<number_ct_crosslink name="wounds" merge="replace">
+			<number_ct_crosslink name="wounds" insertbefore="initresult" merge="replace">
 				<anchored to="rightanchor" width="30" height="20">
 					<top />
 					<right anchor="left" relation="relative" offset="-10" />
@@ -37,7 +37,7 @@
 					end
 				</script>
 			</number_ct_crosslink>
-			<number_ct_crosslink name="nonlethal" merge="replace">
+			<number_ct_crosslink name="nonlethal" insertbefore="initresult" merge="replace">
 				<anchored to="rightanchor" width="30" height="20">
 					<top />
 					<right anchor="left" relation="relative" offset="-10" />
