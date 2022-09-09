@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+
+<!-- 
+  Please see the license.html file included with this distribution for 
+  attribution and copyright information.
+  KEL: Due to Fortification I have to change Drag&Drop to settle that in at an earlier position in the code
+-->
+
+<root>
+	<!-- Section - Defense -->
+	<windowclass name="ct_section_defense" merge="join">
+		<sheetdata>
+			<number_ct name="aoo">
+				<anchored to="sr" position="righthigh" offset="50,0" />
+			</number_ct>
+			<label name="label_aoo">
+				<anchored to="aoo" position="lefthigh" offset="10,0"/>
+				<static textres="attackofOp" />
+			</label>
+			
+			<number_ct name="aoomax">
+				<anchored to="aoo" position="righthigh" offset="15,0" />
+				<default>1</default>
+			</number_ct>
+			<label name="label_aoomax">
+				<anchored to="aoomax" position="lefthigh" offset="5,0"/>
+				<static textres="attackofOpOf" />
+			</label>
+		</sheetdata>
+	</windowclass>
+</root>
