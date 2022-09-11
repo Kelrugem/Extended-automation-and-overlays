@@ -3,24 +3,35 @@
 -- attribution and copyright information.
 --
 
+local tSpellsets = { "spellset" };
+
+-- Compatiblity check for Advanced Charsheet and several spellsets
+function onInit()
+	if SpellManagerAC then
+		tSpellsets = { "spellset", "itemspellset", "otherspellset" };
+	end
+end
+
 -- Reset power points and individual spells cast
 -- KEL adding nomnom and short rest reset (also some change in manager_combat2 stored in _combat3)
 function resetSpells(nodeCaster)
-	for _,nodeSpellClass in pairs(DB.getChildren(nodeCaster, "spellset")) do
-		DB.setValue(nodeSpellClass, "pointsused", "number", 0);
-		
-		for _,nodeLevel in pairs(DB.getChildren(nodeSpellClass, "levels")) do
-			for _,nodeSpell in pairs(DB.getChildren(nodeLevel, "spells")) do
-				local sleep = true;
-				-- KEL Beware the actions of one spell contain all actions, also damage and over casts and so on
-				for _,nodeAction in pairs(DB.getChildren(nodeSpell, "actions")) do
-					local resetdef = DB.getValue(nodeAction, "usereset", "");
-					if resetdef == "consumable" then
-						sleep = false;
+	for _,sSpellset in ipairs(tSpellsets) do
+		for _,nodeSpellClass in pairs(DB.getChildren(nodeCaster, sSpellset)) do
+			DB.setValue(nodeSpellClass, "pointsused", "number", 0);
+			
+			for _,nodeLevel in pairs(DB.getChildren(nodeSpellClass, "levels")) do
+				for _,nodeSpell in pairs(DB.getChildren(nodeLevel, "spells")) do
+					local sleep = true;
+					-- KEL Beware the actions of one spell contain all actions, also damage and over casts and so on
+					for _,nodeAction in pairs(DB.getChildren(nodeSpell, "actions")) do
+						local resetdef = DB.getValue(nodeAction, "usereset", "");
+						if resetdef == "consumable" then
+							sleep = false;
+						end
 					end
-				end
-				if sleep then
-					DB.setValue(nodeSpell, "cast", "number", 0);
+					if sleep then
+						DB.setValue(nodeSpell, "cast", "number", 0);
+					end
 				end
 			end
 		end
@@ -28,21 +39,23 @@ function resetSpells(nodeCaster)
 end
 
 function resetShortSpells(nodeCaster)
-	for _,nodeSpellClass in pairs(DB.getChildren(nodeCaster, "spellset")) do
-		-- DB.setValue(nodeSpellClass, "pointsused", "number", 0);
-		
-		for _,nodeLevel in pairs(DB.getChildren(nodeSpellClass, "levels")) do
-			for _,nodeSpell in pairs(DB.getChildren(nodeLevel, "spells")) do
-				local sleep = false;
-				-- KEL Beware the actions of one spell contain all actions, also damage and other casts and so on
-				for _,nodeAction in pairs(DB.getChildren(nodeSpell, "actions")) do
-					local resetdef = DB.getValue(nodeAction, "usereset", "");
-					if resetdef == "shortrest" then
-						sleep = true;
+	for _,sSpellset in ipairs(tSpellsets) do
+		for _,nodeSpellClass in pairs(DB.getChildren(nodeCaster, sSpellset)) do
+			-- DB.setValue(nodeSpellClass, "pointsused", "number", 0);
+			
+			for _,nodeLevel in pairs(DB.getChildren(nodeSpellClass, "levels")) do
+				for _,nodeSpell in pairs(DB.getChildren(nodeLevel, "spells")) do
+					local sleep = false;
+					-- KEL Beware the actions of one spell contain all actions, also damage and other casts and so on
+					for _,nodeAction in pairs(DB.getChildren(nodeSpell, "actions")) do
+						local resetdef = DB.getValue(nodeAction, "usereset", "");
+						if resetdef == "shortrest" then
+							sleep = true;
+						end
 					end
-				end
-				if sleep then
-					DB.setValue(nodeSpell, "cast", "number", 0);
+					if sleep then
+						DB.setValue(nodeSpell, "cast", "number", 0);
+					end
 				end
 			end
 		end
@@ -53,10 +66,12 @@ end
 
 -- Iterate through each spell to reset
 function resetPrepared(nodeCaster)
-	for _,nodeSpellClass in pairs(DB.getChildren(nodeCaster, "spellset")) do
-		for _,nodeLevel in pairs(DB.getChildren(nodeSpellClass, "levels")) do
-			for _,nodeSpell in pairs(DB.getChildren(nodeLevel, "spells")) do
-				DB.setValue(nodeSpell, "prepared", "number", 0);
+	for _,sSpellset in ipairs(tSpellsets) do
+		for _,nodeSpellClass in pairs(DB.getChildren(nodeCaster, sSpellset)) do
+			for _,nodeLevel in pairs(DB.getChildren(nodeSpellClass, "levels")) do
+				for _,nodeSpell in pairs(DB.getChildren(nodeLevel, "spells")) do
+					DB.setValue(nodeSpell, "prepared", "number", 0);
+				end
 			end
 		end
 	end
