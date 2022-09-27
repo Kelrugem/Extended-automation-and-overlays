@@ -6,7 +6,6 @@
 -->
 
 <root>
-	<windowclass name="power_cast_editor_main" merge="delete"> </windowclass>
 	<windowclass name="power_cast_editor_main" >
 		<script file="campaign/scripts/replace_dc.lua" />
 		<sheetdata>
