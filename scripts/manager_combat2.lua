@@ -83,6 +83,17 @@ function onNPCPostAdd(tCustom)
 	local sIftagcomp = {};
 	-- END
 	
+	-- HD
+	local sHDField = DB.getValue(nodeNPC, "hd", "");
+	local nHDFieldSemiColon = sHDField:find(";");
+	local sHD, sPostHDHealthProps;
+	if nHDFieldSemiColon then
+		sHD = StringManager.trim(sHDField:sub(1, nHDFieldSemiColon - 1));
+		sPostHDHealthProps = StringManager.trim(sHDField:sub(nHDFieldSemiColon + 1));
+	else
+		sHD = StringManager.trim(sHDField);
+	end
+	
 	-- HP
 	local sOptHRNH = OptionsManager.getOption("HRNH");
 	local nHP = DB.getValue(nodeNPC, "hp", 0);
@@ -312,6 +323,57 @@ function onNPCPostAdd(tCustom)
 		table.insert(aEffects, "REVERT: negative");
 	end
 	-- END
+	
+	-- DECODE SPECIAL HEALTH PROPERTIES
+	if sPostHDHealthProps then
+		local aSQWords = StringManager.parseWords(sPostHDHealthProps:lower());
+		local i = 1;
+		while aSQWords[i] do
+			-- FAST HEALING
+			if StringManager.isWord(aSQWords[i], "fast") and StringManager.isWord(aSQWords[i+1], { "healing", "heal" }) then
+				i = i + 1;
+
+				if StringManager.isNumberString(aSQWords[i+1]) then
+					i = i + 1;
+					table.insert(aEffects, "FHEAL: " .. aSQWords[i]);
+				end
+
+			-- REGENERATION
+			elseif StringManager.isWord(aSQWords[i], "regeneration") then
+				if StringManager.isNumberString(aSQWords[i+1]) then
+					i = i + 1;
+					local sRegenAmount = aSQWords[i];
+					local aRegenTypes = {};
+
+					while aSQWords[i+1] do
+						if StringManager.isWord(aSQWords[i+1], { "and", "or" }) then
+							table.insert(aRegenTypes, aSQWords[i+1]);
+						elseif StringManager.isWord(aSQWords[i+1], "cold") and StringManager.isWord(aSQWords[i+2], "iron") then
+							table.insert(aRegenTypes, "cold iron");
+							i = i + 1;
+						elseif StringManager.isWord(aSQWords[i+1], DataCommon.dmgtypes) then
+							table.insert(aRegenTypes, aSQWords[i+1]);
+						else
+							break;
+						end
+
+						i = i + 1;
+					end
+					i = i - 1;
+
+					local sRegenEffect = "REGEN: " .. sRegenAmount;
+					if #aRegenTypes > 0 then
+						sRegenEffect = sRegenEffect .. " " .. table.concat(aRegenTypes, " ");
+						EffectManager.addEffect("", "", tCustom.nodeCT, { sName = sRegenEffect, nDuration = 0, nGMOnly = 1 }, false);
+					else
+						table.insert(aEffects, sRegenEffect);
+					end
+				end
+			end
+
+			i = i + 1;
+		end
+	end
 
 	-- DECODE SPECIAL QUALITIES
 	local sSpecialQualities = string.lower(DB.getValue(nodeNPC, "specialqualities", ""));
