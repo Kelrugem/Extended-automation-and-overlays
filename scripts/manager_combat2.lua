@@ -318,7 +318,7 @@ function onNPCPostAdd(tCustom)
 		table.insert(aEffects, "IMMUNE: precision");
 	end
 	-- KEL
-	if bRevert then
+	if bRevert and (OptionsManager.getOption("REVERT") == "on") then
 		table.insert(aEffects, "REVERT: positive");
 		table.insert(aEffects, "REVERT: negative");
 	end
