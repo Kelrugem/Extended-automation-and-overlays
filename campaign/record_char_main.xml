@@ -8,10 +8,7 @@
 <root>
 	<windowclass name="charsheet_main" merge="join">
 		<sheetdata>
-			<number_dropadd name="nonlethal" source="hp.nonlethal" merge="replace">
-				<anchored to="wounds" position="right" offset="20,0" width="40" />
-				<hideonvalue>0</hideonvalue>
-				<description textres="char_tooltip_nonlethal" />
+			<number_dropadd name="nonlethal" source="hp.nonlethal">
 				<script>
 					function onValueChanged()
 						window.onHealthChanged();
