@@ -300,9 +300,7 @@ function getRoll(rActor, rAction, tag)
 
 	-- Add the dice and modifiers
 	for _,vClause in pairs(rRoll.clauses) do
-		for _,vDie in ipairs(vClause.dice) do
-			table.insert(rRoll.aDice, vDie);
-		end
+		DiceRollManager.addDamageDice(rRoll.aDice, vClause.dice, { dmgtype = vClause.dmgtype });
 		rRoll.nMod = rRoll.nMod + vClause.modifier;
 	end
 
@@ -659,17 +657,18 @@ function applyCriticalToModRoll(rRoll, rSource, rTarget)
 
 			for i = 2, nMult do
 				for j = 1, nDice do
-					if vClause.dice[j]:sub(1,1) == "-" then
-						table.insert(rRoll.aDice, nDieIndex, "-g" .. vClause.dice[j]:sub(3));
-					else
-						table.insert(rRoll.aDice, nDieIndex, "g" .. vClause.dice[j]:sub(2));
-					end
-					nDieIndex = nDieIndex + 1;
 					table.insert(rNewClause.dice, vClause.dice[j]);
 				end
 				rRoll.nMod = rRoll.nMod + nMod;
 				rNewClause.modifier = rNewClause.modifier + nMod;
 			end
+			
+			local tDiceData = {
+				index = nDieIndex,
+				dmgtype = rNewClause.dmgtype,
+				iconcolor = "00FF00",
+			};
+			DiceRollManager.addDamageDice(rRoll.aDice, rNewClause.dice, tDiceData);
 
 			table.insert(aNewClauses, rNewClause);
 		end
@@ -723,11 +722,6 @@ function applyDmgEffectsToModRoll(rRoll, rSource, rTarget)
 				for _,vDie in ipairs(v.dice) do
 					table.insert(rRoll.tEffectDice, vDie);
 					table.insert(rClause.dice, vDie);
-					if vDie:sub(1,1) == "-" then
-						table.insert(rRoll.aDice, "-p" .. vDie:sub(3));
-					else
-						table.insert(rRoll.aDice, "p" .. vDie:sub(2));
-					end
 				end
 
 				if #tEffectDmgType == 0 then
@@ -742,6 +736,12 @@ function applyDmgEffectsToModRoll(rRoll, rSource, rTarget)
 				rRoll.nEffectMod = rRoll.nEffectMod + nCurrentMod;
 				rClause.modifier = nCurrentMod;
 				rRoll.nMod = rRoll.nMod + nCurrentMod;
+				
+				local tDiceData = {
+					dmgtype = rClause.dmgtype,
+					iconcolor = "FF00FF",
+				};
+				DiceRollManager.addDamageDice(rRoll.aDice, rClause.dice, tDiceData);
 
 				table.insert(rRoll.clauses, rClause);
 
@@ -2114,7 +2114,7 @@ function applyDamage(rSource, rTarget, bSecret, sRollType, sDamage, nTotal, bImm
 		local nHealAmount = rDamageOutput.nVal;
 		if rDamageOutput.sType == "heal" and not sDamage:match("%[REV%]") then
 			local aRevert = EffectManager35E.getEffectsBonusByType(rTarget, "REVERT", false, {}, rSource, false, tags);
-			if aRevert["positive"] or aRevert["all"] then
+			if aRevert["heal"] or aRevert["all"] then
 				rRollHeal.sType = "damage";
 				rRollHeal.aDice = {nil, {result = 0}};
 				rRollHeal.nMod = nHealAmount;
