@@ -255,7 +255,7 @@
 		</sheetdata>
 	</windowclass>
 	
-	<windowclass name="power_damage_entry" merge="delete"> </windowclass>
+	<!-- <windowclass name="power_damage_entry" merge="delete"> </windowclass> -->
 	<windowclass name="power_damage_entry">
 		<margins control="0,0,0,5" />
 		<sheetdata>
@@ -373,7 +373,7 @@
 		</sheetdata>
 	</windowclass>
 
-	<windowclass name="power_heal_entry" merge="delete"> </windowclass>
+	<!-- <windowclass name="power_heal_entry" merge="delete"> </windowclass> -->
 	<windowclass name="power_heal_entry">
 		<margins control="0,0,0,5" />
 		<sheetdata>
@@ -469,7 +469,7 @@
 		</sheetdata>
 	</windowclass>
 	
-	<windowclass name="power_effect_editor_main" merge="delete"> </windowclass>
+	<!-- <windowclass name="power_effect_editor_main" merge="delete"> </windowclass> -->
 	<windowclass name="power_effect_editor_main">
 		<sheetdata>
 			<anchor_column name="columnanchor" />

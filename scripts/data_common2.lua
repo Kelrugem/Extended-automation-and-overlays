@@ -163,6 +163,8 @@ function onInit()
 	table.insert(DataCommon.dmgtypes, "bypass");
 	table.insert(DataCommon.specialdmgtypes, "bypass");
 	table.insert(DataCommon.energytypes, "bypass");
+	-- KEL For Revert, not suggested as actual damage type
+	table.insert(DataCommon.dmgtypes, "heal");
 	DataCommon.conditions = conditions;
 	-- KEL Removing certain things for IFTAG parsing to avoid additional unneeded effects
 	table.remove(DataCommon.immunetypes, 8);
