@@ -6,7 +6,7 @@
 -->
 
 <root>
-	<template name="number_charwounds" merge="replace">
+	<template name="number_charwounds">
 		<number_dropadd>
 			<hideonvalue value="0" />
 			<script>
