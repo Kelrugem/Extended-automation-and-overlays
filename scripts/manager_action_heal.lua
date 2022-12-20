@@ -27,7 +27,7 @@ function getRoll(rActor, rAction, tag)
 	
 	-- Add the dice and modifiers
 	for _,vClause in pairs(rRoll.clauses) do
-		DiceRollManager.addHealDice(rRoll.aDice, vClause.dice);
+		DiceRollManager.addHealDice(rRoll.aDice, vClause.dice, { healtype = rRoll.healtype });
 		rRoll.nMod = rRoll.nMod + vClause.modifier;
 	end
 
@@ -114,7 +114,7 @@ function modHeal(rSource, rTarget, rRoll)
 		if (nEffectCount > 0) then
 			bEffects = true;
 			
-			DiceRollManager.addHealDice(rRoll.aDice, aAddDice, { iconcolor = "FF00FF" });
+			DiceRollManager.addHealDice(rRoll.aDice, aAddDice, { iconcolor = "FF00FF", healtype = rRoll.healtype });
 			nEffectMod = nEffectMod + nAddMod;
 			rRoll.nMod = rRoll.nMod + nAddMod;
 		end
