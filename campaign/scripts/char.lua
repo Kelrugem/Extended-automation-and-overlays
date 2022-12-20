@@ -3,14 +3,6 @@
 -- attribution and copyright information.
 --
 
-function onInit()
-	if Session.IsHost then
-		registerMenuItem(Interface.getString("menu_rest"), "lockvisibilityon", 7);
-		registerMenuItem(Interface.getString("menu_restshort"), "pointer_cone", 7, 8);
-		registerMenuItem(Interface.getString("menu_restovernight"), "pointer_circle", 7, 6);
-	end
-end
-
 function onMenuSelection(selection, subselection)
 	if selection == 7 then
 		if subselection == 8 then
