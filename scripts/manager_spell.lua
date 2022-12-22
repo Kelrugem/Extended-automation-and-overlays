@@ -8,7 +8,7 @@ local tSpellsets = { "spellset" };
 -- Compatiblity check for Advanced Charsheet and several spellsets
 function onInit()
 	if SpellManagerAC then
-		tSpellsets = { "spellset", "itemspellset", "otherspellset" };
+		tSpellsets = { "spellset", "weaponspellset", "itemspellset", "otherspellset" };
 	end
 end
 
