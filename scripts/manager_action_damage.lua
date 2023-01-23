@@ -2114,7 +2114,7 @@ function applyDamage(rSource, rTarget, bSecret, sRollType, sDamage, nTotal, bImm
 		local nHealAmount = rDamageOutput.nVal;
 		if rDamageOutput.sType == "heal" and not sDamage:match("%[REV%]") then
 			local aRevert = EffectManager35E.getEffectsBonusByType(rTarget, "REVERT", false, {}, rSource, false, tags);
-			if aRevert["heal"] or aRevert["all"] then
+			if aRevert["revheal"] or aRevert["all"] then
 				rRollHeal.sType = "damage";
 				rRollHeal.aDice = {nil, {result = 0}};
 				rRollHeal.nMod = nHealAmount;
