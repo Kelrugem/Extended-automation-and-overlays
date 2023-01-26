@@ -319,7 +319,7 @@ function onNPCPostAdd(tCustom)
 	end
 	-- KEL
 	if bRevert and (OptionsManager.getOption("REVERT") == "on") then
-		table.insert(aEffects, "REVERT: heal");
+		table.insert(aEffects, "REVERT: revheal");
 		table.insert(aEffects, "REVERT: negative");
 	end
 	-- END
