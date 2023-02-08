@@ -1,5 +1,5 @@
--- 
--- Please see the license.html file included with this distribution for 
+--
+-- Please see the license.html file included with this distribution for
 -- attribution and copyright information.
 --
 
@@ -7,9 +7,9 @@ function onInit()
 	EffectManager.registerEffectVar("sUnits", { sDBType = "string", sDBField = "unit", bSkipAdd = true });
 	EffectManager.registerEffectVar("sApply", { sDBType = "string", sDBField = "apply", sDisplay = "[%s]" });
 	EffectManager.registerEffectVar("sTargeting", { sDBType = "string", bClearOnUntargetedDrop = true });
-	
+
 	EffectManager.setCustomOnEffectAddStart(onEffectAddStart);
-	
+
 	EffectManager.setCustomOnEffectRollEncode(onEffectRollEncode);
 	EffectManager.setCustomOnEffectTextEncode(onEffectTextEncode);
 	EffectManager.setCustomOnEffectTextDecode(onEffectTextDecode);
@@ -39,7 +39,7 @@ end
 
 function onEffectTextEncode(rEffect)
 	local aMessage = {};
-	
+
 	if rEffect.sUnits and rEffect.sUnits ~= "" then
 		local sOutputUnits = nil;
 		if rEffect.sUnits == "minute" then
@@ -60,13 +60,13 @@ function onEffectTextEncode(rEffect)
 	if rEffect.sApply and rEffect.sApply ~= "" then
 		table.insert(aMessage, "[" .. rEffect.sApply:upper() .. "]");
 	end
-	
+
 	return table.concat(aMessage, " ");
 end
 
 function onEffectTextDecode(sEffect, rEffect)
 	local s = sEffect;
-	
+
 	local sUnits = s:match("%[UNITS ([^]]+)]");
 	if sUnits then
 		s = s:gsub("%[UNITS ([^]]+)]", "");
@@ -92,7 +92,7 @@ function onEffectTextDecode(sEffect, rEffect)
 		s = s:gsub("%[SINGLE%]", "");
 		rEffect.sApply = "single";
 	end
-	
+
 	return s;
 end
 
@@ -122,7 +122,7 @@ function onEffectActorStartTurn(nodeActor, nodeEffect)
 			if checkConditional(rActor, nodeEffect, rEffectComp.remainder) then
 				break;
 			end
-		
+
 		-- Ongoing damage, fast healing and regeneration
 		elseif rEffectComp.type == "DMGO" or rEffectComp.type == "FHEAL" or rEffectComp.type == "REGEN" then
 			local nActive = DB.getValue(nodeEffect, "isactive", 0);
@@ -153,13 +153,13 @@ function parseEffectComp(s)
 	local nMod = 0;
 	local aRemainder = {};
 	local nRemainderIndex = 1;
-	
+
 	local aWords, aWordStats = StringManager.parseWords(s, "/\\%.%[%]%(%):{}");
 	if #aWords > 0 then
 		sType = aWords[1]:match("^([^:]+):");
 		if sType then
 			nRemainderIndex = 2;
-			
+
 			local sValueCheck = aWords[1]:sub(#sType + 2);
 			if sValueCheck ~= "" then
 				table.insert(aWords, 2, sValueCheck);
@@ -167,7 +167,7 @@ function parseEffectComp(s)
 				aWords[1] = aWords[1]:sub(1, #sType + 1);
 				aWordStats[1].endpos = #sType + 1;
 			end
-			
+
 			if #aWords > 1 then
 				if StringManager.isDiceString(aWords[2]) then
 					aDice, nMod = StringManager.convertStringToDice(aWords[2]);
@@ -175,14 +175,14 @@ function parseEffectComp(s)
 				end
 			end
 		end
-		
+
 		if nRemainderIndex <= #aWords then
 			while nRemainderIndex <= #aWords and aWords[nRemainderIndex]:match("^%[%d?%a+%]$") do
 				table.insert(aRemainder, aWords[nRemainderIndex]);
 				nRemainderIndex = nRemainderIndex + 1;
 			end
 		end
-		
+
 		if nRemainderIndex <= #aWords then
 			local sRemainder = s:sub(aWordStats[nRemainderIndex].startpos);
 			local nStartRemainderPhrase = 1;
@@ -222,10 +222,10 @@ function parseEffectComp(s)
 	end
 
 	return  {
-		type = sType or "", 
-		mod = nMod, 
-		dice = aDice, 
-		remainder = aRemainder, 
+		type = sType or "",
+		mod = nMod,
+		dice = aDice,
+		remainder = aRemainder,
 		original = StringManager.trim(s)
 	};
 end
@@ -234,7 +234,7 @@ function rebuildParsedEffectComp(rComp)
 	if not rComp then
 		return "";
 	end
-	
+
 	local aComp = {};
 	if rComp.type ~= "" then
 		table.insert(aComp, rComp.type .. ":");
@@ -269,15 +269,15 @@ function applyOngoingDamageAdjustment(nodeActor, nodeEffect, rEffectComp)
 			nNumberPrefix = tostring(rEffectComp.mod);
 		end
 		TableManager.processTableRoll("rollon", nNumberPrefix .. " " .. rEffectComp.remainder[1]);
-		-- end	
+		-- end
 	end
 	-- END
 	if #(rEffectComp.dice) == 0 and rEffectComp.mod == 0 then
 		return;
 	end
-	
+
 	local rTarget = ActorManager.resolveActor(nodeActor);
-	
+
 	local aResults = {};
 	if rEffectComp.type == "FHEAL" then
 		local sStatus = ActorHealthManager.getHealthStatus(rTarget);
@@ -287,7 +287,7 @@ function applyOngoingDamageAdjustment(nodeActor, nodeEffect, rEffectComp)
 		if DB.getValue(nodeActor, "wounds", 0) == 0 and DB.getValue(nodeActor, "nonlethal", 0) == 0 then
 			return;
 		end
-		
+
 		table.insert(aResults, "[FHEAL] Fast Heal");
 
 	elseif rEffectComp.type == "REGEN" then
@@ -301,7 +301,7 @@ function applyOngoingDamageAdjustment(nodeActor, nodeEffect, rEffectComp)
 				return;
 			end
 		end
-		
+
 		table.insert(aResults, "[REGEN] Regeneration");
 
 	else
@@ -342,11 +342,11 @@ function evalAbilityHelper(rActor, sEffectAbility, nodeSpellClass)
 					local nDieSides = tonumber(sDieSides) or 0;
 					nResult = math.random(nDieSides);
 				end
-				
+
 				if aSign == "-" then
 					nResult = 0 - nResult;
 				end
-				
+
 				nMod = nMod + nResult;
 			end
 		end
@@ -376,7 +376,7 @@ function evalAbilityHelper(rActor, sEffectAbility, nodeSpellClass)
 	elseif IsDie then
 		nAbility = nMod;
 	end
-	
+
 	if nAbility and not IsDie then
 		if sModifier == "H" then
 			nAbility = nAbility / 2;
@@ -404,7 +404,7 @@ function evalAbilityHelper(rActor, sEffectAbility, nodeSpellClass)
 			nAbility = math.ceil(nAbility);
 		end
 	end
-	
+
 	return nAbility;
 end
 
@@ -415,7 +415,7 @@ function evalEffect(rActor, s, nodeSpellClass)
 	if not rActor then
 		return s;
 	end
-	
+
 	local aNewEffectComps = {};
 	local aEffectComps = EffectManager.parseEffect(s);
 	for _,sComp in ipairs(aEffectComps) do
@@ -435,7 +435,7 @@ function evalEffect(rActor, s, nodeSpellClass)
 		table.insert(aNewEffectComps, rebuildParsedEffectComp(rEffectComp));
 	end
 	local sOutput = EffectManager.rebuildParsedEffect(aNewEffectComps);
-	
+
 	return sOutput;
 end
 -- KEL add tags
@@ -464,7 +464,13 @@ function getEffectsByType(rActor, sEffectType, aFilter, rFilterActor, bTargetedO
 	local bTargetSupport = StringManager.isWord(sEffectType, DataCommon.targetableeffectcomps);
 
 	-- Iterate through effects
-	for _,v in pairs(DB.getChildren(ActorManager.getCTNode(rActor), "effects")) do
+	local aEffects = {};
+	if TurboManager then
+		aEffects = TurboManager.getMatchedEffects(rActor, sEffectType);
+	else
+		aEffects = DB.getChildren(ActorManager.getCTNode(rActor), "effects");
+	end
+	for _,v in pairs(DB.getChildren(aEffects)) do
 		-- Check active
 		local nActive = DB.getValue(v, "isactive", 0);
 
@@ -525,7 +531,7 @@ function getEffectsByType(rActor, sEffectType, aFilter, rFilterActor, bTargetedO
 						if rFilterActor then
 							bTargeted = true;
 						end
-					
+
 					-- Compare other attributes
 					else
 						-- Strip energy/bonus types for subtype comparison
@@ -563,7 +569,7 @@ function getEffectsByType(rActor, sEffectType, aFilter, rFilterActor, bTargetedO
 						end
 						local j = 1;
 						while aComponents[j] do
-							if StringManager.contains(DataCommon.dmgtypes, aComponents[j]) or 
+							if StringManager.contains(DataCommon.dmgtypes, aComponents[j]) or
 									StringManager.contains(DataCommon.bonustypes, aComponents[j]) or
 									aComponents[j] == "all" then
 								-- Skip
@@ -572,7 +578,7 @@ function getEffectsByType(rActor, sEffectType, aFilter, rFilterActor, bTargetedO
 							else
 								table.insert(aEffectOtherFilter, aComponents[j]);
 							end
-							
+
 							j = j + 1;
 						end
 
@@ -662,18 +668,18 @@ function getEffectsBonusByType(rActor, aEffectType, bAddEmptyBonus, aFilter, rFi
 	if not rActor or not aEffectType then
 		return {}, 0;
 	end
-	
+
 	-- MAKE BONUS TYPE INTO TABLE, IF NEEDED
 	if type(aEffectType) ~= "table" then
 		aEffectType = { aEffectType };
 	end
-	
+
 	-- PER EFFECT TYPE VARIABLES
 	local results = {};
 	local bonuses = {};
 	local penalties = {};
 	local nEffectCount = 0;
-	
+
 	for k, v in pairs(aEffectType) do
 		-- LOOK FOR EFFECTS THAT MATCH BONUSTYPE
 		local aEffectsByType = getEffectsByType(rActor, v, aFilter, rFilterActor, bTargetedOnly, rEffectSpell);
@@ -700,17 +706,17 @@ function getEffectsBonusByType(rActor, aEffectType, bAddEmptyBonus, aFilter, rFi
 					break;
 				end
 			end
-			
+
 			-- IF MODIFIER TYPE IS UNTYPED, THEN APPEND MODIFIERS
 			-- (SUPPORTS DICE)
 			if dmg_type or not mod_type then
-				-- ADD EFFECT RESULTS 
+				-- ADD EFFECT RESULTS
 				local new_key = dmg_type or "";
 				local new_results = results[new_key] or {dice = {}, mod = 0, remainder = {}};
 
 				-- BUILD THE NEW RESULT
 				for _,v3 in pairs(v2.dice) do
-					table.insert(new_results.dice, v3); 
+					table.insert(new_results.dice, v3);
 				end
 				if bAddEmptyBonus then
 					new_results.mod = new_results.mod + v2.mod;
@@ -724,7 +730,7 @@ function getEffectsBonusByType(rActor, aEffectType, bAddEmptyBonus, aFilter, rFi
 				-- SET THE NEW DICE RESULTS BASED ON ENERGY TYPE
 				results[new_key] = new_results;
 
-			-- OTHERWISE, TRACK BONUSES AND PENALTIES BY MODIFIER TYPE 
+			-- OTHERWISE, TRACK BONUSES AND PENALTIES BY MODIFIER TYPE
 			-- (IGNORE DICE, ONLY TAKE BIGGEST BONUS AND/OR PENALTY FOR EACH MODIFIER TYPE)
 			else
 				local bStackable = StringManager.contains(DataCommon.stackablebonustypes, mod_type);
@@ -743,7 +749,7 @@ function getEffectsBonusByType(rActor, aEffectType, bAddEmptyBonus, aFilter, rFi
 				end
 
 			end
-			
+
 			-- INCREMENT EFFECT COUNT
 			nEffectCount = nEffectCount + 1;
 		end
@@ -775,24 +781,24 @@ function getEffectsBonus(rActor, aEffectType, bModOnly, aFilter, rFilterActor, b
 		end
 		return {}, 0, 0;
 	end
-	
+
 	-- MAKE BONUS TYPE INTO TABLE, IF NEEDED
 	if type(aEffectType) ~= "table" then
 		aEffectType = { aEffectType };
 	end
-	
+
 	-- START WITH AN EMPTY MODIFIER TOTAL
 	local aTotalDice = {};
 	local nTotalMod = 0;
 	local nEffectCount = 0;
-	
+
 	-- ITERATE THROUGH EACH BONUS TYPE
 	local masterbonuses = {};
 	local masterpenalties = {};
 	for k, v in pairs(aEffectType) do
 		-- GET THE MODIFIERS FOR THIS MODIFIER TYPE
 		local effbonusbytype, nEffectSubCount = getEffectsBonusByType(rActor, v, true, aFilter, rFilterActor, bTargetedOnly, rEffectSpell);
-		
+
 		-- ITERATE THROUGH THE MODIFIERS
 		for k2, v2 in pairs(effbonusbytype) do
 			-- IF MODIFIER TYPE IS UNTYPED, THEN APPEND TO TOTAL MODIFIER
@@ -802,7 +808,7 @@ function getEffectsBonus(rActor, aEffectType, bModOnly, aFilter, rFilterActor, b
 					table.insert(aTotalDice, v3);
 				end
 				nTotalMod = nTotalMod + v2.mod;
-			
+
 			-- OTHERWISE, WE HAVE A NON-ENERGY MODIFIER TYPE, WHICH MEANS WE NEED TO INTEGRATE
 			-- (IGNORE DICE, ONLY TAKE BIGGEST BONUS AND/OR PENALTY FOR EACH MODIFIER TYPE)
 			else
@@ -825,13 +831,13 @@ function getEffectsBonus(rActor, aEffectType, bModOnly, aFilter, rFilterActor, b
 	for k,v in pairs(masterpenalties) do
 		nTotalMod = nTotalMod + v;
 	end
-	
+
 	if bModOnly then
 		return nTotalMod, nEffectCount;
 	end
 	return aTotalDice, nTotalMod, nEffectCount;
 end
--- KEL Adding tags and IFTAG to 
+-- KEL Adding tags and IFTAG to
 function hasEffectCondition(rActor, sEffect, rEffectSpell)
 	return hasEffect(rActor, sEffect, nil, false, true, rEffectSpell);
 end
@@ -844,7 +850,13 @@ function hasEffect(rActor, sEffect, rTarget, bTargetedOnly, bIgnoreEffectTargets
 
 	-- Iterate through each effect
 	local aMatch = {};
-	for _,v in pairs(DB.getChildren(ActorManager.getCTNode(rActor), "effects")) do
+	local aEffects = {};
+	if TurboManager then
+		aEffects = TurboManager.getMatchedEffects(rActor, sEffect);
+	else
+		aEffects = DB.getChildren(ActorManager.getCTNode(rActor), "effects");
+	end
+	for _,v in pairs(aEffects) do
 		local nActive = DB.getValue(v, "isactive", 0);
 
 		-- COMPATIBILITY FOR ADVANCED EFFECTS
@@ -904,7 +916,7 @@ function hasEffect(rActor, sEffect, rTarget, bTargetedOnly, bIgnoreEffectTargets
 					if checkTagConditional(rEffectComp.remainder, rEffectSpell) then
 						break;
 					end
-				
+
 				-- Check for match
 				elseif rEffectComp.original:lower() == sLowerEffect then
 					if bTargeted and not bIgnoreEffectTargets then
@@ -917,7 +929,7 @@ function hasEffect(rActor, sEffect, rTarget, bTargetedOnly, bIgnoreEffectTargets
 						nMatch = kEffectComp;
 					end
 				end
-				
+
 			end
 
 			-- If matched, then remove one-off effects
@@ -947,12 +959,12 @@ end
 
 function checkConditional(rActor, nodeEffect, aConditions, rTarget, aIgnore, rEffectSpell)
 	local bReturn = true;
-	
+
 	if not aIgnore then
 		aIgnore = {};
 	end
 	table.insert(aIgnore, nodeEffect.getPath());
-	
+
 	for _,v in ipairs(aConditions) do
 		local sLower = v:lower();
 		if sLower == DataCommon.healthstatusfull then
@@ -1013,9 +1025,9 @@ function checkConditional(rActor, nodeEffect, aConditions, rTarget, aIgnore, rEf
 			end
 		end
 	end
-	
+
 	table.remove(aIgnore);
-	
+
 	return bReturn;
 end
 
@@ -1023,7 +1035,7 @@ function checkConditionalHelper(rActor, sEffect, rTarget, aIgnore, rEffectSpell)
 	if not rActor then
 		return false;
 	end
-	
+
 	for _,v in pairs(DB.getChildren(ActorManager.getCTNode(rActor), "effects")) do
 		local nActive = DB.getValue(v, "isactive", 0);
 		if nActive ~= 0 and not StringManager.contains(aIgnore, v.getPath()) then
@@ -1063,7 +1075,7 @@ function checkConditionalHelper(rActor, sEffect, rTarget, aIgnore, rEffectSpell)
 					if checkConditional(rTarget, v, rEffectComp.remainder, rActor, aIgnore, rEffectSpell) then
 						break;
 					end
-				
+
 				-- Check for match
 				-- KEL ignore effects which are on skip
 				elseif rEffectComp.original:lower() == sEffect and nActive == 1 then
@@ -1095,21 +1107,21 @@ function checkConditionalHelper(rActor, sEffect, rTarget, aIgnore, rEffectSpell)
 			end
 		end
 	end
-	
+
 	return false;
 end
 -- KEL TAG
 function checkTagConditional(aConditions, rEffectSpell)
 	if rEffectSpell then
 		local tagshelp = StringManager.parseWords(rEffectSpell);
-		
+
 		if not tagshelp[1] then
 			return false;
 		end
-		
+
 		local i = 1;
-		
-		for _,v in ipairs(aConditions) do	
+
+		for _,v in ipairs(aConditions) do
 			while tagshelp[i] do
 				if tagshelp[i] == v then
 					return true;
