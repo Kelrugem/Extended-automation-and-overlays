@@ -53,6 +53,12 @@ function handleApplyDamage(msgOOB)
 	local bSFortif = {};
 	local MaxFortifMod = {};
 	local bPFMode = DataCommon.isPFRPG();
+	if AdvancedEffects then
+		rSource.nodeItem = msgOOB.nodeItem;
+ 		rSource.nodeAmmo = msgOOB.nodeAmmo;
+ 		rSource.nodeWeapon = msgOOB.nodeWeapon;
+	end
+
 
 	-- if string.match(rMessage.text, "%[DAMAGE") then
 	local rDamageOutput = ActionDamage.decodeDamageText(nTotal, msgOOB.sDamage);
@@ -268,6 +274,11 @@ function notifyApplyDamage(rSource, rTarget, bSecret, sRollType, sDesc, nTotal, 
 	msgOOB.sSourceNode = ActorManager.getCreatureNodeName(rSource);
 	msgOOB.sTargetNode = ActorManager.getCreatureNodeName(rTarget);
 	msgOOB.nTargetOrder = rTarget.nOrder;
+	if AdvancedEffects then
+		msgOOB.nodeItem = rSource.nodeItem;
+		msgOOB.nodeAmmo = rSource.nodeAmmo;
+		msgOOB.nodeWeapon = rSource.nodeWeapon;
+	end
 
 	Comm.deliverOOBMessage(msgOOB, "");
 end
@@ -522,7 +533,7 @@ function onDamage(rSource, rTarget, rRoll)
 	if rRoll.tags then
 		tag = rRoll.tags;
 	end
-	
+
 	-- Apply damage to the PC or CT entry referenced
 	ActionDamage.notifyApplyDamage(rSource, rTarget, rRoll.bTower, rRoll.sType, rMessage.text, nTotal, aAttackFilter, tag);
 	-- END
@@ -537,7 +548,7 @@ function onStabilization(rSource, rTarget, rRoll)
 	else
 		rMessage.text = rMessage.text .. " [FAILURE]";
 	end
-	
+
 	Comm.deliverChatMessage(rMessage);
 
 	if bSuccess then
@@ -559,7 +570,7 @@ function setupModRoll(rRoll, rSource, rTarget)
 	CombatManager2.addRightClickDiceToClauses(rRoll);
 
 	rRoll.tNotifications = {};
-	
+
 	rRoll.bCritical = rRoll.bCritical or ModifierManager.getKey("DMG_CRIT") or Input.isShiftPressed();
 	if ActionAttack.isCrit(rSource, rTarget) then
 		rRoll.bCritical = true;
@@ -586,17 +597,17 @@ function applyAbilityEffectsToModRoll(rRoll, rSource, rTarget)
 	for _,vClause in ipairs(rRoll.clauses) do
 		-- Get original stat modifier
 		local nStatMod = ActorManager35E.getAbilityBonus(rSource, vClause.stat);
-		
+
 		-- Get any stat effects bonus
 		-- KEL Add tags
 		local nAbilityEffectMod, nAbilityEffects = ActorManager35E.getAbilityEffectsBonus(rSource, vClause.stat, rRoll.tags);
 		-- END
 		if nAbilityEffects > 0 then
 			rRoll.bEffects = true;
-			
+
 			-- Calc total stat mod
 			local nTotalStatMod = nStatMod + nAbilityEffectMod;
-			
+
 			-- Handle maximum stat mod setting
 			-- WORKAROUND: If max limited, then assume no penalty allowed (i.e. bows)
 			local nStatModMax = vClause.statmax or 0;
@@ -619,10 +630,10 @@ function applyAbilityEffectsToModRoll(rRoll, rSource, rTarget)
 			else
 				nMultNewStatMod = math.floor(nTotalStatMod * nMult);
 			end
-			
+
 			-- Calculate bonus difference
 			local nMultDiffStatMod = nMultNewStatMod - nMultOrigStatMod;
-			
+
 			-- Apply bonus difference
 			rRoll.nEffectMod = rRoll.nEffectMod + nMultDiffStatMod;
 			vClause.modifier = vClause.modifier + nMultDiffStatMod;
@@ -662,7 +673,7 @@ function applyCriticalToModRoll(rRoll, rSource, rTarget)
 				rRoll.nMod = rRoll.nMod + nMod;
 				rNewClause.modifier = rNewClause.modifier + nMod;
 			end
-			
+
 			local tDiceData = {
 				index = nDieIndex,
 				dmgtype = rNewClause.dmgtype,
@@ -711,12 +722,12 @@ function applyDmgEffectsToModRoll(rRoll, rSource, rTarget)
 					table.insert(tEffectDmgType, sWord);
 				end
 			end
-			
+
 			if not bEffectCritical or rRoll.bCritical then
 				rRoll.bEffects = true;
-				
+
 				local rClause = {};
-				
+
 				-- Add effect dice
 				rClause.dice = {};
 				for _,vDie in ipairs(v.dice) do
@@ -736,7 +747,7 @@ function applyDmgEffectsToModRoll(rRoll, rSource, rTarget)
 				rRoll.nEffectMod = rRoll.nEffectMod + nCurrentMod;
 				rClause.modifier = nCurrentMod;
 				rRoll.nMod = rRoll.nMod + nCurrentMod;
-				
+
 				local tDiceData = {
 					dmgtype = rClause.dmgtype,
 					iconcolor = "FF00FF",
@@ -959,16 +970,16 @@ function decodeDamageTypes(rRoll, bFinal)
 		rClause.stat = sDmgStat;
 		rClause.statmax = tonumber(sDmgStatMax) or 0;
 		rClause.statmult = tonumber(sDmgStatMult) or 1;
-		
+
 		rClause.nTotal = rClause.modifier;
 		for _,vDie in ipairs(rClause.dice) do
 			nMainDieIndex = nMainDieIndex + 1;
 			rClause.nTotal = rClause.nTotal + (rRoll.aDice[nMainDieIndex].result or 0);
 		end
-		
+
 		table.insert(rRoll.clauses, rClause);
 	end
-	
+
 	-- Handle rolls that went straight to roll without going through whole system (i.e. ongoing damage, regen, fast heal, etc.)
 	local nClauses = #(rRoll.clauses);
 	if nClauses == 0 then
@@ -978,7 +989,7 @@ function decodeDamageTypes(rRoll, bFinal)
 			if not sDmgDice then
 				sTotal = sDamageType:match("%((%d+)%)")
 			end
-			
+
 			local rClause = {};
 			rClause.dmgtype = StringManager.trim(sDmgType);
 			rClause.dice = {};
@@ -987,13 +998,13 @@ function decodeDamageTypes(rRoll, bFinal)
 			rClause.stat = "";
 			rClause.statmax = 0;
 			rClause.statmult = 1;
-			
+
 			rClause.nTotal = rClause.modifier;
-			
+
 			table.insert(rRoll.clauses, rClause);
 		end
 	end
-	
+
 	-- Handle drag results that are halved or doubled
 	if #(rRoll.aDice) == 0 then
 		local nResultTotal = 0;
@@ -1014,10 +1025,10 @@ function decodeDamageTypes(rRoll, bFinal)
 			end
 		end
 	end
-	
+
 	-- Remove damage type information from roll description
 	rRoll.sDesc = string.gsub(rRoll.sDesc, " %[TYPE:[^]]*%]", "");
-	
+
 	if bFinal then
 		-- Capture any manual modifiers and adjust damage types accordingly
 		-- NOTE: Positive values are added to first damage clause, Negative values reduce damage clauses until none remain
@@ -1084,7 +1095,7 @@ function getParenDepth(sText, nIndex)
 			nDepth = nDepth - 1;
 		end
 	end
-	
+
 	return nDepth;
 end
 
@@ -1314,7 +1325,7 @@ function getDamageAdjust(rSource, rTarget, nDamage, rDamageOutput, bImmune, bFor
 	local nVulnApplied = 0;
 	for k, v in pairs(rDamageOutput.aDamageTypes) do
 		-- KEL bypass stuff
-		local bypass = false; 
+		local bypass = false;
 		local drbypass = false;
 		local resisthalved = false;
 		-- GET THE INDIVIDUAL DAMAGE TYPES FOR THIS ENTRY (EXCLUDING UNTYPED DAMAGE TYPE)
@@ -1376,7 +1387,7 @@ function getDamageAdjust(rSource, rTarget, nDamage, rDamageOutput, bImmune, bFor
 				bResist = true;
 			elseif bFortif[k] then
 				nLocalDamageAdjust = - v;
-				bResist = true;	
+				bResist = true;
 			else
 			-- KEL For PF VULN before resistances; 3.5e: VULN at the very end
 				if bPFMode then
@@ -1430,7 +1441,7 @@ function getDamageAdjust(rSource, rTarget, nDamage, rDamageOutput, bImmune, bFor
 								end
 							elseif aVuln[sDmgType].mod == 0 and roundingvariableVulnCeil[sDmgType] then
 								nVulnAmount = math.ceil((v + nLocalDamageAdjust) / 2);
-								aVuln[sDmgType].nApplied = nVulnAmount;	
+								aVuln[sDmgType].nApplied = nVulnAmount;
 								VulnApplied = true;
 								if (v + nLocalDamageAdjust) % 2 ~= 0 then
 									roundingvariableVulnCeil[sDmgType] = false;
@@ -1479,7 +1490,7 @@ function getDamageAdjust(rSource, rTarget, nDamage, rDamageOutput, bImmune, bFor
 							end
 						end
 						nLocalDamageAdjust = nLocalDamageAdjust - nHresistAmount;
-						bResist = true;	
+						bResist = true;
 					end
 				end
 			end
@@ -1720,7 +1731,7 @@ function getDamageAdjust(rSource, rTarget, nDamage, rDamageOutput, bImmune, bFor
 								end
 							elseif aVuln[sDmgType].mod == 0 and roundingvariableVulnCeil[sDmgType] then
 								nVulnAmount = math.ceil((v + nLocalDamageAdjust) / 2);
-								aVuln[sDmgType].nApplied = nVulnAmount;	
+								aVuln[sDmgType].nApplied = nVulnAmount;
 								VulnApplied = true;
 								if (v + nLocalDamageAdjust) % 2 ~= 0 then
 									roundingvariableVulnCeil[sDmgType] = false;
@@ -2185,7 +2196,7 @@ function applyDamage(rSource, rTarget, bSecret, sRollType, sDamage, nTotal, bImm
 
 	-- Damage
 	else
-		-- Apply any targeted damage effects 
+		-- Apply any targeted damage effects
 		-- NOTE: Dice determined randomly, instead of rolled
 		-- KEL Here TDMG is not needed, the following only for: Multiple targets while dmg only rolled once (as for spells), thence, random table only. That is not a problem of DMG
 		if rSource and rTarget and rTarget.nOrder then
