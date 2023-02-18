@@ -5,6 +5,18 @@
 
 function onInit()
 	initActorHealth();
+
+	-- Add Extended AC Bonuses (https://github.com/FG-Unofficial-Developers-Guild/FG-PFRPG-ExtendedACBonusTypes)
+	DataCommon.actypes["naturalsize"] = "naturalsize";
+	DataCommon.actypes["armorenhancement"] = "armorenhancement";
+	DataCommon.actypes["shieldenhancement"] = "shieldenhancement";
+	DataCommon.actypes["naturalenhancement"] = "naturalenhancement";
+
+	-- Add Extended AC Bonuses (https://github.com/FG-Unofficial-Developers-Guild/FG-PFRPG-ExtendedACBonusTypes)
+	table.insert(DataCommon.bonustypes, "naturalsize");
+	table.insert(DataCommon.bonustypes, "armorenhancement");
+	table.insert(DataCommon.bonustypes, "shieldenhancement");
+	table.insert(DataCommon.bonustypes, "naturalenhancement");
 end
 
 --
@@ -769,6 +781,12 @@ function getDefenseValue(rAttacker, rDefender, rRoll)
 			table.insert(aIgnoreEffects, "armor");
 			table.insert(aIgnoreEffects, "shield");
 			table.insert(aIgnoreEffects, "natural");
+
+			-- Add Extended AC Bonuses (https://github.com/FG-Unofficial-Developers-Guild/FG-PFRPG-ExtendedACBonusTypes)
+			table.insert(aIgnoreEffects, "naturalsize");
+			table.insert(aIgnoreEffects, "armorenhancement");
+			table.insert(aIgnoreEffects, "shieldenhancement");
+			table.insert(aIgnoreEffects, "naturalenhancement");
 		end
 		if bFlatFooted or bCombatAdvantage then
 			table.insert(aIgnoreEffects, "dodge");
