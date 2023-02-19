@@ -71,7 +71,7 @@ function performConcentrationCheck(draginfo, rActor, nodeSpellClass)
 			local sSkills = DB.getValue(nodeActor, "skills", "");
 			local aSkillClauses = StringManager.split(sSkills, ",;\r", true);
 			for i = 1, #aSkillClauses do
-				local nStarts, nEnds, sLabel, sSign, sMod = string.find(aSkillClauses[i], "([%w%s\(\)]*[%w\(\)]+)%s*([%+%-–]?)(%d*)");
+				local nStarts, nEnds, sLabel, sSign, sMod = string.find(aSkillClauses[i], "([%w%s%(%)]*[%w%(%)]+)%s*([%+%-]?)(%d*)");
 				if nStarts and string.lower(sSkill) == string.lower(sLabel) and sMod ~= "" then
 					nValue = tonumber(sMod) or 0;
 					if sSign == "-" or sSign == "–" then

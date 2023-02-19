@@ -25,7 +25,7 @@ function handleApplyInit(msgOOB)
 		local sSourceType, nodeSource = ActorManager.getTypeAndNode(rSource);
 		local nGMOnly = 0;
 		if sSourceType == "pc" then
-			for _,v in pairs(DB.getChildren(nodeSource, "specialabilitylist")) do
+			for _,v in ipairs(DB.getChildList(nodeSource, "specialabilitylist")) do
 				local sAbilityname = string.lower(DB.getValue(v, "name", ""));
 				if string.match(sAbilityname, "improved uncanny dodge") or string.match(sAbilityname, "uncanny dodge") then
 					bHasUncDodge = true;
@@ -42,7 +42,7 @@ function handleApplyInit(msgOOB)
 		if not bHasUncDodge then
 			-- KEL commenting out of original FFOS code; this is not really complete and actually not really useful I think
 			-- if EffectManager35E.hasEffectCondition(rSource, "Flatfooted") then
-				-- for _,nodeEffect in pairs(DB.getChildren(nodeActor, "effects")) do
+				-- for _,nodeEffect in ipairs(DB.getChildList(nodeActor, "effects")) do
 					-- if DB.getValue(nodeEffect, "label", "") == "Flatfooted" then
 						-- nodeEffect.delete();
 					-- end

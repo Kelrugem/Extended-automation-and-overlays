@@ -5,6 +5,18 @@
 
 function onInit()
 	initActorHealth();
+
+	-- Add Extended AC Bonuses (https://github.com/FG-Unofficial-Developers-Guild/FG-PFRPG-ExtendedACBonusTypes)
+	DataCommon.actypes["naturalsize"] = "naturalsize";
+	DataCommon.actypes["armorenhancement"] = "armorenhancement";
+	DataCommon.actypes["shieldenhancement"] = "shieldenhancement";
+	DataCommon.actypes["naturalenhancement"] = "naturalenhancement";
+
+	-- Add Extended AC Bonuses (https://github.com/FG-Unofficial-Developers-Guild/FG-PFRPG-ExtendedACBonusTypes)
+	table.insert(DataCommon.bonustypes, "naturalsize");
+	table.insert(DataCommon.bonustypes, "armorenhancement");
+	table.insert(DataCommon.bonustypes, "shieldenhancement");
+	table.insert(DataCommon.bonustypes, "naturalenhancement");
 end
 
 --
@@ -769,6 +781,12 @@ function getDefenseValue(rAttacker, rDefender, rRoll)
 			table.insert(aIgnoreEffects, "armor");
 			table.insert(aIgnoreEffects, "shield");
 			table.insert(aIgnoreEffects, "natural");
+
+			-- Add Extended AC Bonuses (https://github.com/FG-Unofficial-Developers-Guild/FG-PFRPG-ExtendedACBonusTypes)
+			table.insert(aIgnoreEffects, "naturalsize");
+			table.insert(aIgnoreEffects, "armorenhancement");
+			table.insert(aIgnoreEffects, "shieldenhancement");
+			table.insert(aIgnoreEffects, "naturalenhancement");
 		end
 		if bFlatFooted or bCombatAdvantage then
 			table.insert(aIgnoreEffects, "dodge");
@@ -993,7 +1011,7 @@ function hasSpecialAbility(rActor, sSearchStringIni, bFeat, bTrait, bSpecialAbil
 	-- local sSearchString = StringManager.trim(sSearchStringIni:lower());
 	if ActorManager.isPC(nodeActor) then
 		if bFeat then
-			for _,vNode in pairs(DB.getChildren(nodeActor .. '.featlist')) do
+			for _,vNode in ipairs(DB.getChildList(nodeActor .. '.featlist')) do
 				local sFeatName = StringManager.trim(DB.getValue(vNode, 'name', ''):lower());
 				if sFeatName and string.match(sFeatName, sSearchString) then
 					return true;
@@ -1001,7 +1019,7 @@ function hasSpecialAbility(rActor, sSearchStringIni, bFeat, bTrait, bSpecialAbil
 			end
 		end
 		if bTrait then
-			for _,vNode in pairs(DB.getChildren(nodeActor .. '.traitlist')) do
+			for _,vNode in ipairs(DB.getChildList(nodeActor .. '.traitlist')) do
 				local sTraitName = StringManager.trim(DB.getValue(vNode, 'name', ''):lower());
 				if sTraitName and string.match(sTraitName, sSearchString) then
 					return true;
@@ -1009,7 +1027,7 @@ function hasSpecialAbility(rActor, sSearchStringIni, bFeat, bTrait, bSpecialAbil
 			end
 		end
 		if bSpecialAbility then
-			for _,vNode in pairs(DB.getChildren(nodeActor .. '.specialabilitylist')) do
+			for _,vNode in ipairs(DB.getChildList(nodeActor .. '.specialabilitylist')) do
 				local sSpecialAbilityName = StringManager.trim(DB.getValue(vNode, 'name', ''):lower());
 				if sSpecialAbilityName and string.match(sSpecialAbilityName, sSearchString) then
 					return true;

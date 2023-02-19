@@ -340,7 +340,7 @@ function modAttack(rSource, rTarget, rRoll)
 		local rActionCrit = tonumber(rRoll.crit) or 20;
 		local aKEEN = EffectManager35E.getEffectsByType(rSource, "KEEN", aAttackFilter, rTarget, false, rRoll.tags);
 		if (#aKEEN > 0) or EffectManager35E.hasEffect(rSource, "KEEN", rTarget, false, false, rRoll.tags) then
-			rActionCrit = 20 - ((20 - rActionCrit + 1) * 2) + 1;
+			rActionCrit = rActionCrit * 2 - 21;
 			bEffects = true;
 		end
 		if rActionCrit < 20 then

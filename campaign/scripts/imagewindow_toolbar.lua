@@ -29,6 +29,7 @@ function update(bInit)
 	h4.setVisible(true);
 	toggle_shortcut.setValueByBoolean(image.getShortcutState());
 	if Session.IsHost then
+		deathmarker_clear.setVisible(bHasTokens and ImageDeathMarkerManager.isEnabled());
 		toggle_tokenlock.setVisible(bHasTokens);
 		toggle_tokenlock.setValueByBoolean(image.getTokenLockState());
 		toggle_preview.setVisible(true);

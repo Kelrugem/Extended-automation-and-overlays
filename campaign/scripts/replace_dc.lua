@@ -4,7 +4,7 @@ function onInit()
 	onStatUpdate();
 	local nodeSpell = getDatabaseNode();
 	local nodeSpellClass = DB.getChild(nodeSpell, ".......");
-	local nodeCreature = nodeSpell.getChild(".........");
+	local nodeCreature = DB.getChild(nodeSpell, ".........");
 	if ActorManager.isPC(nodeCreature) then
 		DB.addHandler(DB.getPath(nodeCreature, "abilities"), "onChildUpdate", onStatUpdate);
 	else
@@ -17,14 +17,14 @@ function onInit()
 	end
 	
 	if nodeSpellClass then
-		DB.addHandler(nodeSpellClass.getPath("dc.ability"), "onUpdate", onStatUpdate);
+		DB.addHandler(DB.getPath(nodeSpellClass, "dc.ability"), "onUpdate", onStatUpdate);
 	end
 end
 
 function onClose()
 	local nodeSpell = getDatabaseNode();
 	local nodeSpellClass = DB.getChild(nodeSpell, ".......");
-	local nodeCreature = nodeSpell.getChild(".........");
+	local nodeCreature = DB.getChild(nodeSpell, ".........");
 	if ActorManager.isPC(nodeCreature) then
 		DB.removeHandler(DB.getPath(nodeCreature, "abilities"), "onChildUpdate", onStatUpdate);
 	else
@@ -37,14 +37,14 @@ function onClose()
 	end
 	
 	if nodeSpellClass then
-		DB.addHandler(nodeSpellClass.getPath("dc.ability"), "onUpdate", onStatUpdate);
+		DB.addHandler(DB.getPath(nodeSpellClass, "dc.ability"), "onUpdate", onStatUpdate);
 	end
 end
 
 function onStatUpdate()
 	if replacedcstatmod then
 		local nodeSpell = getDatabaseNode();
-		local nodeCreature = nodeSpell.getChild(".........");
+		local nodeCreature = DB.getChild(nodeSpell, ".........");
 
 		local sAbility = DB.getValue(nodeSpell, "replacedc.ability", "");
 		if sAbility ~= "" then
