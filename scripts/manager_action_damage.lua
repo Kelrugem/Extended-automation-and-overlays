@@ -233,7 +233,7 @@ function handleApplyDamage(msgOOB)
 					for _,vUser in ipairs(User.getActiveUsers()) do
 						if vUser == sOwner then
 							for _,vIdentity in ipairs(User.getActiveIdentities(vUser)) do
-								if nodeTarget.getName() == vIdentity then
+								if DB.getName(nodeTarget) == vIdentity then
 									msgOOB.type = OOB_MSGTYPE_APPLYTDMG;
 									Comm.deliverOOBMessage(msgOOB, sOwner);
 									return;
@@ -2320,7 +2320,7 @@ function applyDamage(rSource, rTarget, bSecret, sRollType, sDamage, nTotal, bImm
 					local aActualDamageTypes = StringManager.split(table.concat(aTempDamageTypes, ","), ",", true);
 
 					-- Check target's effects for regeneration effects that match
-					for _,v in pairs(DB.getChildren(nodeTargetCT, "effects")) do
+					for _,v in ipairs(DB.getChildList(nodeTargetCT, "effects")) do
 						local nActive = DB.getValue(v, "isactive", 0);
 						if (nActive == 1) then
 							local bMatch = false;

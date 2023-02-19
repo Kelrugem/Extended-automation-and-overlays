@@ -476,9 +476,9 @@ function getEffectsByType(rActor, sEffectType, aFilter, rFilterActor, bTargetedO
 	if TurboManager then
 		aEffects = TurboManager.getMatchedEffects(rActor, sEffectType);
 	else
-		aEffects = DB.getChildren(ActorManager.getCTNode(rActor), "effects");
+		aEffects = DB.getChildList(ActorManager.getCTNode(rActor), "effects");
 	end
-	for _,v in pairs(DB.getChildren(aEffects)) do
+	for _,v in ipairs(aEffects) do
 		-- Check active
 		local nActive = DB.getValue(v, "isactive", 0);
 
@@ -862,9 +862,9 @@ function hasEffect(rActor, sEffect, rTarget, bTargetedOnly, bIgnoreEffectTargets
 	if TurboManager then
 		aEffects = TurboManager.getMatchedEffects(rActor, sEffect);
 	else
-		aEffects = DB.getChildren(ActorManager.getCTNode(rActor), "effects");
+		aEffects = DB.getChildList(ActorManager.getCTNode(rActor), "effects");
 	end
-	for _,v in pairs(aEffects) do
+	for _,v in ipairs(aEffects) do
 		local nActive = DB.getValue(v, "isactive", 0);
 
 		-- COMPATIBILITY FOR ADVANCED EFFECTS
@@ -971,7 +971,7 @@ function checkConditional(rActor, nodeEffect, aConditions, rTarget, aIgnore, rEf
 	if not aIgnore then
 		aIgnore = {};
 	end
-	table.insert(aIgnore, nodeEffect.getPath());
+	table.insert(aIgnore, DB.getPath(nodeEffect));
 
 	for _,v in ipairs(aConditions) do
 		local sLower = v:lower();
@@ -1043,8 +1043,14 @@ function checkConditionalHelper(rActor, sEffect, rTarget, aIgnore, rEffectSpell)
 	if not rActor then
 		return false;
 	end
-
-	for _,v in pairs(DB.getChildren(ActorManager.getCTNode(rActor), "effects")) do
+	-- KEl Adding TurboManager Support
+	local aEffects = {};
+	if TurboManager then
+		aEffects = TurboManager.getMatchedEffects(rActor, sEffect);
+	else
+		aEffects = DB.getChildList(ActorManager.getCTNode(rActor), "effects");
+	end
+	for _,v in ipairs(aEffects) do
 		local nActive = DB.getValue(v, "isactive", 0);
 		if nActive ~= 0 and not StringManager.contains(aIgnore, v.getPath()) then
 			-- Parse each effect label
