@@ -2469,6 +2469,7 @@ function addBloodTrail(nodeCT, nBloodRatio)
 	local x,y = token.getPosition();
 	local xAdj = math.random(100);
 	local yAdj = math.random(100);
+	-- Not correct yet
 	x = x * xAdj / 100;
 	y = y * yAdj / 100;
 	local nGridScale = nBloodRatio * TokenManager.getTokenSpace(token);
