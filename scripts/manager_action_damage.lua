@@ -793,25 +793,21 @@ end
 
 function applyEffectModNotificationToModRoll(rRoll)
 	if rRoll.bEffects then
-		local sEffects;
 		local sMod = StringManager.convertDiceToString(rRoll.tEffectDice, rRoll.nEffectMod, true);
-		if sMod ~= "" then
-			sEffects = "[" .. Interface.getString("effects_tag") .. " " .. sMod .. "]";
-		else
-			sEffects = "[" .. Interface.getString("effects_tag") .. "]";
-		end
-		table.insert(rRoll.tNotifications, sEffects);
+		table.insert(rRoll.tNotifications, EffectManager.buildEffectOutput(sMod));
 	end
 end
-
+-- KEL
 function applyDmgTypeEffectsToModRoll(rRoll, rSource, rTarget)
 	local tAddDmgTypes = {};
 	local tDmgTypeEffects;
+	-- KEL Adding tags
 	if rRoll.sType == "spdamage" then
 		tDmgTypeEffects = EffectManager35E.getEffectsByType(rSource, "DMGSTYPE", nil, rTarget, false, rRoll.tags);
 	else
 		tDmgTypeEffects = EffectManager35E.getEffectsByType(rSource, "DMGTYPE", nil, rTarget, false, rRoll.tags);
 	end
+	-- END
 	for _,rEffectComp in ipairs(tDmgTypeEffects) do
 		for _,v2 in ipairs(rEffectComp.remainder) do
 			if StringManager.contains(DataCommon.dmgtypes, v2) then
@@ -833,8 +829,7 @@ function applyDmgTypeEffectsToModRoll(rRoll, rSource, rTarget)
 			end
 		end
 
-		local sNotification = "[" .. Interface.getString("effects_tag") .. " " .. table.concat(tAddDmgTypes, ",") .. "]";
-		table.insert(rRoll.tNotifications, sNotification);
+		table.insert(rRoll.tNotifications, EffectManager.buildEffectOutput(table.concat(tAddDmgTypes, ",")));
 	end
 end
 
@@ -2421,6 +2416,16 @@ function applyDamage(rSource, rTarget, bSecret, sRollType, sDamage, nTotal, bImm
 			end
 		end
 	end
+	
+	-- KEL Blood trails
+	if (OptionsManager.getOption("BLOOD") == "on") then
+		local nodeCT = ActorManager.getCTNode(rTarget);
+		local nBloodRatio = math.min(nWounds / nTotalHP, 1);
+		if nWounds > 0 and not EffectManager35E.hasEffectCondition(rTarget, "noblood") then
+			ActionDamage.addBloodTrail(nodeCT, nBloodRatio);
+		end
+	end
+	-- END
 
 	-- Output results
 	ActionDamage.messageDamage(rSource, rTarget, bSecret, rDamageOutput.sTypeOutput, sDamage, rDamageOutput.sVal, table.concat(rDamageOutput.tNotifications, " "));
@@ -2439,7 +2444,37 @@ function applyDamage(rSource, rTarget, bSecret, sRollType, sDamage, nTotal, bImm
 		TargetingManager.removeTarget(ActorManager.getCTNodeName(rSource), ActorManager.getCTNodeName(rTarget));
 	end
 end
+-- KEL
+function addBloodTrail(nodeCT, nBloodRatio)
+	if not nodeCT then
+		return;
+	end
 
+	local token = CombatManager.getTokenFromCT(nodeCT);
+	if not token then
+		return;
+	end
+
+	local sAsset, sTint = ImageDeathMarkerManager.resolveMarker(nodeCT);
+	if (sAsset or "") == "" then
+		return;
+	end
+	if (sTint or "") == "" then
+		sTint = "FFFFFFFF";
+	end
+
+	local sPath = DB.getPath(token.getContainerNode());
+	local nLayerID = ImageDeathMarkerManager.getMarkerLayer(sPath, true);
+
+	local x,y = token.getPosition();
+	local xAdj = math.random(100);
+	local yAdj = math.random(100);
+	x = x * xAdj / 100;
+	y = y * yAdj / 100;
+	local nGridScale = nBloodRatio * TokenManager.getTokenSpace(token);
+	Image.addLayerPaintStamp(sPath, nLayerID, { asset=sAsset, w=nGridScale, h=nGridScale, x=x, y=y, color=sTint });
+end
+-- END
 function messageDamage(rSource, rTarget, bSecret, sDamageType, sDamageDesc, sTotal, sExtraResult)
 	if not (rTarget or sExtraResult ~= "") then
 		return;

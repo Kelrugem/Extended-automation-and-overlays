@@ -35,6 +35,7 @@
 	<string name="option_label_SO">Save/Failure Overlay</string>
 	<string name="option_label_REV">NPC parsing: REVERT effect</string>
 	<string name="option_label_WO">Wound and Death Overlay</string>
+	<string name="option_label_BLOOD">Blood Trails</string>
 	<string name="option_header_overlays">Extended Automation by Kel</string>
 	<string name="option_val_standard">Standard</string>
 	<string name="power_label_school">School</string>
