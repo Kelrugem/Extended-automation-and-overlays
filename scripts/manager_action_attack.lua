@@ -208,6 +208,20 @@ function handleApplyAoO(msgOOB)
 	local rSourceCTNode = ActorManager.getCTNode(msgOOB.sSourceNode);
 	local aoo = DB.getValue(rSourceCTNode, "aoo", 0) + 1;
 	DB.setValue(rSourceCTNode, "aoo", "number", aoo);
+	excessAoOMessage(rSourceCTNode)
+end
+--By Bmos, thanks :)
+function excessAoOMessage(nodeCT)
+	local nAOO = DB.getValue(nodeCT, "aoo", 0);
+	local nMaxAOO = DB.getValue(nodeCT, "aoomax", 0);
+	local messagedata = { text = '', sender = ActorManager.resolveActor(nodeCT).sName, font = "emotefont" }
+	if nAOO == nMaxAOO then
+		messagedata.text = "Maximum Attacks of Opportunity Reached"
+		Comm.deliverChatMessage(messagedata)
+	elseif nAOO > nMaxAOO then
+		messagedata.text = "Maximum Attacks of Opportunity Exceeded"
+		Comm.deliverChatMessage(messagedata)
+	end
 end
 -- END
 
@@ -239,6 +253,7 @@ function modAttack(rSource, rTarget, rRoll)
 			local rSourceCTNode = ActorManager.getCTNode(rSource);
 			local aoo = DB.getValue(rSourceCTNode, "aoo", 0) + 1;
 			DB.setValue(rSourceCTNode, "aoo", "number", aoo);
+			excessAoOMessage(rSourceCTNode);
 		else
 			local msgOOB = {};
 			msgOOB.sSourceNode = ActorManager.getCreatureNodeName(rSource);
@@ -446,14 +461,8 @@ function modAttack(rSource, rTarget, rRoll)
 
 		-- If effects, then add them
 		if bEffects then
-			local sEffects = "";
 			local sMod = StringManager.convertDiceToString(aAddDice, nAddMod, true);
-			if sMod ~= "" then
-				sEffects = "[" .. Interface.getString("effects_tag") .. " " .. sMod .. "]";
-			else
-				sEffects = "[" .. Interface.getString("effects_tag") .. "]";
-			end
-			table.insert(aAddDesc, sEffects);
+			table.insert(aAddDesc, EffectManager.buildEffectOutput(sMod));
 		end
 	end
 	
@@ -539,13 +548,11 @@ function onAttack(rSource, rTarget, rRoll)
 		-- END
 		if rRoll.nAtkEffectsBonus ~= 0 then
 			rRoll.nTotal = rRoll.nTotal + rRoll.nAtkEffectsBonus;
-			local sFormat = "[" .. Interface.getString("effects_tag") .. " %+d]";
-			table.insert(rRoll.aMessages, string.format(sFormat, rRoll.nAtkEffectsBonus));
+			table.insert(rRoll.aMessages, EffectManager.buildEffectOutput(rRoll.nAtkEffectsBonus));
 		end
 		if rRoll.nDefEffectsBonus ~= 0 then
 			rRoll.nDefenseVal = rRoll.nDefenseVal + rRoll.nDefEffectsBonus;
-			local sFormat = "[" .. Interface.getString("effects_def_tag") .. " %+d]";
-			table.insert(rRoll.aMessages, string.format(sFormat, rRoll.nDefEffectsBonus));
+			table.insert(rRoll.aMessages, string.format("[%s %+d]", Interface.getString("effects_def_tag"), rRoll.nDefEffectsBonus));
 		end
 	end
 	
@@ -703,8 +710,7 @@ function onAttackResolve(rSource, rTarget, rRoll, rMessage)
 			end
 			
 			if (rRoll.nAtkEffectsBonus or 0) ~= 0 then
-				local sFormat = "[" .. Interface.getString("effects_tag") .. " %+d]";
-				rCritConfirmRoll.sDesc = rCritConfirmRoll.sDesc .. " " .. string.format(sFormat, rRoll.nAtkEffectsBonus);
+				rCritConfirmRoll.sDesc = string.format("%s %s", rCritConfirmRoll.sDesc, EffectManager.buildEffectOutput(rRoll.nAtkEffectsBonus));
 			end
 			
 			ActionsManager.roll(rSource, { rTarget }, rCritConfirmRoll, true);

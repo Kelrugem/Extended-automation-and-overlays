@@ -127,19 +127,22 @@ function setDeathOverlay(nodeCT, death, erase)
 		end
 	elseif sOptWO == "on" then
 		if nodeCT then
-			if Session.IsHost then
-				local deathNode = DB.createChild(nodeCT, "death","number"); 
-				if deathNode then
-					deathNode.setValue(death);
+			local rSource = ActorManager.resolveActor(nodeCT);
+			
+			if not EffectManager35E.hasEffectCondition(rSource, "noblood") then
+				if Session.IsHost then
+					local deathNode = DB.createChild(nodeCT, "death","number"); 
+					if deathNode then
+						deathNode.setValue(death);
+					end
+				else
+					local msgOOB = {};
+					msgOOB.type = OOB_MSGTYPE_APPLYWOUNDS;
+					msgOOB.sSourceNode = ActorManager.getCreatureNodeName(rSource);
+					
+					msgOOB.woundsnumber = death;
+					Comm.deliverOOBMessage(msgOOB, "");
 				end
-			else
-				local msgOOB = {};
-				msgOOB.type = OOB_MSGTYPE_APPLYWOUNDS;
-				local rSource = ActorManager.resolveActor(nodeCT);
-				msgOOB.sSourceNode = ActorManager.getCreatureNodeName(rSource);
-				
-				msgOOB.woundsnumber = death;
-				Comm.deliverOOBMessage(msgOOB, "");
 			end
 		end
 	end
