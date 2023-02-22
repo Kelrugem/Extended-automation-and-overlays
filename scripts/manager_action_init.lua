@@ -132,14 +132,8 @@ function modRoll(rSource, rTarget, rRoll)
 			end
 			rRoll.nMod = rRoll.nMod + nEffectMod;
 
-			local sEffects = "";
 			local sMod = StringManager.convertDiceToString(aEffectDice, nEffectMod, true);
-			if sMod ~= "" then
-				sEffects = "[" .. Interface.getString("effects_tag") .. " " .. sMod .. "]";
-			else
-				sEffects = "[" .. Interface.getString("effects_tag") .. "]";
-			end
-			rRoll.sDesc = rRoll.sDesc .. " " .. sEffects;
+			rRoll.sDesc = string.format("%s %s", rRoll.sDesc, EffectManager.buildEffectOutput(sMod));
 		end
 	end
 end

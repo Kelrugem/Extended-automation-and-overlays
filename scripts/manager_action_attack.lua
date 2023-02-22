@@ -208,6 +208,20 @@ function handleApplyAoO(msgOOB)
 	local rSourceCTNode = ActorManager.getCTNode(msgOOB.sSourceNode);
 	local aoo = DB.getValue(rSourceCTNode, "aoo", 0) + 1;
 	DB.setValue(rSourceCTNode, "aoo", "number", aoo);
+	excessAoOMessage(rSourceCTNode)
+end
+--By Bmos, thanks :)
+function excessAoOMessage(nodeCT)
+	local nAOO = DB.getValue(nodeCT, "aoo", 0);
+	local nMaxAOO = DB.getValue(nodeCT, "aoomax", 0);
+	local messagedata = { text = '', sender = ActorManager.resolveActor(nodeCT).sName, font = "emotefont" }
+	if nAOO == nMaxAOO then
+		messagedata.text = "Maximum Attacks of Opportunity Reached"
+		Comm.deliverChatMessage(messagedata)
+	elseif nAOO > nMaxAOO then
+		messagedata.text = "Maximum Attacks of Opportunity Exceeded"
+		Comm.deliverChatMessage(messagedata)
+	end
 end
 -- END
 
@@ -239,6 +253,7 @@ function modAttack(rSource, rTarget, rRoll)
 			local rSourceCTNode = ActorManager.getCTNode(rSource);
 			local aoo = DB.getValue(rSourceCTNode, "aoo", 0) + 1;
 			DB.setValue(rSourceCTNode, "aoo", "number", aoo);
+			excessAoOMessage(rSourceCTNode);
 		else
 			local msgOOB = {};
 			msgOOB.sSourceNode = ActorManager.getCreatureNodeName(rSource);

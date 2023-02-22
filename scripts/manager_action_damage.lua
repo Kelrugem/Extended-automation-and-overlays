@@ -894,14 +894,7 @@ function applyTargetedDmgEffectsToDamageOutput(rDamageOutput, rSource, rTarget, 
 
 	if nDamageEffectCount > 0 then
 		rDamageOutput.nVal = rDamageOutput.nVal + nDamageEffectTotal;
-
-		local sNotification;
-		if nDamageEffectTotal ~= 0 then
-			sNotification = string.format("[" .. Interface.getString("effects_tag") .. " %+d]", nDamageEffectTotal);
-		else
-			sNotification = "[" .. Interface.getString("effects_tag") .. "]";
-		end
-		table.insert(rDamageOutput.tNotifications, sNotification);
+		table.insert(rDamageOutput.tNotifications, EffectManager.buildEffectOutput(nDamageEffectTotal));
 	end
 end
 -- KEL adding tags
@@ -937,8 +930,7 @@ function applyTargetedDmgTypeEffectsToDamageOutput(rDamageOutput, rSource, rTarg
 		end
 		rDamageOutput.aDamageTypes = tNewDmgTypes;
 
-		local sNotification = "[" .. Interface.getString("effects_tag") .. " " .. table.concat(tAddDmgTypes, ",") .. "]";
-		table.insert(rDamageOutput.tNotifications, sNotification);
+		table.insert(rDamageOutput.tNotifications, EffectManager.buildEffectOutput(table.concat(tAddDmgTypes, ",")));
 	end
 end
 
@@ -2377,7 +2369,7 @@ function applyDamage(rSource, rTarget, bSecret, sRollType, sDamage, nTotal, bImm
 	end
 	if bShowStatus then
 		if sOriginalStatus ~= sNewStatus then
-			table.insert(rDamageOutput.tNotifications, "[" .. Interface.getString("combat_tag_status") .. ": " .. sNewStatus .. "]");
+			table.insert(rDamageOutput.tNotifications, string.format("[%s: %s]", Interface.getString("combat_tag_status"), sNewStatus));
 		end
 	end
 
@@ -2420,8 +2412,8 @@ function applyDamage(rSource, rTarget, bSecret, sRollType, sDamage, nTotal, bImm
 	-- KEL Blood trails
 	if (OptionsManager.getOption("BLOOD") == "on") then
 		local nodeCT = ActorManager.getCTNode(rTarget);
-		local nBloodRatio = math.min(nWounds / nTotalHP, 1);
-		if nWounds > 0 and not EffectManager35E.hasEffectCondition(rTarget, "noblood") then
+		if rDamageOutput.nVal > 0 and not EffectManager35E.hasEffectCondition(rTarget, "noblood") then
+			local nBloodRatio = math.min(rDamageOutput.nVal / nTotalHP, 1);
 			ActionDamage.addBloodTrail(nodeCT, nBloodRatio);
 		end
 	end
@@ -2444,7 +2436,7 @@ function applyDamage(rSource, rTarget, bSecret, sRollType, sDamage, nTotal, bImm
 		TargetingManager.removeTarget(ActorManager.getCTNodeName(rSource), ActorManager.getCTNodeName(rTarget));
 	end
 end
--- KEL
+-- KEL See addMarker in the ImageDeathMarkerManager
 function addBloodTrail(nodeCT, nBloodRatio)
 	if not nodeCT then
 		return;
@@ -2462,6 +2454,11 @@ function addBloodTrail(nodeCT, nBloodRatio)
 	if (sTint or "") == "" then
 		sTint = "FFFFFFFF";
 	end
+	
+	local vImage = ImageManager.getImageControl(token, false);
+	if not vImage then
+		return;
+	end
 
 	local sPath = DB.getPath(token.getContainerNode());
 	local nLayerID = ImageDeathMarkerManager.getMarkerLayer(sPath, true);
@@ -2469,10 +2466,13 @@ function addBloodTrail(nodeCT, nBloodRatio)
 	local x,y = token.getPosition();
 	local xAdj = math.random(100);
 	local yAdj = math.random(100);
-	-- Not correct yet
-	x = x * xAdj / 100;
-	y = y * yAdj / 100;
-	local nGridScale = nBloodRatio * TokenManager.getTokenSpace(token);
+	-- local nSpace = TokenManager.getTokenSpace(token);
+	local wToken, hToken = token.getSize();
+	local gridlength = vImage.getGridSize();
+	
+	x = x + wToken * ( xAdj/100 - 1/2 );
+	y = y + hToken * ( yAdj/100 - 1/2 );
+	local nGridScale = nBloodRatio * wToken/gridlength;
 	Image.addLayerPaintStamp(sPath, nLayerID, { asset=sAsset, w=nGridScale, h=nGridScale, x=x, y=y, color=sTint });
 end
 -- END

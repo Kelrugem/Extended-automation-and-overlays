@@ -327,14 +327,8 @@ function modSave(rSource, rTarget, rRoll)
 
 		-- If effects, then add them
 		if bEffects then
-			local sEffects = "";
 			local sMod = StringManager.convertDiceToString(aAddDice, nAddMod, true);
-			if sMod ~= "" then
-				sEffects = "[" .. Interface.getString("effects_tag") .. " " .. sMod .. "]";
-			else
-				sEffects = "[" .. Interface.getString("effects_tag") .. "]";
-			end
-			table.insert(aAddDesc, sEffects);
+			table.insert(aAddDesc, EffectManager.buildEffectOutput(sMod));
 		end
 	end
 	
