@@ -12,5 +12,6 @@ function registerOptions()
 	OptionsManager.registerOption2("REVERT",false, "option_header_overlays", "option_label_REV", "option_entry_cycler", 
 		{ labels = "option_val_on", values = "on", baselabel = "option_val_off", baseval = "off", default = "off" });
 	OptionsManager.registerOption2("BLOOD",false, "option_header_overlays", "option_label_BLOOD", "option_entry_cycler", 
-		{ labels = "option_val_on", values = "on", baselabel = "option_val_off", baseval = "off", default = "off" });
+		{ labels = "option_val_blood25|option_val_blood50|option_val_blood75|option_val_blood100", 
+			values = "25|50|75|100", baselabel = "option_val_off", baseval = "off", default = "off" });
 end
