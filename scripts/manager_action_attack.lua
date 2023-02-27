@@ -161,8 +161,8 @@ local function modAttack(rSource, rTarget, rRoll, ...)
 		-- Get attack effect modifiers
 		-- KEL New KEEN code for allowing several new configurations
 		local rActionCrit = tonumber(rRoll.crit) or 20;
-		local aKEEN = EffectManager35E.getEffectsByType(rSource, "KEEN", aAttackFilter, rTarget, false, rRoll.tags);
-		if (#aKEEN > 0) or EffectManager35E.hasEffect(rSource, "KEEN", rTarget, false, false, rRoll.tags) then
+		local aKEEN = EffectManager35E.getEffectsByType(rSource, "KEEN", aAttackFilter, rTarget, false);
+		if (#aKEEN > 0) or EffectManager35E.hasEffect(rSource, "KEEN", rTarget, false, false) then
 			rActionCrit = rActionCrit * 2 - 21;
 			bEffects = true;
 		end
