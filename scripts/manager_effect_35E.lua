@@ -323,11 +323,11 @@ function evalAbilityHelper(rActor, sEffectAbility, nodeSpellClass)
 	local sSign, sModifier, sNumber, sShortAbility, nMax = sEffectAbility:match("^%[([%+%-%^]*)([HTQd]?)([%d]?)([A-Z][A-Z][A-Z]?)(%d*)%]$");
 	-- KEL adding rollable stats (for damage especially)
 	-- local sSign, sDieSides = sEffectAbility:match("^%[([%-%+]?)[dD]([%dF]+)%]$");
-	local sDie, sDesc = sEffectAbility:match("^%[%s*(%S+)%s*(.*)%]$");
+	local sDie, _ = sEffectAbility:match("^%[%s*(%S+)%s*(.*)%]$");
 	local aDice, nMod = StringManager.convertStringToDice(sDie);
 	local IsDie = StringManager.isDiceString(sDie);
 	if IsDie then
-		for k,v in ipairs(aDice) do
+		for _,v in ipairs(aDice) do
 			local aSign, sDieSides = v:match("^([%-%+]?)[dD]([%dF]+)");
 			if sDieSides then
 				local nResult = 0;
@@ -385,7 +385,7 @@ function evalAbilityHelper(rActor, sEffectAbility, nodeSpellClass)
 		elseif sModifier == "Q" then
 			nAbility = nAbility / 4;
 		end
-		if sNumber and not (sModifier == "d") then
+		if sNumber and sModifier ~= "d" then
 			nAbility = nAbility * (tonumber(sNumber) or 1);
 		elseif ((sNumber or 0) ~= 0) and (sModifier == "d") then
 			nAbility = nAbility / (tonumber(sNumber) or 1);
@@ -430,7 +430,7 @@ function evalEffect(rActor, s, nodeSpellClass)
 		local rEffectComp = parseEffectComp(sComp);
 		for i = #(rEffectComp.remainder), 1, -1 do
 			-- KEL adding die possibility
-			local sDie, sDesc = rEffectComp.remainder[i]:match("^%[%s*(%S+)%s*(.*)%]$");
+			local sDie, _ = rEffectComp.remainder[i]:match("^%[%s*(%S+)%s*(.*)%]$");
 			-- KEL TQD stuff
 			if rEffectComp.remainder[i]:match("^%[([%+%-%^]*)([HTQd]?)([%d]?)([A-Z][A-Z][A-Z]?)(%d*)%]") or StringManager.isDiceString(sDie) then
 				local nAbility = evalAbilityHelper(rActor, rEffectComp.remainder[i], nodeSpellClass);
@@ -451,6 +451,7 @@ function getEffectsByType(rActor, sEffectType, aFilter, rFilterActor, bTargetedO
 	if not rActor then
 		return {};
 	end
+	rEffectSpell = rEffectSpell or rActor.tags;
 	local results = {};
 
 	-- Set up filters
@@ -467,9 +468,6 @@ function getEffectsByType(rActor, sEffectType, aFilter, rFilterActor, bTargetedO
 			end
 		end
 	end
-
-	-- Determine effect type targeting
-	local bTargetSupport = StringManager.isWord(sEffectType, DataCommon.targetableeffectcomps);
 
 	-- Iterate through effects
 	local aEffects = {};
@@ -619,7 +617,7 @@ function getEffectsByType(rActor, sEffectType, aFilter, rFilterActor, bTargetedO
 								for _,v2 in pairs(aOtherFilter) do
 									if type(v2) == "table" then
 										local bOtherTableMatch = true;
-										for k3, v3 in pairs(v2) do
+										for _, v3 in pairs(v2) do
 											if not StringManager.contains(aEffectOtherFilter, v3) then
 												bOtherTableMatch = false;
 												break;
@@ -676,6 +674,7 @@ function getEffectsBonusByType(rActor, aEffectType, bAddEmptyBonus, aFilter, rFi
 	if not rActor or not aEffectType then
 		return {}, 0;
 	end
+	rEffectSpell = rEffectSpell or rActor.tags;
 
 	-- MAKE BONUS TYPE INTO TABLE, IF NEEDED
 	if type(aEffectType) ~= "table" then
@@ -688,12 +687,12 @@ function getEffectsBonusByType(rActor, aEffectType, bAddEmptyBonus, aFilter, rFi
 	local penalties = {};
 	local nEffectCount = 0;
 
-	for k, v in pairs(aEffectType) do
+	for _, v in pairs(aEffectType) do
 		-- LOOK FOR EFFECTS THAT MATCH BONUSTYPE
 		local aEffectsByType = getEffectsByType(rActor, v, aFilter, rFilterActor, bTargetedOnly, rEffectSpell);
 
 		-- ITERATE THROUGH EFFECTS THAT MATCHED
-		for k2,v2 in pairs(aEffectsByType) do
+		for _,v2 in pairs(aEffectsByType) do
 			-- LOOK FOR ENERGY OR BONUS TYPES
 			local dmg_type = nil;
 			local mod_type = nil;
@@ -789,6 +788,7 @@ function getEffectsBonus(rActor, aEffectType, bModOnly, aFilter, rFilterActor, b
 		end
 		return {}, 0, 0;
 	end
+	rEffectSpell = rEffectSpell or rActor.tags;
 
 	-- MAKE BONUS TYPE INTO TABLE, IF NEEDED
 	if type(aEffectType) ~= "table" then
@@ -803,7 +803,7 @@ function getEffectsBonus(rActor, aEffectType, bModOnly, aFilter, rFilterActor, b
 	-- ITERATE THROUGH EACH BONUS TYPE
 	local masterbonuses = {};
 	local masterpenalties = {};
-	for k, v in pairs(aEffectType) do
+	for _, v in pairs(aEffectType) do
 		-- GET THE MODIFIERS FOR THIS MODIFIER TYPE
 		local effbonusbytype, nEffectSubCount = getEffectsBonusByType(rActor, v, true, aFilter, rFilterActor, bTargetedOnly, rEffectSpell);
 
@@ -812,7 +812,7 @@ function getEffectsBonus(rActor, aEffectType, bModOnly, aFilter, rFilterActor, b
 			-- IF MODIFIER TYPE IS UNTYPED, THEN APPEND TO TOTAL MODIFIER
 			-- (SUPPORTS DICE)
 			if k2 == "" or StringManager.contains(DataCommon.dmgtypes, k2) then
-				for k3, v3 in pairs(v2.dice) do
+				for _, v3 in pairs(v2.dice) do
 					table.insert(aTotalDice, v3);
 				end
 				nTotalMod = nTotalMod + v2.mod;
@@ -833,10 +833,10 @@ function getEffectsBonus(rActor, aEffectType, bModOnly, aFilter, rFilterActor, b
 	end
 
 	-- ADD INTEGRATED BONUSES AND PENALTIES FOR NON-ENERGY TYPED MODIFIERS
-	for k,v in pairs(masterbonuses) do
+	for _,v in pairs(masterbonuses) do
 		nTotalMod = nTotalMod + v;
 	end
-	for k,v in pairs(masterpenalties) do
+	for _,v in pairs(masterpenalties) do
 		nTotalMod = nTotalMod + v;
 	end
 
@@ -847,13 +847,14 @@ function getEffectsBonus(rActor, aEffectType, bModOnly, aFilter, rFilterActor, b
 end
 -- KEL Adding tags and IFTAG to
 function hasEffectCondition(rActor, sEffect, rEffectSpell)
-	return hasEffect(rActor, sEffect, nil, false, true, rEffectSpell);
+	return hasEffect(rActor, sEffect, nil, false, true, rEffectSpell or rActor.tags);
 end
 -- KEL add counter to hasEffect needed for dis/adv
 function hasEffect(rActor, sEffect, rTarget, bTargetedOnly, bIgnoreEffectTargets, rEffectSpell)
 	if not sEffect or not rActor then
 		return false, 0;
 	end
+	rEffectSpell = rEffectSpell or rActor.tags;
 	local sLowerEffect = sEffect:lower();
 	
 	-- Iterate through each effect
@@ -937,7 +938,6 @@ function hasEffect(rActor, sEffect, rTarget, bTargetedOnly, bIgnoreEffectTargets
 						nMatch = kEffectComp;
 					end
 				end
-
 			end
 			
 			-- If matched, then remove one-off effects
@@ -966,6 +966,7 @@ function hasEffect(rActor, sEffect, rTarget, bTargetedOnly, bIgnoreEffectTargets
 end
 
 function checkConditional(rActor, nodeEffect, aConditions, rTarget, aIgnore, rEffectSpell)
+	rEffectSpell = rEffectSpell or rActor.tags;
 	local bReturn = true;
 
 	if not aIgnore then
