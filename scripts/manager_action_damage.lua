@@ -53,7 +53,8 @@ function handleApplyDamage(msgOOB)
 	local bSFortif = {};
 	local MaxFortifMod = {};
 	local bPFMode = DataCommon.isPFRPG();
-	if AdvancedEffects then
+
+	if AdvancedEffects and rSource then
 		rSource.nodeItem = msgOOB.nodeItem;
  		rSource.nodeAmmo = msgOOB.nodeAmmo;
  		rSource.nodeWeapon = msgOOB.nodeWeapon;
@@ -274,7 +275,8 @@ function notifyApplyDamage(rSource, rTarget, bSecret, sRollType, sDesc, nTotal, 
 	msgOOB.sSourceNode = ActorManager.getCreatureNodeName(rSource);
 	msgOOB.sTargetNode = ActorManager.getCreatureNodeName(rTarget);
 	msgOOB.nTargetOrder = rTarget.nOrder;
-	if AdvancedEffects then
+
+	if AdvancedEffects and rSource then
 		msgOOB.nodeItem = rSource.nodeItem;
 		msgOOB.nodeAmmo = rSource.nodeAmmo;
 		msgOOB.nodeWeapon = rSource.nodeWeapon;
