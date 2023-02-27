@@ -46,6 +46,29 @@ local function getRoll(rActor, rAction, tag, ...)
 	return rRoll;
 end
 
+--By Bmos, thanks :)
+function excessAoOMessage(nodeCT)
+	local nAOO = DB.getValue(nodeCT, "aoo", 0);
+	local nMaxAOO = DB.getValue(nodeCT, "aoomax", 0);
+	local messagedata = { text = '', sender = ActorManager.resolveActor(nodeCT).sName, font = "emotefont" }
+	if nAOO == nMaxAOO then
+		messagedata.text = "Maximum Attacks of Opportunity Reached"
+		Comm.deliverChatMessage(messagedata)
+	elseif nAOO > nMaxAOO then
+		messagedata.text = "Maximum Attacks of Opportunity Exceeded"
+		Comm.deliverChatMessage(messagedata)
+	end
+end
+
+-- KEL AoO
+function handleApplyAoO(msgOOB)
+	-- local rSource = ActorManager.resolveActor(msgOOB.sSourceNode);
+	local rSourceCTNode = ActorManager.getCTNode(msgOOB.sSourceNode);
+	local aoo = DB.getValue(rSourceCTNode, "aoo", 0) + 1;
+	DB.setValue(rSourceCTNode, "aoo", "number", aoo);
+	excessAoOMessage(rSourceCTNode)
+end
+
 local modAttack_old;
 local function modAttack(rSource, rTarget, rRoll, ...)
 	if rSource and rRoll then rSource.tags = rRoll.tags; end
@@ -77,6 +100,7 @@ local function modAttack(rSource, rTarget, rRoll, ...)
 		end
 		--END
 	end
+
 	-- KEL remove [FF] tag added to sDesc by modAttack_old if target is flat-footed but has uncanny dodge
 	if bFlatFooted and ActorManager35E.hasSpecialAbility(rTarget, "Uncanny Dodge", false, false, true) then
 		rRoll.sDesc = rRoll.sDesc:gsub('%s*%[FF%]', '');
@@ -137,9 +161,9 @@ local function modAttack(rSource, rTarget, rRoll, ...)
 		-- Get attack effect modifiers
 		-- KEL New KEEN code for allowing several new configurations
 		local rActionCrit = tonumber(rRoll.crit) or 20;
-		local aKEEN = EffectManager35E.getEffectsByType(rSource, "KEEN", aAttackFilter, rTarget, false);
-		if (#aKEEN > 0) or EffectManager35E.hasEffect(rSource, "KEEN", rTarget, false, false) then
-			rActionCrit = 20 - ((20 - rActionCrit + 1) * 2) + 1;
+		local aKEEN = EffectManager35E.getEffectsByType(rSource, "KEEN", aAttackFilter, rTarget, false, rRoll.tags);
+		if (#aKEEN > 0) or EffectManager35E.hasEffect(rSource, "KEEN", rTarget, false, false, rRoll.tags) then
+			rActionCrit = rActionCrit * 2 - 21;
 			bEffects = true;
 		end
 		if rActionCrit < 20 and not rRoll.sDesc:match('%[CRIT %d+%]')then
@@ -149,12 +173,8 @@ local function modAttack(rSource, rTarget, rRoll, ...)
 
 		-- If effects, then add them
 		if bEffects then
-			local sEffects = "[" .. Interface.getString("effects_tag") .. "]";
 			local sMod = StringManager.convertDiceToString(aAddDice, nAddMod, true);
-			if sMod ~= "" then
-				sEffects = "[" .. Interface.getString("effects_tag") .. " " .. sMod .. "]";
-			end
-			table.insert(aAddDesc, sEffects);
+			table.insert(aAddDesc, EffectManager.buildEffectOutput(sMod));
 		end
 	end
 
@@ -233,13 +253,11 @@ function onAttack(rSource, rTarget, rRoll)
 		-- END
 		if rRoll.nAtkEffectsBonus ~= 0 then
 			rRoll.nTotal = rRoll.nTotal + rRoll.nAtkEffectsBonus;
-			local sFormat = "[" .. Interface.getString("effects_tag") .. " %+d]";
-			table.insert(rRoll.aMessages, string.format(sFormat, rRoll.nAtkEffectsBonus));
+			table.insert(rRoll.aMessages, EffectManager.buildEffectOutput(rRoll.nAtkEffectsBonus));
 		end
 		if rRoll.nDefEffectsBonus ~= 0 then
 			rRoll.nDefenseVal = rRoll.nDefenseVal + rRoll.nDefEffectsBonus;
-			local sFormat = "[" .. Interface.getString("effects_def_tag") .. " %+d]";
-			table.insert(rRoll.aMessages, string.format(sFormat, rRoll.nDefEffectsBonus));
+			table.insert(rRoll.aMessages, string.format("[%s %+d]", Interface.getString("effects_def_tag"), rRoll.nDefEffectsBonus));
 		end
 	end
 
@@ -395,8 +413,7 @@ function onAttackResolve(rSource, rTarget, rRoll, rMessage)
 			end
 
 			if (rRoll.nAtkEffectsBonus or 0) ~= 0 then
-				local sFormat = "[" .. Interface.getString("effects_tag") .. " %+d]";
-				rCritConfirmRoll.sDesc = rCritConfirmRoll.sDesc .. " " .. string.format(sFormat, rRoll.nAtkEffectsBonus);
+				rCritConfirmRoll.sDesc = string.format("%s %s", rCritConfirmRoll.sDesc, EffectManager.buildEffectOutput(rRoll.nAtkEffectsBonus));
 			end
 
 			ActionsManager.roll(rSource, { rTarget }, rCritConfirmRoll, true);

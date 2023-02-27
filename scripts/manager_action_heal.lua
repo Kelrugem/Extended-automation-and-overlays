@@ -54,6 +54,11 @@ function getRoll(rActor, rAction, tag)
 			rRoll.sDesc = rRoll.sDesc .. " [MAXIMIZE]";
 		end
 	end
+	
+	-- Self targeting
+	if rAction.sTargeting == "self" then
+		rRoll.bSelfTarget = true;
+	end
 
 	return rRoll;
 end
@@ -121,14 +126,8 @@ function modHeal(rSource, rTarget, rRoll)
 		
 		-- Add note about effects
 		if bEffects then
-			local sEffects = "";
 			local sMod = StringManager.convertDiceToString(aEffectDice, nEffectMod, true);
-			if sMod ~= "" then
-				sEffects = "[" .. Interface.getString("effects_tag") .. " " .. sMod .. "]";
-			else
-				sEffects = "[" .. Interface.getString("effects_tag") .. "]";
-			end
-			table.insert(aAddDesc, sEffects);
+			table.insert(aAddDesc, EffectManager.buildEffectOutput(sMod));
 		end
 	end
 	

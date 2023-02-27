@@ -140,15 +140,13 @@ function onNPCPostAdd(tCustom)
 	-- Offensive properties
 	local nodeAttacks = DB.createChild(tCustom.nodeCT, "attacks");
 	if nodeAttacks then
-		for _,v in pairs(nodeAttacks.getChildren()) do
-			v.delete();
-		end
+		DB.deleteChildren(nodeAttacks);
 		
 		local nAttacks = 0;
 		
 		local sAttack = DB.getValue(nodeNPC, "atk", "");
 		if sAttack ~= "" then
-			local nodeValue = nodeAttacks.createChild();
+			local nodeValue = DB.createChild(nodeAttacks);
 			if nodeValue then
 				DB.setValue(nodeValue, "value", "string", sAttack);
 				nAttacks = nAttacks + 1;
@@ -157,7 +155,7 @@ function onNPCPostAdd(tCustom)
 		
 		local sFullAttack = DB.getValue(nodeNPC, "fullatk", "");
 		if sFullAttack ~= "" then
-			nodeValue = nodeAttacks.createChild();
+			nodeValue = DB.createChild(nodeAttacks);
 			if nodeValue then
 				DB.setValue(nodeValue, "value", "string", sFullAttack);
 				nAttacks = nAttacks + 1;
@@ -165,7 +163,7 @@ function onNPCPostAdd(tCustom)
 		end
 		
 		if nAttacks == 0 then
-			nodeAttacks.createChild();
+			DB.createChild(nodeAttacks);
 		end
 	end
 	
@@ -713,14 +711,10 @@ function clearExpiringEffects(bShort)
 		local sApply = DB.getValue(nodeEffect, "apply", "");
 		
 		if nDuration ~= 0 or sApply ~= "" or sLabel == "" then
-			if bShort then
-				if nDuration > 50 then
-					DB.setValue(nodeEffect, "duration", "number", nDuration - 50);
-				else
-					nodeEffect.delete();
-				end
+			if bShort and (nDuration > 50) then
+				DB.setValue(nodeEffect, "duration", "number", nDuration - 50);
 			else
-				nodeEffect.delete();
+				DB.deleteNode(nodeEffect);
 			end
 		end
 	end
@@ -754,132 +748,31 @@ function rest(bShort)
 	end
 end
 
+function rollInit(sType)
+	CombatManager.rollTypeInit(sType, CombatManager2.rollEntryInit);
+end
+
 function rollEntryInit(nodeEntry)
+	CombatManager.rollStandardEntryInit(CombatManager2.getEntryInitRecord(nodeEntry));
+end
+function getEntryInitRecord(nodeEntry)
 	if not nodeEntry then
-		return;
+		return nil;
 	end
-	
+
+	local tInit = { nodeEntry = nodeEntry };
+
 	-- Start with the base initiative bonus
-	local nInit = DB.getValue(nodeEntry, "init", 0);
-	
+	tInit.nMod = DB.getValue(nodeEntry, "init", 0);
+
 	-- Get any effect modifiers
 	local rActor = ActorManager.resolveActor(nodeEntry);
 	local bEffects, aEffectDice, nEffectMod = ActionInit.getEffectAdjustments(rActor);
 	if bEffects then
-		nInit = nInit + StringManager.evalDice(aEffectDice, nEffectMod);
-	end
-	
-	-- KEL FFOS
-	local nCurrent = DB.getValue("combattracker.round", 0);
-	local sOptFFOS = OptionsManager.getOption("FFOS");
-	local bHasUncDodge = false;
-	if (sOptFFOS == "on") and (nCurrent == 0) then
-		local sSourceType, nodeSource = ActorManager.getTypeAndNode(rActor);
-		if sSourceType == "pc" then
-			for _,v in pairs(DB.getChildren(nodeSource, "specialabilitylist")) do
-				local sAbilityname = string.lower(DB.getValue(v, "name", ""));
-				if string.match(sAbilityname, "improved uncanny dodge") or string.match(sAbilityname, "uncanny dodge") then
-					bHasUncDodge = true;
-				end
-			end
-		else
-			local sAbilityname = string.lower(DB.getValue(nodeSource, "specialqualities", ""));
-			if string.match(sAbilityname, "improved uncanny dodge") or string.match(sAbilityname, "uncanny dodge") then
-				bHasUncDodge = true;
-			end
-		end
-	end
-	-- END
-	
-	-- For PCs, we always roll unique initiative
-	local sClass, sRecord = DB.getValue(vChild, "link", "", "");
-	if sClass == "charsheet" then
-		local nInitResult = math.random(20) + nInit;
-		DB.setValue(nodeEntry, "initresult", "number", nInitResult);
-		-- KEL FFOS
-		if sOptFFOS == "on" then
-			if nCurrent == 0 and not bHasUncDodge then
-				EffectManager.addEffect("", "", nodeEntry, { sName = "Flatfooted", nDuration = 1, nInit = nInitResult, nGMOnly = 0 }, false);
-			end
-		end
-		-- END
-		return;
-	end
-	
-	-- For NPCs, if NPC init option is not group, then roll unique initiative
-	local sOptINIT = OptionsManager.getOption("INIT");
-	if sOptINIT ~= "group" then
-		local nInitResult = math.random(20) + nInit;
-		DB.setValue(nodeEntry, "initresult", "number", nInitResult);
-		-- KEL FFOS
-		if sOptFFOS == "on" then
-			if nCurrent == 0 and not bHasUncDodge then
-				EffectManager.addEffect("", "", nodeEntry, { sName = "Flatfooted", nDuration = 1, nInit = nInitResult, nGMOnly = 1 }, false);
-			end
-		end
-		-- END
-		return;
+		tInit.nMod = tInit.nMod + StringManager.evalDice(aEffectDice, nEffectMod);
 	end
 
-	-- For NPCs with group option enabled
-	
-	-- Get the entry's database node name and creature name
-	local sStripName = CombatManager.stripCreatureNumber(DB.getValue(nodeEntry, "name", ""));
-	if sStripName == "" then
-		local nInitResult = math.random(20) + nInit;
-		DB.setValue(nodeEntry, "initresult", "number", nInitResult);
-		-- KEL FFOS
-		if sOptFFOS == "on" then
-			if nCurrent == 0 and not bHasUncDodge then
-				EffectManager.addEffect("", "", nodeEntry, { sName = "Flatfooted", nDuration = 1, nInit = nInitResult, nGMOnly = 1 }, false);
-			end
-		end
-		-- END
-		return;
-	end
-		
-	-- Iterate through list looking for other creature's with same name
-	local nLastInit = nil;
-	local sEntryFaction = DB.getValue(nodeEntry, "friendfoe", "");
-	for _,v in pairs(CombatManager.getCombatantNodes()) do
-		if v.getName() ~= nodeEntry.getName() then
-			if DB.getValue(v, "friendfoe", "") == sEntryFaction then
-				local sTemp = CombatManager.stripCreatureNumber(DB.getValue(v, "name", ""));
-				if sTemp == sStripName then
-					local nChildInit = DB.getValue(v, "initresult", 0);
-					if nChildInit ~= -10000 then
-						nLastInit = nChildInit;
-					end
-				end
-			end
-		end
-	end
-	
-	-- If we found similar creatures, then match the initiative of the last one found
-	if nLastInit then
-		DB.setValue(nodeEntry, "initresult", "number", nLastInit);
-		-- KEL FFOS
-		if sOptFFOS == "on" then
-			if nCurrent == 0 and not bHasUncDodge then
-				EffectManager.addEffect("", "", nodeEntry, { sName = "Flatfooted", nDuration = 1, nInit = nLastInit, nGMOnly = 1 }, false);
-			end
-		end
-		-- END
-	else
-		local nInitResult = math.random(20) + nInit;
-		DB.setValue(nodeEntry, "initresult", "number", nInitResult);
-		-- KEL FFOS
-		if sOptFFOS == "on" then
-			if nCurrent == 0 and not bHasUncDodge then
-				EffectManager.addEffect("", "", nodeEntry, { sName = "Flatfooted", nDuration = 1, nInit = nInitResult, nGMOnly = 1 }, false);
-			end
-		end
-		-- END
-	end
-end
-
-function rollInit(sType)
-	CombatManager.rollTypeInit(sType, rollEntryInit);
+	return tInit;
 end
 
 --
@@ -1344,7 +1237,7 @@ function calcBattleXP(nodeBattle)
 		local sTargetNPCList = LibraryData.getCustomData("battle", "npclist") or "npclist";
 
 		local nXP = 0;
-		for _, vNPCItem in pairs(DB.getChildren(nodeBattle, sTargetNPCList)) do
+		for _, vNPCItem in ipairs(DB.getChildList(nodeBattle, sTargetNPCList)) do
 			local sClass, sRecord = DB.getValue(vNPCItem, "link", "", "");
 			if sRecord ~= "" then
 				local nodeNPC = DB.findNode(sRecord);

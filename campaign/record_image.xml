@@ -18,6 +18,7 @@
 			<image_toolbar_toggle_preview name="toggle_preview" />
 			<image_toolbar_toggle_tokenlock name="toggle_tokenlock" />
 			<image_toolbar_toggle_shortcut name="toggle_shortcut" />
+			<image_toolbar_button_deathmarkerclear name="deathmarker_clear" />
 			<image_toolbar_separator name="h4" />
 
 			<image_toolbar_targeting name="toolbar_targeting" />

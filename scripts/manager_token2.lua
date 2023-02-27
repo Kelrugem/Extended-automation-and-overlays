@@ -23,14 +23,14 @@ end
 function setSaveOverlay(nodeCT, success, erase)
 	local sOptSO = OptionsManager.getOption("SO");
 	if erase then
-		local saveclearNode = nodeCT.createChild("saveclear","number"); 
+		local saveclearNode = DB.createChild(nodeCT, "saveclear","number"); 
 		if saveclearNode then
 			saveclearNode.setValue(success);
 		end
 	elseif sOptSO == "on" then
 		if nodeCT then
 			if Session.IsHost then
-				local saveclearNode = nodeCT.createChild("saveclear","number"); 
+				local saveclearNode = DB.createChild(nodeCT, "saveclear","number"); 
 				if saveclearNode then
 					if success < getSaveOverlay(nodeCT) then
 						saveclearNode.setValue(success); 
@@ -55,7 +55,7 @@ function handleApplyOverlay(msgOOB)
 	local nodeCT = ActorManager.getCTNode(rSource);
 	
 	if nodeCT then
-		local saveclearNode = nodeCT.createChild("saveclear","number"); 
+		local saveclearNode = DB.createChild(nodeCT, "saveclear","number"); 
 		if saveclearNode then
 			if success < getSaveOverlay(nodeCT) then
 				saveclearNode.setValue(success); 
@@ -66,17 +66,17 @@ end
 
 function getSaveOverlay(nodeCT)
 	if nodeCT then
-		local saveoverlayNode = nodeCT.getChild("saveclear","number"); 
+		local saveoverlayNode = DB.getChild(nodeCT, "saveclear","number"); 
 		if saveoverlayNode then
-			return saveoverlayNode.getValue(); 
+			return DB.getValue(saveoverlayNode); 
 		end
 	end
 end
 
 function updateSaveOverlay(nodeField)
-	local nodeCT = nodeField.getParent();
+	local nodeCT = DB.getParent(nodeField);
 	local tokenCT = CombatManager.getTokenFromCT(nodeCT);
-	local success = nodeField.getValue(); 
+	local success = DB.getValue(nodeField); 
 	local widgetSuccess;
 
 	if tokenCT then
@@ -121,25 +121,28 @@ end
 function setDeathOverlay(nodeCT, death, erase)
 	local sOptWO = OptionsManager.getOption("WO");
 	if erase then
-		local deathNode = nodeCT.createChild("death","number"); 
+		local deathNode = DB.createChild(nodeCT, "death","number"); 
 		if deathNode then
 			deathNode.setValue(death);
 		end
 	elseif sOptWO == "on" then
 		if nodeCT then
-			if Session.IsHost then
-				local deathNode = nodeCT.createChild("death","number"); 
-				if deathNode then
-					deathNode.setValue(death);
+			local rSource = ActorManager.resolveActor(nodeCT);
+			
+			if not EffectManager35E.hasEffectCondition(rSource, "noblood") then
+				if Session.IsHost then
+					local deathNode = DB.createChild(nodeCT, "death","number"); 
+					if deathNode then
+						deathNode.setValue(death);
+					end
+				else
+					local msgOOB = {};
+					msgOOB.type = OOB_MSGTYPE_APPLYWOUNDS;
+					msgOOB.sSourceNode = ActorManager.getCreatureNodeName(rSource);
+					
+					msgOOB.woundsnumber = death;
+					Comm.deliverOOBMessage(msgOOB, "");
 				end
-			else
-				local msgOOB = {};
-				msgOOB.type = OOB_MSGTYPE_APPLYWOUNDS;
-				local rSource = ActorManager.resolveActor(nodeCT);
-				msgOOB.sSourceNode = ActorManager.getCreatureNodeName(rSource);
-				
-				msgOOB.woundsnumber = death;
-				Comm.deliverOOBMessage(msgOOB, "");
 			end
 		end
 	end
@@ -151,7 +154,7 @@ function handleApplyWounds(msgOOB)
 	local nodeCT = ActorManager.getCTNode(rSource);
 	
 	if nodeCT then
-		local deathNode = nodeCT.createChild("death","number"); 
+		local deathNode = DB.createChild(nodeCT, "death","number"); 
 		if deathNode then
 			deathNode.setValue(death);
 		end
@@ -159,9 +162,9 @@ function handleApplyWounds(msgOOB)
 end
 
 function updateDeathOverlay(nodeField)
-	local nodeCT = nodeField.getParent();
+	local nodeCT = DB.getParent(nodeField);
 	local tokenCT = CombatManager.getTokenFromCT(nodeCT);
-	local deathvalue = nodeField.getValue(); 
+	local deathvalue = DB.getValue(nodeField); 
 	local widgetDeath;
 
 	if tokenCT then
