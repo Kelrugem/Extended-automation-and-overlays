@@ -2412,8 +2412,8 @@ function applyDamage(rSource, rTarget, bSecret, sRollType, sDamage, nTotal, bImm
 	end
 	
 	-- KEL Blood trails
-	local sBloodOpt = OptionsManager.getOption("BLOOD");
-	if (sBloodOpt ~= "off") then
+	local sBloodOpt = OptionsManager.getOption("KELBLOOD");
+	if ( (sBloodOpt or "off") ~= "off") then
 		local nodeCT = ActorManager.getCTNode(rTarget);
 		local nBloodRatio = math.min(rDamageOutput.nVal / nTotalHP, 1);
 		local nBloodOpt = tonumber(sBloodOpt);
