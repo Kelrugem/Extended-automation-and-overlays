@@ -97,7 +97,6 @@ end
 
 function getVsRoll(rActor, sSave, sSaveDesc, tags)
 	local rRoll = {};
-	local VSData = {};
 	rRoll.sType = "save";
 	rRoll.aDice = { "d20" };
 	rRoll.nMod = 0;
@@ -115,7 +114,6 @@ function getVsRoll(rActor, sSave, sSaveDesc, tags)
 	end
 
 	rRoll.sDesc = "[SAVE] " .. StringManager.capitalize(sSave);
-	
 	if sAbility and sAbility ~= "" then
 		if (sSave == "fortitude" and sAbility ~= "constitution") or
 				(sSave == "reflex" and sAbility ~= "dexterity") or
