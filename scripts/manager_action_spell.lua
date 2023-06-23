@@ -131,7 +131,7 @@ function getSpellCastRoll(rActor, rAction, tag)
 	if rAction.order and rAction.order > 1 then
 		rRoll.sDesc = rRoll.sDesc .. " #" .. rAction.order;
 	end
-	rRoll.sDesc = rRoll.sDesc .. "] " .. rAction.label;
+	rRoll.sDesc = rRoll.sDesc .. "] " .. StringManager.capitalizeAll(rAction.label);
 	
 	-- KEL adding tags to chat message
 	if rRoll.tags then
@@ -154,7 +154,7 @@ function getCLCRoll(rActor, rAction, tag)
 	if rAction.order and rAction.order > 1 then
 		rRoll.sDesc = rRoll.sDesc .. " #" .. rAction.order;
 	end
-	rRoll.sDesc = rRoll.sDesc .. "] " .. rAction.label;
+	rRoll.sDesc = rRoll.sDesc .. "] " .. StringManager.capitalizeAll(rAction.label);
 	if rAction.sr == "no" then
 		rRoll.sDesc = rRoll.sDesc .. " [SR NOT ALLOWED]";
 	end
@@ -179,7 +179,7 @@ function getSaveVsRoll(rActor, rAction, tag)
 	if rAction.order and rAction.order > 1 then
 		rRoll.sDesc = rRoll.sDesc .. " #" .. rAction.order;
 	end
-	rRoll.sDesc = rRoll.sDesc .. "] " .. rAction.label;
+	rRoll.sDesc = rRoll.sDesc .. "] " .. StringManager.capitalizeAll(rAction.label);
 	if rAction.save == "fortitude" then
 		rRoll.sDesc = rRoll.sDesc .. " [FORT DC " .. rAction.savemod .. "]";
 	elseif rAction.save == "reflex" then
@@ -227,10 +227,13 @@ function modCLC(rSource, rTarget, rRoll)
 		
 		-- Get CLC modifier effects
 		-- KEL adding tags
-		local nCLCMod, nCLCCount = EffectManager35E.getEffectsBonus(rSource, {"CLC"}, true, nil, rTarget, false, rRoll.tags);
+		local tCLCDice, nCLCMod, nCLCCount = EffectManager35E.getEffectsBonus(rSource, {"CLC"}, false, nil, rTarget, false, rRoll.tags);
 		-- END
 		if nCLCCount > 0 then
 			bEffects = true;
+			for _,v in ipairs(tCLCDice) do
+				table.insert(aAddDice, v);
+			end
 			nAddMod = nAddMod + nCLCMod;
 		end
 		

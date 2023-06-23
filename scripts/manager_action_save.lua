@@ -73,7 +73,7 @@ function performPartySheetRoll(draginfo, rActor, sSave)
 end
 
 function performVsRoll(draginfo, rActor, sSave, nTargetDC, bSecretRoll, rSource, bRemoveOnMiss, sSaveDesc, tags)
-	local rRoll = getVsRoll(rActor, sSave, sSaveDesc, tags);
+	local rRoll = getRoll(rActor, sSave, tags);
 
 	if bSecretRoll then
 		rRoll.bSecret = true;
@@ -93,11 +93,18 @@ function performVsRoll(draginfo, rActor, sSave, nTargetDC, bSecretRoll, rSource,
 	ActionsManager.performAction(draginfo, rActor, rRoll);
 end
 
--- ROLL VS SCHOOL ETC
+function performRoll(draginfo, rActor, sSave)
+	local rRoll = getRoll(rActor, sSave);
+	
+	if Session.IsHost and CombatManager.isCTHidden(ActorManager.getCTNode(rActor)) then
+		rRoll.bSecret = true;
+	end
 
-function getVsRoll(rActor, sSave, sSaveDesc, tags)
+	ActionsManager.performAction(draginfo, rActor, rRoll);
+end
+-- KEL adding tags
+function getRoll(rActor, sSave, tags)
 	local rRoll = {};
-	local VSData = {};
 	rRoll.sType = "save";
 	rRoll.aDice = { "d20" };
 	rRoll.nMod = 0;
@@ -114,8 +121,7 @@ function getVsRoll(rActor, sSave, sSaveDesc, tags)
 		end
 	end
 
-	rRoll.sDesc = "[SAVE] " .. StringManager.capitalize(sSave);
-	
+	rRoll.sDesc = "[SAVE] " .. StringManager.capitalizeAll(sSave);
 	if sAbility and sAbility ~= "" then
 		if (sSave == "fortitude" and sAbility ~= "constitution") or
 				(sSave == "reflex" and sAbility ~= "dexterity") or
@@ -128,55 +134,11 @@ function getVsRoll(rActor, sSave, sSaveDesc, tags)
 	end
 	-- KEL Add tags
 	rRoll.tags = tags;
+	--END
 	
 	return rRoll;
 end
-
--- END ROLL VS SCHOOL ETC
-
-function performRoll(draginfo, rActor, sSave)
-	local rRoll = getRoll(rActor, sSave);
-	
-	if Session.IsHost and CombatManager.isCTHidden(ActorManager.getCTNode(rActor)) then
-		rRoll.bSecret = true;
-	end
-
-	ActionsManager.performAction(draginfo, rActor, rRoll);
-end
-
-function getRoll(rActor, sSave)
-	local rRoll = {};
-	rRoll.sType = "save";
-	rRoll.aDice = { "d20" };
-	rRoll.nMod = 0;
-	
-	-- Look up actor specific information
-	local sAbility = nil;
-	local sNodeType, nodeActor = ActorManager.getTypeAndNode(rActor);
-	if nodeActor then
-		if sNodeType == "pc" then
-			rRoll.nMod = DB.getValue(nodeActor, "saves." .. sSave .. ".total", 0);
-			sAbility = DB.getValue(nodeActor, "saves." .. sSave .. ".ability", "");
-		else
-			rRoll.nMod = DB.getValue(nodeActor, sSave .. "save", 0);
-		end
-	end
-
-	rRoll.sDesc = "[SAVE] " .. StringManager.capitalize(sSave);
-	if sAbility and sAbility ~= "" then
-		if (sSave == "fortitude" and sAbility ~= "constitution") or
-				(sSave == "reflex" and sAbility ~= "dexterity") or
-				(sSave == "will" and sAbility ~= "wisdom") then
-			local sAbilityEffect = DataCommon.ability_ltos[sAbility];
-			if sAbilityEffect then
-				rRoll.sDesc = rRoll.sDesc .. " [MOD:" .. sAbilityEffect .. "]";
-			end
-		end
-	end
-	
-	return rRoll;
-end
-
+-- END
 function modSave(rSource, rTarget, rRoll)
 	local aAddDesc = {};
 	local aAddDice = {};
@@ -277,6 +239,10 @@ function modSave(rSource, rTarget, rRoll)
 					bEffects = true;
 				end
 			else
+				for _,v2 in pairs(v.dice) do
+					table.insert(aAddDice, v2);
+				end
+				
 				nAddMod = nAddMod + v.mod;
 				bEffects = true;
 			end

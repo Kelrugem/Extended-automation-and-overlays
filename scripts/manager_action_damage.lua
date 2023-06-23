@@ -306,7 +306,7 @@ function getRoll(rActor, rAction, tag)
 		rRoll.sDesc = rRoll.sDesc .. " (" .. rAction.range ..")";
 		rRoll.range = rAction.range;
 	end
-	rRoll.sDesc = rRoll.sDesc .. "] " .. rAction.label;
+	rRoll.sDesc = rRoll.sDesc .. "] " .. StringManager.capitalizeAll(rAction.label);
 
 	-- Save the damage clauses in the roll structure
 	rRoll.clauses = rAction.clauses;
