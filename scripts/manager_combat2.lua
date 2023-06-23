@@ -11,6 +11,8 @@ function onInit()
 	CombatManager.setCustomTurnEnd(onTurnEnd);
 	CombatManager.setCustomCombatReset(resetInit);
 	
+	ActorCommonManager.setDefaultSpaceReachFromActorSizeKey("D20");
+	ActorCommonManager.setRecordTypeSpaceReachCallback("charsheet", ActorCommonManager.getSpaceReachFromSizeFieldCore);
 	ActorCommonManager.setRecordTypeSpaceReachCallback("npc", ActorCommonManager.getSpaceReachDnD3Legacy);
 	CombatRecordManager.setRecordTypePostAddCallback("npc", onNPCPostAdd);
 end

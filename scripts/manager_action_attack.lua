@@ -29,28 +29,20 @@ function handleApplyAttack(msgOOB)
 	local rSource = ActorManager.resolveActor(msgOOB.sSourceNode);
 	local rTarget = ActorManager.resolveActor(msgOOB.sTargetNode);
 	
-	local nTotal = tonumber(msgOOB.nTotal) or 0;
-	ActionAttack.applyAttack(rSource, rTarget, (tonumber(msgOOB.nSecret) == 1), msgOOB.sAttackType, msgOOB.sDesc, nTotal, msgOOB.sResults);
+	local rRoll = UtilityManager.decodeRollFromOOB(msgOOB);
+	ActionAttack.applyAttack(rSource, rTarget, rRoll);
 end
 
-function notifyApplyAttack(rSource, rTarget, bSecret, sAttackType, sDesc, nTotal, sResults)
+function notifyApplyAttack(rSource, rTarget, rRoll)
 	if not rTarget then
 		return;
 	end
 
-	local msgOOB = {};
-	msgOOB.type = OOB_MSGTYPE_APPLYATK;
-	
-	if bSecret then
-		msgOOB.nSecret = 1;
-	else
-		msgOOB.nSecret = 0;
-	end
-	msgOOB.sAttackType = sAttackType;
-	msgOOB.nTotal = nTotal;
-	msgOOB.sDesc = sDesc;
-	msgOOB.sResults = sResults;
+	rRoll.bSecret = rRoll.bTower;
+	rRoll.sResults = table.concat(rRoll.aMessages, " ");
 
+	local msgOOB = UtilityManager.encodeRollToOOB(rRoll);
+	msgOOB.type = ActionAttack.OOB_MSGTYPE_APPLYATK;
 	msgOOB.sSourceNode = ActorManager.getCreatureNodeName(rSource);
 	msgOOB.sTargetNode = ActorManager.getCreatureNodeName(rTarget);
 
@@ -121,7 +113,7 @@ function getRoll(rActor, rAction, tag)
 		if rAction.order and rAction.order > 1 then
 			rRoll.sDesc = rRoll.sDesc .. " #" .. rAction.order;
 		end
-		rRoll.sDesc = rRoll.sDesc .. "] " .. rAction.label;
+		rRoll.sDesc = rRoll.sDesc .. "] " .. StringManager.capitalizeAll(rAction.label);
 	else
 		rRoll.sDesc = "[ATTACK";
 		if rAction.order and rAction.order > 1 then
@@ -130,7 +122,7 @@ function getRoll(rActor, rAction, tag)
 		if rAction.range then
 			rRoll.sDesc = rRoll.sDesc .. " (" .. rAction.range .. ")";
 		end
-		rRoll.sDesc = rRoll.sDesc .. "] " .. rAction.label;
+		rRoll.sDesc = rRoll.sDesc .. "] " .. StringManager.capitalizeAll(rAction.label);
 	end
 	
 	-- Add ability modifiers
@@ -186,7 +178,7 @@ function getGrappleRoll(rActor, rAction)
 		rRoll.sDesc = "[GRAPPLE]";
 	end
 	if rAction.label and rAction.label ~= "" then
-		rRoll.sDesc = rRoll.sDesc .. " " .. rAction.label;
+		rRoll.sDesc = rRoll.sDesc .. " " .. StringManager.capitalizeAll(rAction.label);
 	end
 	
 	-- Add ability modifiers
@@ -386,7 +378,7 @@ function modAttack(rSource, rTarget, rRoll)
 			local aPFDice, nPFMod, nPFCount = EffectManager35E.getEffectsBonus(rSource, {"CMB"}, false, aAttackFilter, rTarget, false, rRoll.tags);
 			if nPFCount > 0 then
 				bEffects = true;
-				for k, v in ipairs(aPFDice) do
+				for _,v in ipairs(aPFDice) do
 					table.insert(aAddDice, v);
 				end
 				nAddMod = nAddMod + nPFMod;
@@ -488,6 +480,8 @@ function modAttack(rSource, rTarget, rRoll)
 end
 
 function onAttack(rSource, rTarget, rRoll)
+	ActionAttack.decodeAttackRoll(rRoll);
+	
 	local rMessage = ActionsManager.createActionMessage(rSource, rRoll);
 
 	local bIsSourcePC = ActorManager.isPC(rSource);
@@ -685,16 +679,26 @@ function onAttackResolve(rSource, rTarget, rRoll, rMessage)
 		if rRoll.bCritThreat then
 			local rCritConfirmRoll = { sType = "critconfirm", aDice = {"d20"}, bTower = rRoll.bTower, bSecret = rRoll.bSecret };
 			
-			local nCCMod = EffectManager35E.getEffectsBonus(rSource, {"CC"}, true, nil, rTarget, false, rRoll.tags);
-			if nCCMod ~= 0 then
-				rCritConfirmRoll.sDesc = string.format("%s [CONFIRM %+d]", rRoll.sDesc, nCCMod);
+			local tCCDice, nCCMod, nCCEffects = EffectManager35E.getEffectsBonus(rSource, {"CC"}, false, nil, rTarget, false, rRoll.tags);
+			if (nCCEffects > 0) then
+				local sMod = StringManager.convertDiceToString(tCCDice, nCCMod, true);
+				rCritConfirmRoll.sDesc = string.format("%s [CONFIRM %s]", rRoll.sDesc, sMod);
 			else
 				rCritConfirmRoll.sDesc = rRoll.sDesc .. " [CONFIRM]";
 			end
+			
+			for _,vDie in ipairs(tCCDice) do
+				if vDie:sub(1,1) == "-" then
+					table.insert(rCritConfirmRoll.aDice, "-p" .. vDie:sub(3));
+				else
+					table.insert(rCritConfirmRoll.aDice, "p" .. vDie:sub(2));
+				end
+			end
+			rCritConfirmRoll.nMod = rRoll.nMod + nCCMod;
+			
 			if rRoll.nMissChance > 0 then
 				rCritConfirmRoll.sDesc = rCritConfirmRoll.sDesc .. " [MISS CHANCE " .. rRoll.nMissChance .. "%]";
 			end
-			rCritConfirmRoll.nMod = rRoll.nMod + nCCMod;
 			-- KEL ACCC stuff
 			local nNewDefenseVal = 0;
 			if rRoll.nAdditionalDefenseForCC ~= 0 and rRoll.nDefenseVal then
@@ -776,7 +780,7 @@ function onAttackResolve(rSource, rTarget, rRoll, rMessage)
 	-- END
 
 	if rTarget then
-		ActionAttack.notifyApplyAttack(rSource, rTarget, rRoll.bTower, rRoll.sType, rRoll.sDesc, rRoll.nTotal, table.concat(rRoll.aMessages, " "));
+		ActionAttack.notifyApplyAttack(rSource, rTarget, rRoll);
 		
 		-- REMOVE TARGET ON MISS OPTION
 		if (rRoll.sResult == "miss" or rRoll.sResult == "fumble") and rRoll.sType ~= "critconfirm" and not string.match(rRoll.sDesc, "%[FULL%]") then
@@ -806,6 +810,8 @@ function onPostAttackResolve(rSource, rTarget, rRoll, rMessage)
 end
 
 function onGrapple(rSource, rTarget, rRoll)
+	ActionAttack.decodeAttackRoll(rRoll);
+
 	if DataCommon.isPFRPG() then
 		ActionAttack.onAttack(rSource, rTarget, rRoll);
 	else
@@ -891,44 +897,77 @@ function onMissChance(rSource, rTarget, rRoll)
 	-- END
 end
 
-function applyAttack(rSource, rTarget, bSecret, sAttackType, sDesc, nTotal, sResults)
+function decodeAttackRoll(rRoll)
+	-- Rebuild detail fields if dragging from chat window
+	if not rRoll.nOrder then
+		rRoll.nOrder = tonumber(rRoll.sDesc:match("%[ATTACK.-#(%d+)")) or nil;
+	end
+	if not rRoll.sRange then
+		rRoll.sRange = rRoll.sDesc:match("%[ATTACK.-%((%w+)%)%]");
+	end
+	if not rRoll.sLabel then
+		rRoll.sLabel = StringManager.trim(rRoll.sDesc:match("%[ATTACK.-%]([^%[]+)"));
+	end
+end
+
+function applyAttack(rSource, rTarget, rRoll)
 	local msgShort = {font = "msgfont"};
 	local msgLong = {font = "msgfont"};
 	
-	if sAttackType == "grapple" then
-		msgShort.text = "Combat Man. ->";
-		msgLong.text = "Combat Man. [" .. nTotal .. "] ->";
+	if rRoll.sType == "grapple" then
+		msgShort.text = "Combat Man.";
+		msgLong.text = "Combat Man.";
 	else
-		msgShort.text = "Attack ->";
-		msgLong.text = "Attack [" .. nTotal .. "] ->";
+		msgShort.text = "Attack";
+		msgLong.text = "Attack";
 	end
+	if rRoll.nOrder then
+		msgShort.text = string.format("%s #%d", msgShort.text, rRoll.nOrder);
+		msgLong.text = string.format("%s #%d", msgLong.text, rRoll.nOrder);
+	end
+	if (rRoll.sRange or "") ~= "" then
+		msgShort.text = string.format("%s (%s)", msgShort.text, rRoll.sRange);
+		msgLong.text = string.format("%s (%s)", msgLong.text, rRoll.sRange);
+	end
+	if (rRoll.sLabel or "") ~= "" then
+		msgShort.text = string.format("%s (%s)", msgShort.text, rRoll.sLabel or "");
+		msgLong.text = string.format("%s (%s)", msgLong.text, rRoll.sLabel or "");
+	end
+	msgLong.text = string.format("%s [%d]", msgLong.text, rRoll.nTotal or 0);
+
+	-- Targeting information
+	msgShort.text = string.format("%s ->", msgShort.text);
+	msgLong.text = string.format("%s ->", msgLong.text);
 	if rTarget then
-		local sName = ActorManager.getDisplayName(rTarget);
-		msgShort.text = msgShort.text .. " [at " .. sName .. "]";
-		msgLong.text = msgLong.text .. " [at " .. sName .. "]";
+		local sTargetName = ActorManager.getDisplayName(rTarget);
+		msgShort.text = string.format("%s [at %s]", msgShort.text, sTargetName);
+		msgLong.text = string.format("%s [at %s]", msgLong.text, sTargetName);
 	end
-	if sResults ~= "" then
-		msgLong.text = msgLong.text .. " " .. sResults;
-	end
-	
+
+	-- Extra roll information
 	msgShort.icon = "roll_attack";
-	if string.match(sResults, "%[CRITICAL HIT%]") then
-		msgLong.icon = "roll_attack_crit";
-	elseif string.match(sResults, "HIT%]") then
-		msgLong.icon = "roll_attack_hit";
-	elseif string.match(sResults, "MISS%]") then
-		msgLong.icon = "roll_attack_miss";
-	-- KEL MirrorImageHandler compatibility
-	elseif string.match(sResults, "%[MISFIRE%]") then
-		msgLong.icon = "roll_attack_miss";
-	-- END
-	elseif string.match(sResults, "CRITICAL THREAT%]") then
-		msgLong.icon = "roll_attack_hit";
+	if (rRoll.sResults or "") ~= "" then
+		msgLong.text = string.format("%s %s", msgLong.text, rRoll.sResults);
+		if rRoll.sResults:match("%[CRITICAL HIT%]") then
+			msgLong.icon = "roll_attack_crit";
+		elseif rRoll.sResults:match("HIT%]") then
+			msgLong.icon = "roll_attack_hit";
+		elseif rRoll.sResults:match("MISS%]") then
+			msgLong.icon = "roll_attack_miss";
+		-- KEL MirrorImageHandler compatibility
+		elseif rRoll.sResults:match("%[MISFIRE%]") then
+			msgLong.icon = "roll_attack_miss";
+		-- END
+		elseif rRoll.sResults:match("CRITICAL THREAT%]") then
+			msgLong.icon = "roll_attack_hit";
+		else
+			msgLong.icon = "roll_attack";
+		end
 	else
 		msgLong.icon = "roll_attack";
 	end
 		
-	ActionsManager.outputResult(bSecret, rSource, rTarget, msgLong, msgShort);
+	ActionsManager.outputResult(rRoll.bSecret, rSource, rTarget, msgLong, msgShort);
 end
 
 aCritState = {};

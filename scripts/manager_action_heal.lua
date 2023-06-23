@@ -20,7 +20,7 @@ function getRoll(rActor, rAction, tag)
 	if rAction.order and rAction.order > 1 then
 		rRoll.sDesc = rRoll.sDesc .. " #" .. rAction.order;
 	end
-	rRoll.sDesc = rRoll.sDesc .. "] " .. rAction.label;
+	rRoll.sDesc = rRoll.sDesc .. "] " .. StringManager.capitalizeAll(rAction.label);
 
 	-- Save the heal clauses in the roll structure
 	rRoll.clauses = rAction.clauses;
