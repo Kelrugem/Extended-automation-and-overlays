@@ -584,17 +584,18 @@ function onAttack(rSource, rTarget, rRoll)
 			if bAllowCC then
 				rRoll.sResult = "hit";
 				rRoll.bCritThreat = true;
-				table.insert(rRoll.aMessages, "[AUTOMATIC HIT]");
+				table.insert(rRoll.aMessages, "[CRITICAL THREAT]");
 			else
 				rRoll.sResult = "crit";
 				table.insert(rRoll.aMessages, "[CRITICAL HIT]");
 			end
 		else
 			rRoll.sResult = "hit";
-			table.insert(rRoll.aMessages, "[AUTOMATIC HIT]");
+			table.insert(rRoll.aMessages, "[HIT]");
 		end
 	elseif rRoll.nFirstDie == 1 then
 		if rRoll.sType == "critconfirm" then
+			table.insert(rRoll.aMessages, "[HIT]");
 			table.insert(rRoll.aMessages, "[CRIT NOT CONFIRMED]");
 			rRoll.sResult = "miss";
 		else
@@ -634,6 +635,7 @@ function onAttack(rSource, rTarget, rRoll)
 		else
 			rRoll.sResult = "miss";
 			if rRoll.sType == "critconfirm" then
+				table.insert(rRoll.aMessages, "[HIT]");
 				table.insert(rRoll.aMessages, "[CRIT NOT CONFIRMED]");
 			else
 				table.insert(rRoll.aMessages, "[MISS]");
