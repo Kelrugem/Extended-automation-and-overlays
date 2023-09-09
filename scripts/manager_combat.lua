@@ -68,8 +68,7 @@ function rollStandardEntryInit(tInit)
 	-- END
 
 	-- For PCs, we always roll unique initiative
-	local sClass, sRecord = DB.getValue(tInit.nodeEntry, "link", "", "");
-	if sClass == "charsheet" then
+	if CombatManager.isPlayerCT(tInit.nodeEntry) then
 		-- KEL FFOS
 		local nInitResult = CombatManager.helperRollRandomInit(tInit);
 		DB.setValue(tInit.nodeEntry, "initresult", "number", nInitResult);

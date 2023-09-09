@@ -3,7 +3,7 @@
 <root version="3.0">
   <properties>
     <name>Feature: Extended automation and overlays</name>
-    <version>4.3.3</version>
+    <version>4.4.3</version>
     <author>rhythmist, mr900rr, darrenan, tahl_liadon, bmos, DCrumb, RabidPaladin, SoxMax, Cristmo, rhagelstrom, rogervinc and Kelrugem</author>
     <description>Deekin ist super! (Will ever someone read that strange description?)</description>
     <ruleset>
@@ -15,7 +15,7 @@
     <loadorder>35</loadorder>
   </properties>
 
-  <announcement text="Extended automation, dated at 28 February 2023, for 3.5E and PFRPG rulesets, v. 4.3.3. Copyright 2022 Smiteworks.\rBy darrenan, mr900rr, phixation, rhythmist, tahl_liadon, bmos, DCrumb, RabidPaladin, SoxMax, Cristmo, rhagelstrom, rogervinc and Kelrugem." icon="DeekinMightyBard" font="emotefont" />
+  <announcement text="Extended automation, dated at 28 February 2023, for 3.5E and PFRPG rulesets, v. 4.4.3. Copyright 2022 Smiteworks.\rBy darrenan, mr900rr, phixation, rhythmist, tahl_liadon, bmos, DCrumb, RabidPaladin, SoxMax, Cristmo, rhagelstrom, rogervinc and Kelrugem." icon="DeekinMightyBard" font="emotefont" />
 
   <base>
     <icon name="DeekinMightyBard" file="DeekinMightyBard.jpg" />
