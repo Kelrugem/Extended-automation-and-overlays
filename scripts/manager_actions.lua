@@ -25,8 +25,12 @@ function getTargeting(rSource, rTarget, sDragType, rRolls)
 end
 
 function roll(rSource, vTargets, rRoll, bMultiTarget)
-	if rRoll.aDice then
-		rRoll.originaldicenumber = #rRoll.aDice;
+	if rRoll and rRoll.aDice then
+		if #(rRoll.aDice) > 0 then
+			rRoll.originaldicenumber = #rRoll.aDice;
+		else
+			rRoll.originaldicenumber = 0;
+		end
 	else
 		rRoll.originaldicenumber = 0;
 	end
@@ -64,7 +68,7 @@ function roll(rSource, vTargets, rRoll, bMultiTarget)
 end 
 
 function resolveAction(rSource, rTarget, rRoll)
-	if rRoll.aDice and ( #rRoll.aDice > 0 ) then
+	if rRoll and rRoll.aDice and ( #rRoll.aDice > 0 ) then
 		
 		rRoll.adv = tonumber(rRoll.adv) or 0;
 		

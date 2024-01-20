@@ -153,7 +153,7 @@ function addSpell(nodeSource, nodeSpellClass, nLevel)
 	if not nodeTargetLevelSpells then
 		return nil;
 	end
-	local nodeNewSpell = DB.createChild(nodeTargetLevelSpells);
+	local nodeNewSpell = DB.createChildAndCopy(nodeTargetLevelSpells, nodeSource);
 	if not nodeNewSpell then
 		return nil;
 	end
