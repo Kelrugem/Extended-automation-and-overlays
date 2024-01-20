@@ -10,6 +10,7 @@ function onInit()
 		local bShowLockButton = (parentcontrol.window.getClass() ~= "imagewindow");
 		h5.setVisible(bShowLockButton);
 		locked.setVisible(bShowLockButton);
+		spacer_menu.setVisible(bShowLockButton);
 	end
 end
 
