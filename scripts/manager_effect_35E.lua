@@ -494,7 +494,7 @@ function getEffectsByType(rActor, sEffectType, aFilter, rFilterActor, bTargetedO
 			if not bTargeted or EffectManager.isEffectTarget(v, rFilterActor) then
 				local sLabel = DB.getValue(v, "label", "");
 				local aEffectComps = EffectManager.parseEffect(sLabel);
-				
+
 				-- Look for type/subtype match
 				local nMatch = 0;
 				for kEffectComp, sEffectComp in ipairs(aEffectComps) do
@@ -545,7 +545,7 @@ function getEffectsByType(rActor, sEffectType, aFilter, rFilterActor, bTargetedO
 						-- Strip energy/bonus types for subtype comparison
 						local aEffectRangeFilter = {};
 						local aEffectOtherFilter = {};
-						
+
 						local aComponents = {};
 						for _,vPhrase in ipairs(rEffectComp.remainder) do
 							local nTempIndexOR = 0;
@@ -559,7 +559,7 @@ function getEffectsByType(rActor, sEffectType, aFilter, rFilterActor, bTargetedO
 									table.insert(aPhraseOR, vPhrase:sub(nTempIndexOR));
 								end
 							until nStartOR == nil;
-							
+
 							for _,vPhraseOR in ipairs(aPhraseOR) do
 								local nTempIndexAND = 0;
 								repeat
@@ -589,7 +589,7 @@ function getEffectsByType(rActor, sEffectType, aFilter, rFilterActor, bTargetedO
 
 							j = j + 1;
 						end
-					
+
 						-- Check for match
 						local comp_match = false;
 						if rEffectComp.type == sEffectType then
@@ -600,7 +600,7 @@ function getEffectsByType(rActor, sEffectType, aFilter, rFilterActor, bTargetedO
 							else
 								comp_match = true;
 							end
-						
+
 							-- Check filters
 							if #aEffectRangeFilter > 0 then
 								local bRangeMatch = false;
@@ -668,7 +668,7 @@ function getEffectsByType(rActor, sEffectType, aFilter, rFilterActor, bTargetedO
 			end -- END TARGET CHECK
 		end  -- END ACTIVE CHECK
 	end  -- END EFFECT LOOP
-	
+
 	return results;
 end
 -- KEL add tags
@@ -855,7 +855,7 @@ function hasEffect(rActor, sEffect, rTarget, bTargetedOnly, bIgnoreEffectTargets
 		return false, 0;
 	end
 	local sLowerEffect = sEffect:lower();
-	
+
 	-- Iterate through each effect
 	local aMatch = {};
 	local aEffects = {};
@@ -939,7 +939,7 @@ function hasEffect(rActor, sEffect, rTarget, bTargetedOnly, bIgnoreEffectTargets
 				end
 
 			end
-			
+
 			-- If matched, then remove one-off effects
 			if nMatch > 0 then
 				if nActive == 2 then
@@ -958,7 +958,7 @@ function hasEffect(rActor, sEffect, rTarget, bTargetedOnly, bIgnoreEffectTargets
 			end
 		end
 	end
-	
+
 	if #aMatch > 0 then
 		return true, #aMatch;
 	end
@@ -1045,7 +1045,7 @@ function checkConditionalHelper(rActor, sEffect, rTarget, aIgnore, rEffectSpell)
 	end
 	-- KEl Adding TurboManager Support
 	local aEffects = {};
-	if TurboManager then
+	if TurboManager and sEffect ~= "nodex" then
 		aEffects = TurboManager.getMatchedEffects(rActor, sEffect);
 	else
 		aEffects = DB.getChildList(ActorManager.getCTNode(rActor), "effects");
