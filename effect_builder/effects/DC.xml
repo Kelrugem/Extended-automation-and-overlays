@@ -15,7 +15,6 @@
     <script name="loader_DC">
         function onInit()
             if ExtensionManagerExtendedAutomation.shouldLoadEffects() then
-                Debug.console("loading DC effect")
                 EditorManager.addEditor(
                     "category_spell",
                     {
