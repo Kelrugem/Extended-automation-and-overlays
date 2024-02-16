@@ -1,14 +1,9 @@
-local modSkill
-
 function onInit()
-    modSkill = ActionSkill.modSkill
-    ActionSkill.modSkill = modSkillAdvantage
+    ActionsManager.registerModHandler("skill", skillAdvantage);
 end
 
-function modSkillAdvantage(rSource, rTarget, rRoll, ...)
-    modSkill(rSource, rTarget, rRoll, ...)
+function skillAdvantage(rSource, rTarget, rRoll, ...)
     Debug.chat(rSource, rTarget, rRoll)
-    
     if rSource then
         local aSkillFilter = buildSkillFilter(rRoll)
         local aADVSAV = EffectManager35E.getEffectsByType(rSource, "ADVSKILL", aSkillFilter, rTarget, false, rRoll.tags)
