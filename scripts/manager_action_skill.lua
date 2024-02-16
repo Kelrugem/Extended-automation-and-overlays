@@ -1,8 +1,8 @@
 local modSkill
 
 function onInit()
-    modSkill = ManagerSkill.modSkill
-    ManagerSkill.modSkill = modSkillAdvantage
+    modSkill = ActionSkill.modSkill
+    ActionSkill.modSkill = modSkillAdvantage
 end
 
 function modSkillAdvantage(rSource, rTarget, rRoll, ...)
