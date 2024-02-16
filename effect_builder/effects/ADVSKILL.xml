@@ -16,12 +16,12 @@
     </windowclass>
     <script name="loader_ADVSKILL">
         function onInit()
-            if ExtensionManagerExtendedAutomation.shouldLoadEffects() then
+            if Extension.isEffectBuilderRulesetPluginLoaded then
                 EditorManager.addEditor(
                     "category_advantage",
                     {
                         value="ADVSKILL",
-                        labelres="effect_save",
+                        labelres="effect_skill",
                         windowclass="effect_ADVSKILL"
                     }
                 )
