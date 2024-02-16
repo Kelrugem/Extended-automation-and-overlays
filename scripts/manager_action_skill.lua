@@ -5,11 +5,10 @@ end
 function skillAdvantage(rSource, rTarget, rRoll, ...)
     if rSource then
         local aSkillFilter = buildSkillFilter(rRoll)
-        local aAdvSkill = EffectManager35E.getEffectsByType(rSource, "ADVSKILL", aSkillFilter, rTarget, false, rRoll.tags);
-		local aDisSkill = EffectManager35E.getEffectsByType(rSource, "DISSKILL", aSkillFilter, rTarget, false, rRoll.tags);
-		local _, nAdvSkill = EffectManager35E.hasEffect(rSource, "ADVSKILL", rTarget, false, false, rRoll.tags);
-		local _, nDisSkill = EffectManager35E.hasEffect(rSource, "DISSKILL", rTarget, false, false, rRoll.tags);
-        Debug.chat(aAdvSkill, nAdvSkill, aDisSkill, nDisSkill)
+        local aAdvSkill = EffectManager35E.getEffectsByType(rSource, "ADVSKILL", aSkillFilter, rTarget, false, rRoll.tags)
+		local aDisSkill = EffectManager35E.getEffectsByType(rSource, "DISSKILL", aSkillFilter, rTarget, false, rRoll.tags)
+		local _, nAdvSkill = EffectManager35E.hasEffect(rSource, "ADVSKILL", rTarget, false, false, rRoll.tags)
+		local _, nDisSkill = EffectManager35E.hasEffect(rSource, "DISSKILL", rTarget, false, false, rRoll.tags)
 		rRoll.adv = #aAdvSkill + nAdvSkill - #aDisSkill + nDisSkill
     end
 end
