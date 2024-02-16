@@ -62,6 +62,7 @@
     <script name="SpellManager" file="scripts/manager_spell.lua" />
     <script name="ActionSave" file="scripts/manager_action_save.lua" />
     <script name="ActionSpell" file="scripts/manager_action_spell.lua" />
+    <script name="ActionSkill2" file="scripts/manager_action_skill.lua" />
 
     <!-- Effect Builder -->
     <includefile source="effect_builder/editor_loader.xml" />
