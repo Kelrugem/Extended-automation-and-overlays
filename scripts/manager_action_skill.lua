@@ -3,13 +3,14 @@ function onInit()
 end
 
 function skillAdvantage(rSource, rTarget, rRoll, ...)
-    Debug.chat(rSource, rTarget, rRoll)
     if rSource then
         local aSkillFilter = buildSkillFilter(rRoll)
-        local aADVSAV = EffectManager35E.getEffectsByType(rSource, "ADVSKILL", aSkillFilter, rTarget, false, rRoll.tags)
-        local aDISSAV = EffectManager35E.getEffectsByType(rSource, "DISSKILL", aSkillFilter, rTarget, false, rRoll.tags)
-        Debug.chat(aADVSAV, aDISSAV)
-        rRoll.adv = #aADVSAV - #aDISSAV
+        local aAdvSkill = EffectManager35E.getEffectsByType(rSource, "ADVSKILL", aSkillFilter, rTarget, false, rRoll.tags);
+		local aDisSkill = EffectManager35E.getEffectsByType(rSource, "DISSKILL", aSkillFilter, rTarget, false, rRoll.tags);
+		local _, nAdvSkill = EffectManager35E.hasEffect(rSource, "ADVSKILL", rTarget, false, false, rRoll.tags);
+		local _, nDisSkill = EffectManager35E.hasEffect(rSource, "DISSKILL", rTarget, false, false, rRoll.tags);
+        Debug.chat(aAdvSkill, nAdvSkill, aDisSkill, nDisSkill)
+		rRoll.adv = #aAdvSkill + nAdvSkill - #aDisSkill + nDisSkill
     end
 end
 
