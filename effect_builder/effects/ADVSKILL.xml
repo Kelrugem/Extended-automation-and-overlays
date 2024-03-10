@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+
+<root>
+    <windowclass name="effect_ADVSKILL">
+        <script file="effect_builder/effects/scripts/ADVSKILL.lua" />
+		<margins control="0,0,0,2" />
+        <sheetdata>
+            <leftanchor_eb />
+
+            <cycler_eb_advantage />
+
+            <combobox_eb_skill />
+
+            <combobox_eb_ability />
+        </sheetdata>
+    </windowclass>
+    <script name="loader_ADVSKILL">
+        function onInit()
+            if Extension.isEffectBuilderRulesetPluginLoaded then
+                EditorManager.addEditor(
+                    "category_advantage",
+                    {
+                        value="ADVSKILL",
+                        labelres="effect_skill",
+                        windowclass="effect_ADVSKILL"
+                    }
+                )
+            end
+        end
+    </script>
+</root>
