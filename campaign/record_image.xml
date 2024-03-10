@@ -6,40 +6,16 @@
 -->
 
 <root>
-	<windowclass name="imagewindow_toolbar">
-		<frame>toolbar_back</frame>
-		<script file="campaign/scripts/imagewindow_toolbar.lua" />
+	<windowclass name="imagewindow_toolbar" merge="join">
 		<sheetdata>
-			<image_toolbar_anchor />
+			<toolbar_separator_right name="image_separator_rightToOverlays" />
 			
-			<image_toolbar_separator name="spacer_menu">
-				<anchored width="96" />
-			</image_toolbar_separator>
-			<image_toolbar_toggle_lock name="locked" />
-			<image_toolbar_separator name="h5" />
-
-			<image_toolbar_toggle_preview name="toggle_preview" />
-			<image_toolbar_toggle_tokenlock name="toggle_tokenlock" />
-			<image_toolbar_toggle_shortcut name="toggle_shortcut" />
-			<image_toolbar_button_deathmarkerclear name="deathmarker_clear" />
-			<image_toolbar_separator name="h4" />
-
-			<image_toolbar_targeting name="toolbar_targeting" />
-			<image_toolbar_mode_targetselect name="toggle_targetselect" />
-			<image_toolbar_separator name="h3" />
-
-			<image_toolbar_mode_select name="toggle_select" />
-			<image_toolbar_separator name="h2" />
-			<!-- KEL -->
-			<image_toolbar_clear_wounds name="toolbar_clear_wounds" />
-			<image_toolbar_clear_saves name="toolbar_clear_saves" />
-			<image_toolbar_separator name="h0" />
-			<!-- END -->
-			<image_toolbar_draw name="toolbar_draw" />
-			<image_toolbar_mode_unmask name="toggle_unmask" />
-			<image_toolbar_separator name="h1" />
-
-			<image_toolbar_button_zoomtofit name="zoom_to_fit" />
+			<toolbar_toggle_right name="image_clear_wounds">
+				<initbyname />
+			</toolbar_toggle_right>
+			<toolbar_toggle_right name="image_clear_saves">
+				<initbyname />
+			</toolbar_toggle_right>
 		</sheetdata>
 	</windowclass>
 </root>
