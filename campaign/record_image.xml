@@ -7,25 +7,14 @@
 
 <root>
 	<windowclass name="imagewindow_toolbar" merge="join">
-		<script>
-			function onInit()
-				if super and super.onInit then
-					super.onInit()
-				end
-				
-				tOverlayButtons = {"", "clear_wounds", "clear_saves"};
-				ToolbarManager.addList(subwindow, tOverlayButtons, "right");
-			end
-		</script>
-		<!-- <sheetdata> -->
-			<!-- <toolbar_separator_right name="image_separator_rightToOverlays" /> -->
-			
-			<!-- <toolbar_toggle_right name="image_clear_wounds"> -->
-				<!-- <initbyname /> -->
-			<!-- </toolbar_toggle_right> -->
-			<!-- <toolbar_toggle_right name="image_clear_saves"> -->
-				<!-- <initbyname /> -->
-			<!-- </toolbar_toggle_right> -->
-		<!-- </sheetdata> -->
+		<sheetdata>
+			<toolbar_separator_right name="image_separator_custom" />
+			<toolbar_action_right name="image_clearwounds">
+				<initbyname />
+			</toolbar_action_right>
+			<toolbar_action_right name="image_clearsaves">
+				<initbyname />
+			</toolbar_action_right>
+		</sheetdata>
 	</windowclass>
 </root>

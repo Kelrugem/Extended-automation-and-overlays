@@ -6,7 +6,7 @@
 -->
 
 <root>
-
+	
 	<!-- Combat Tracker -->
 	<string name="ct_label_strain">Strn</string>
 	<string name="ct_label_injury">Inj</string>
@@ -59,6 +59,7 @@
 	<string name="power_label_typespelllike">Spell-Like</string>
 	<string name="power_label_othertags">Other properties and tags</string>
 	<string name="power_label_othertagsnone">none</string>
+	<string name="power_label_healtypestrain">Strain</string>
 	<string name="skill">Skill</string>
 	<string name="power_header_cast_skill">SKILL</string>
 	<string name="power_label_savedctype_roll">Opposed Roll +</string>
@@ -71,8 +72,8 @@
 	<string name="short">Short Rest</string>
 	<string name="nomnom">Consumable (no reset by nom nom!)</string>
 	<string name="thirdcl">CL/3</string>
-	<string name="tooltip_saves_clear_toolbar">Clear Save Overlays</string>
-	<string name="tooltip_wounds_clear_toolbar">Clear Wound Overlays</string>
+	<string name="image_tooltip_toolbarclearsaves">Clear Save Overlays</string>
+	<string name="image_tooltip_toolbarclearwounds">Clear Wound Overlays</string>
 	<!-- <string name="totallvl">LVL</string> -->
 	<!-- End -->
 	
