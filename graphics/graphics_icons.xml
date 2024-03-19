@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="iso-8859-1"?>
 
 <root>	
+	<icon name="tool_clearsaves" file="graphics/toolbar/tool_clear_saves_30.png" />
+    <icon name="tool_clearwounds" file="graphics/toolbar/tool_clear_wounds_30.png" />
 	<icon name="spell_fail" file="graphics/icons/spell_fail.png" />
 	<icon name="overlay_save_success" file="graphics/token/save_success.png" />
 	<icon name="overlay_save_failure" file="graphics/token/save_fail.png" />

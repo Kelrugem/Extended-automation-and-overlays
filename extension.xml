@@ -3,8 +3,8 @@
 <root version="3.0">
   <properties>
     <name>Feature: Extended automation and alternative overlays</name>
-    <version>4.4.9</version>
-    <author>rhythmist, mr900rr, darrenan, tahl_liadon, bmos, DCrumb, RabidPaladin, SoxMax, Cristmo, rhagelstrom, rogervinc and Kelrugem</author>
+    <version>4.5.0</version>
+    <author>rhythmist, mr900rr, darrenan, tahl_liadon, bmos, DCrumb, RabidPaladin, SoxMax, Cristmo, rhagelstrom, rogervinc, mattekure and Kelrugem</author>
     <description>Deekin ist super! (Will ever someone read that strange description?)</description>
     <ruleset>
       <name>3.5E</name>
@@ -15,9 +15,8 @@
     <loadorder>35</loadorder>
   </properties>
 
-  <announcement text="Extended automation, dated at 20 January 2024, for 3.5E and PFRPG rulesets, v. 4.4.9. Copyright 2024 Smiteworks.\rBy darrenan, mr900rr, phixation, rhythmist, tahl_liadon, bmos, DCrumb, RabidPaladin, SoxMax, Cristmo, rhagelstrom, rogervinc and Kelrugem." icon="DeekinMightyBard" font="emotefont" />
-
-  <base>
+  <announcement text="Extended automation, dated at 19 March 2024, and more for 3.5E and PFRPG rulesets, v. 4.5.0. Copyright 2024 Smiteworks.\rBy darrenan, mr900rr, phixation, tahl_liadon, bmos, DCrumb, RabidPaladin, SoxMax, Cristmo, rhagelstrom, rogervinc, mattekure and Kelrugem." icon="DeekinMightyBard" font="emotefont" />
+	<base>
     <icon name="DeekinMightyBard" file="DeekinMightyBard.jpg" />
     <!-- Graphics -->
     <includefile source="graphics/graphics_icons.xml" />
@@ -33,7 +32,7 @@
     <includefile source="ct/ct_host_entry_section.xml" />
 
     <!-- Common -->
-    <includefile source="common/template_toolbar.xml" />
+    <!-- <includefile source="common/template_toolbar.xml" /> -->
 
     <!-- Campaign -->
     <includefile source="campaign/template_char.xml" />
@@ -62,6 +61,8 @@
     <script name="SpellManager" file="scripts/manager_spell.lua" />
     <script name="ActionSave" file="scripts/manager_action_save.lua" />
     <script name="ActionSpell" file="scripts/manager_action_spell.lua" />
+    <script name="ActionSkill2" file="scripts/manager_action_skill.lua" />
+	<script name="KelToolbar" file="scripts/custom_toolbar.lua" />
 
     <!-- Effect Builder -->
     <includefile source="effect_builder/editor_loader.xml" />
