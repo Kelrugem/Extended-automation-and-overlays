@@ -24,9 +24,9 @@ end
 -- 
 
 function initActorHealth()
-	ActorHealthManager.registerStatusHealthColor(ActorHealthManager.STATUS_UNCONSCIOUS, ColorManager.COLOR_HEALTH_UNCONSCIOUS);
-	ActorHealthManager.registerStatusHealthColor(ActorHealthManager.STATUS_DISABLED, ColorManager.COLOR_HEALTH_SIMPLE_BLOODIED);
-	ActorHealthManager.registerStatusHealthColor(ActorHealthManager.STATUS_STAGGERED, ColorManager.COLOR_HEALTH_SIMPLE_BLOODIED);
+	ActorHealthManager.registerStatusHealthColor(ActorHealthManager.STATUS_UNCONSCIOUS, ColorManager.getUIColor("health_dyingordead"));
+	ActorHealthManager.registerStatusHealthColor(ActorHealthManager.STATUS_DISABLED, ColorManager.getUIColor("health_simple_bloodied"));
+	ActorHealthManager.registerStatusHealthColor(ActorHealthManager.STATUS_STAGGERED, ColorManager.getUIColor("health_simple_bloodied"));
 
 	ActorHealthManager.getWoundPercent = getWoundPercent;
 end
@@ -159,13 +159,13 @@ function getPCSheetWoundColor(nodePC)
 	end
 	
 	if nPercentLethal > 1 then
-		return ColorManager.COLOR_HEALTH_DYING_OR_DEAD;
+		return ColorManager.getUIColor("health_dyingordead");
 	elseif nPercentNonlethal > 1 then
-		return ColorManager.COLOR_HEALTH_UNCONSCIOUS;
+		return ColorManager.getUIColor("health_unconscious");
 	elseif nPercentLethal == 1 then
-		return ColorManager.COLOR_HEALTH_SIMPLE_BLOODIED;
+		return ColorManager.getUIColor("health_simple_bloodied");
 	elseif nPercentNonlethal == 1 then
-		return ColorManager.COLOR_HEALTH_SIMPLE_BLOODIED;
+		return ColorManager.getUIColor("health_simple_bloodied");
 	end
 
 	local sColor = ColorManager.getHealthColor(nPercentNonlethal, false);
@@ -235,35 +235,30 @@ function getAbilityDamage(rActor, sAbility)
 	if not sAbility then
 		return 0;
 	end
-	local sNodeType, nodeActor = ActorManager.getTypeAndNode(rActor);
+	if not ActorManager.isPC(rActor) then
+		return 0;
+	end
+	local nodeActor = ActorManager.getCreatureNode(rActor);
 	if not nodeActor then
 		return 0;
 	end
 	
-	local nStatDamage = 0;
-
-	if sNodeType == "pc" then
-		local sShort = string.sub(string.lower(sAbility), 1, 3);
-		if sShort == "lev" then
-			nStatDamage = 0;
-		elseif sShort == "bab" then
-			nStatDamage = 0;
-		elseif sShort == "str" then
-			nStatDamage = DB.getValue(nodeActor, "abilities.strength.damage", 0);
-		elseif sShort == "dex" then
-			nStatDamage = DB.getValue(nodeActor, "abilities.dexterity.damage", 0);
-		elseif sShort == "con" then
-			nStatDamage = DB.getValue(nodeActor, "abilities.constitution.damage", 0);
-		elseif sShort == "int" then
-			nStatDamage = DB.getValue(nodeActor, "abilities.intelligence.damage", 0);
-		elseif sShort == "wis" then
-			nStatDamage = DB.getValue(nodeActor, "abilities.wisdom.damage", 0);
-		elseif sShort == "cha" then
-			nStatDamage = DB.getValue(nodeActor, "abilities.charisma.damage", 0);
-		end
+	local sShort = sAbility:sub(1,3):lower();
+	if sShort == "str" then
+		return DB.getValue(nodeActor, "abilities.strength.damage", 0);
+	elseif sShort == "dex" then
+		return DB.getValue(nodeActor, "abilities.dexterity.damage", 0);
+	elseif sShort == "con" then
+		return DB.getValue(nodeActor, "abilities.constitution.damage", 0);
+	elseif sShort == "int" then
+		return DB.getValue(nodeActor, "abilities.intelligence.damage", 0);
+	elseif sShort == "wis" then
+		return DB.getValue(nodeActor, "abilities.wisdom.damage", 0);
+	elseif sShort == "cha" then
+		return DB.getValue(nodeActor, "abilities.charisma.damage", 0);
 	end
-	
-	return nStatDamage;
+
+	return 0;
 end
 
 function getAbilityScore(rActor, sAbility)

@@ -105,7 +105,7 @@ function getRoll(rActor, rAction, tag)
 	else
 		rRoll.sType = "attack";
 	end
-	rRoll.aDice = { "d20" };
+	rRoll.aDice = DiceRollManager.getActorDice({ "d20" }, rActor);
 	rRoll.nMod = rAction.modifier or 0;
 	
 	if rAction.cm then
@@ -169,7 +169,7 @@ end
 function getGrappleRoll(rActor, rAction)
 	local rRoll = {};
 	rRoll.sType = "grapple";
-	rRoll.aDice = { "d20" };
+	rRoll.aDice = DiceRollManager.getActorDice({ "d20" }, rActor);
 	rRoll.nMod = rAction.modifier or 0;
 	
 	if DataCommon.isPFRPG() then
@@ -207,6 +207,11 @@ function excessAoOMessage(nodeCT)
 	local nAOO = DB.getValue(nodeCT, "aoo", 0);
 	local nMaxAOO = DB.getValue(nodeCT, "aoomax", 0);
 	local messagedata = { text = '', sender = ActorManager.resolveActor(nodeCT).sName, font = "emotefont" }
+	
+	if Session.IsHost and OptionsManager.isOption("REVL", "off") then
+		messagedata.secret = true;
+	end
+	
 	if nAOO == nMaxAOO then
 		messagedata.text = "Maximum Attacks of Opportunity Reached"
 		Comm.deliverChatMessage(messagedata)
@@ -679,7 +684,12 @@ function onAttackResolve(rSource, rTarget, rRoll, rMessage)
 		bRollMissChance = true;
 	else
 		if rRoll.bCritThreat then
-			local rCritConfirmRoll = { sType = "critconfirm", aDice = {"d20"}, bTower = rRoll.bTower, bSecret = rRoll.bSecret };
+			local rCritConfirmRoll = {
+				sType = "critconfirm",
+				aDice = DiceRollManager.getActorDice({ "d20" }, rActor),
+				bTower = rRoll.bTower,
+				bSecret = rRoll.bSecret,
+			};
 			
 			local tCCDice, nCCMod, nCCEffects = EffectManager35E.getEffectsBonus(rSource, {"CC"}, false, nil, rTarget, false, rRoll.tags);
 			if (nCCEffects > 0) then
@@ -744,10 +754,10 @@ function onAttackResolve(rSource, rTarget, rRoll, rMessage)
 	end
 	-- END
 	if bRollMissChance and (rRoll.nMissChance > 0) then
-		local aMissChanceDice = { "d100" };
+		local aMissChanceDice = {};
 		local sMissChanceText = rMessage.text:gsub(" %[CRIT %d+%]", ""):gsub(" %[CONFIRM%]", "");
 		-- KEL overlay stuff
-		local rMissChanceRoll = { sType = "misschance", sDesc = sMissChanceText .. " [MISS CHANCE " .. rRoll.nMissChance .. "%]", aDice = aMissChanceDice, nMod = 0, fullattack = FullAttack, actionStuffForOverlay = ActionStuffForOverlay };
+		local rMissChanceRoll = { sType = "misschance", sDesc = sMissChanceText .. " [MISS CHANCE " .. rRoll.nMissChance .. "%]", aDice = DiceRollManager.getActorDice({ "d100" }, rSource), nMod = 0, fullattack = FullAttack, actionStuffForOverlay = ActionStuffForOverlay };
 		-- KEL Blind fight
 		local AttackType = "M";
 		if rRoll.sType == "attack" then

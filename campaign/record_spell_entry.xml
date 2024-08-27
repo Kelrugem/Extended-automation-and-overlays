@@ -6,7 +6,7 @@
 -->
 
 <root>
-	<!-- KEL Skill Buttons and making saveview a bit bigger and making the saveview a bit bigger -->
+	<!-- KEL Skill Buttons and making saveview a bit bigger -->
 	<template name="spell_action_saveview">
 		<string_spellactionview name="saveview">
 			<anchored to="saveviewlabel" position="righthigh" offset="7,0" width="77" />

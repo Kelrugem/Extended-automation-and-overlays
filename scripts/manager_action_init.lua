@@ -22,9 +22,9 @@ function handleApplyInit(msgOOB)
 	if (sOptFFOS == "on") and (nCurrent == 0) then
 		-- local bHasImpUncDodge = false;
 		local bHasUncDodge = false;
-		local sSourceType, nodeSource = ActorManager.getTypeAndNode(rSource);
+		local nodeSource = ActorManager.getCreatureNode(rSource);
 		local nGMOnly = 0;
-		if sSourceType == "pc" then
+		if ActorManager.isPC(rSource) then
 			for _,v in ipairs(DB.getChildList(nodeSource, "specialabilitylist")) do
 				local sAbilityname = string.lower(DB.getValue(v, "name", ""));
 				if string.match(sAbilityname, "improved uncanny dodge") or string.match(sAbilityname, "uncanny dodge") then
@@ -74,7 +74,7 @@ end
 function getRoll(rActor, bSecretRoll)
 	local rRoll = {};
 	rRoll.sType = "init";
-	rRoll.aDice = { "d20" };
+	rRoll.aDice = DiceRollManager.getActorDice({ "d20" }, rActor);
 	rRoll.nMod = 0;
 	
 	rRoll.sDesc = "[INIT]";
@@ -83,9 +83,9 @@ function getRoll(rActor, bSecretRoll)
 
 	-- Determine the modifier and ability to use for this roll
 	local sAbility = nil;
-	local sNodeType, nodeActor = ActorManager.getTypeAndNode(rActor);
+	local nodeActor = ActorManager.getCreatureNode(rActor);
 	if nodeActor then
-		if sNodeType == "pc" then
+		if ActorManager.isPC(rActor) then
 			rRoll.nMod = DB.getValue(nodeActor, "initiative.total", 0);
 			sAbility = DB.getValue(nodeActor, "initiative.ability", "");
 		else
@@ -146,9 +146,11 @@ function getEffectAdjustments(rActor, sActionStat)
 	
 	-- Determine initiative ability used
 	if not sActionStat then
-		local sNodeType, nodeActor = ActorManager.getTypeAndNode(rActor);
-		if nodeActor and (sNodeType == "pc") then
-			sActionStat = DB.getValue(nodeActor, "initiative.ability", "");
+		if ActorManager.isPC(rActor) then
+			local nodeActor = ActorManager.getCreatureNode(rActor);
+			if nodeActor then
+				sActionStat = DB.getValue(nodeActor, "initiative.ability", "");
+			end
 		end
 		if (sActionStat or "") == "" then
 			sActionStat = "dexterity";
