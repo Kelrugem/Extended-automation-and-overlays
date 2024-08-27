@@ -207,6 +207,11 @@ function excessAoOMessage(nodeCT)
 	local nAOO = DB.getValue(nodeCT, "aoo", 0);
 	local nMaxAOO = DB.getValue(nodeCT, "aoomax", 0);
 	local messagedata = { text = '', sender = ActorManager.resolveActor(nodeCT).sName, font = "emotefont" }
+	
+	if Session.IsHost and OptionsManager.isOption("REVL", "off") then
+		messagedata.secret = true;
+	end
+	
 	if nAOO == nMaxAOO then
 		messagedata.text = "Maximum Attacks of Opportunity Reached"
 		Comm.deliverChatMessage(messagedata)
