@@ -146,7 +146,7 @@ end
 function getCLCRoll(rActor, rAction, tag)
 	local rRoll = {};
 	rRoll.sType = "clc";
-	rRoll.aDice = { "d20" };
+	rRoll.aDice = DiceRollManager.getActorDice({ "d20" }, rActor);
 	rRoll.nMod = rAction.clc or 0;
 	rRoll.tags = tag;
 	
@@ -280,7 +280,7 @@ end
 function onSpellCast(rSource, rTarget, rRoll)
 	local rMessage = ActionsManager.createActionMessage(rSource, rRoll);
 	rMessage.dice = nil;
-	rMessage.icon = "power_use";
+	rMessage.icon = "roll_cast";
 
 	if rTarget then
 		rMessage.text = rMessage.text .. " [at " .. ActorManager.getDisplayName(rTarget) .. "]";
@@ -320,7 +320,14 @@ function onCastCLC(rSource, rTarget, rRoll)
 		local nSR = math.max(ActorManager35E.getSpellDefense(rTarget), nSRMod);
 		if nSR > 0 then
 			if not string.match(rRoll.sDesc, "%[SR NOT ALLOWED%]") then
-				local rRoll = { sType = "clc", sDesc = rRoll.sDesc, aDice = {"d20"}, nMod = rRoll.nMod, bRemoveOnMiss = rRoll.bRemoveOnMiss, tags = rRoll.tags };
+				local rRoll = { 
+				sType = "clc", 
+				sDesc = rRoll.sDesc, 
+				aDice = DiceRollManager.getActorDice({ "d20" }, rSource), 
+				nMod = rRoll.nMod, 
+				bRemoveOnMiss = rRoll.bRemoveOnMiss, 
+				tags = rRoll.tags 
+				};
 		-- END
 				ActionsManager.actionDirect(rSource, "clc", { rRoll }, { { rTarget } });
 				return true;

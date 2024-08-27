@@ -24,9 +24,9 @@ end
 -- 
 
 function initActorHealth()
-	ActorHealthManager.registerStatusHealthColor(ActorHealthManager.STATUS_UNCONSCIOUS, ColorManager.COLOR_HEALTH_UNCONSCIOUS);
-	ActorHealthManager.registerStatusHealthColor(ActorHealthManager.STATUS_DISABLED, ColorManager.COLOR_HEALTH_SIMPLE_BLOODIED);
-	ActorHealthManager.registerStatusHealthColor(ActorHealthManager.STATUS_STAGGERED, ColorManager.COLOR_HEALTH_SIMPLE_BLOODIED);
+	ActorHealthManager.registerStatusHealthColor(ActorHealthManager.STATUS_UNCONSCIOUS, ColorManager.getUIColor("health_dyingordead"));
+	ActorHealthManager.registerStatusHealthColor(ActorHealthManager.STATUS_DISABLED, ColorManager.getUIColor("health_simple_bloodied"));
+	ActorHealthManager.registerStatusHealthColor(ActorHealthManager.STATUS_STAGGERED, ColorManager.getUIColor("health_simple_bloodied"));
 
 	ActorHealthManager.getWoundPercent = getWoundPercent;
 end
@@ -159,13 +159,13 @@ function getPCSheetWoundColor(nodePC)
 	end
 	
 	if nPercentLethal > 1 then
-		return ColorManager.COLOR_HEALTH_DYING_OR_DEAD;
+		return ColorManager.getUIColor("health_dyingordead");
 	elseif nPercentNonlethal > 1 then
-		return ColorManager.COLOR_HEALTH_UNCONSCIOUS;
+		return ColorManager.getUIColor("health_unconscious");
 	elseif nPercentLethal == 1 then
-		return ColorManager.COLOR_HEALTH_SIMPLE_BLOODIED;
+		return ColorManager.getUIColor("health_simple_bloodied");
 	elseif nPercentNonlethal == 1 then
-		return ColorManager.COLOR_HEALTH_SIMPLE_BLOODIED;
+		return ColorManager.getUIColor("health_simple_bloodied");
 	end
 
 	local sColor = ColorManager.getHealthColor(nPercentNonlethal, false);

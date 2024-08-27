@@ -13,7 +13,11 @@ end
 
 function performConcentrationCheck(draginfo, rActor, nodeSpellClass)
 	if DataCommon.isPFRPG() then
-		local rRoll = { sType = "concentration", sDesc = "[CONCENTRATION]", aDice = { "d20" } };
+		local rRoll = {
+			sType = "concentration",
+			sDesc = "[CONCENTRATION]",
+		};
+		rRoll.aDice = DiceRollManager.getActorDice({ "d20" }, rActor);
 	
 		local sAbility = DB.getValue(nodeSpellClass, "dc.ability", "");
 		local sAbilityEffect = DataCommon.ability_ltos[sAbility];
