@@ -3,7 +3,7 @@
 <root version="3.0">
   <properties>
     <name>Feature: Extended automation and alternative overlays</name>
-    <version>4.5.0</version>
+    <version>4.5.10</version>
     <author>rhythmist, mr900rr, darrenan, tahl_liadon, bmos, DCrumb, RabidPaladin, SoxMax, Cristmo, rhagelstrom, rogervinc, mattekure and Kelrugem</author>
     <description>Deekin ist super! (Will ever someone read that strange description?)</description>
     <ruleset>
