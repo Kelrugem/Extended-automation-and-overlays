@@ -400,28 +400,29 @@ end
 --
 
 function getSpellDefense(rActor)
-	local sNodeType, nodeActor = ActorManager.getTypeAndNode(rActor);
-	if not nodeActor then
-		return 0;
-	end
-
-	local nSR = 0;
-	if sNodeType == "pc" then
-		nSR = DB.getValue(nodeActor, "defenses.sr.total", 0);
-	elseif sNodeType == "ct" then
-		nSR = DB.getValue(nodeActor, "sr", 0);
-	elseif sNodeType == "npc" then
-		local sSpecialQualities = string.lower(DB.getValue(nodeActor, "specialqualities", ""));
-		local sSpellResist = string.match(sSpecialQualities, "spell resistance (%d+)");
-		if not sSpellResist then
-			sSpellResist = string.match(sSpecialQualities, "sr (%d+)");
+	if ActorManager.isPC(rActor) then
+		local nodeActor = ActorManager.getCreatureNode(rActor);
+		if nodeActor then
+			return DB.getValue(nodeActor, "defenses.sr.total", 0);
 		end
-		if sSpellResist then
-			nSR = tonumber(sSpellResist) or 0;
+	elseif ActorManager.isRecordType(rActor, "npc") then
+		local nodeCT = ActorManager.getCTNode(rActor);
+		if nodeCT then
+			return DB.getValue(nodeCT, "sr", 0);
+		end
+		local nodeActor = ActorManager.getCreatureNode(rActor);
+		if nodeActor then
+			local sSpecialQualities = DB.getValue(nodeActor, "specialqualities", ""):lower();
+			local sSpellResist = sSpecialQualities:match("spell resistance (%d+)");
+			if not sSpellResist then
+				sSpellResist = sSpecialQualities:match("sr (%d+)");
+			end
+			if sSpellResist then
+				return tonumber(sSpellResist) or 0;
+			end
 		end
 	end
-	
-	return nSR;
+	return 0;
 end
 
 function getArmorComps(rActor)
