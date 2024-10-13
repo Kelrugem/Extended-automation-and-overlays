@@ -38,8 +38,7 @@ end
 -- NOTE 2: We can not use default effect checking in this function; 
 -- 		as it will cause endless loop with conditionals that check health
 
--- KEL adding bNoIcon to treat NOTE 2
-function getWoundPercent(v, bNoIcon)
+function getWoundPercent(v)
 	local rActor = ActorManager.resolveActor(v);
 
 	local nHP = 0;
@@ -84,12 +83,11 @@ function getWoundPercent(v, bNoIcon)
 		
 		if (nWounds - nHP) < nDying then
 			sStatus = ActorHealthManager.STATUS_DYING;
-			if not bNoIcon then
-				if EffectManager35E.hasEffectCondition(rActor, "Stable") then
-					TokenManager3.setDeathOverlay(nodeCT, 3);
-				else
-					TokenManager3.setDeathOverlay(nodeCT, 2);
-				end
+			-- KEL adding a boolean to treat NOTE 2
+			if EffectManager35E.hasEffectCondition(rActor, "Stable", "", true) then
+				TokenManager3.setDeathOverlay(nodeCT, 3);
+			else
+				TokenManager3.setDeathOverlay(nodeCT, 2);
 			end
 		else
 			sStatus = ActorHealthManager.STATUS_DEAD;
