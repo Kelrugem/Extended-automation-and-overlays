@@ -845,12 +845,12 @@ function getEffectsBonus(rActor, aEffectType, bModOnly, aFilter, rFilterActor, b
 	end
 	return aTotalDice, nTotalMod, nEffectCount;
 end
--- KEL Adding tags and IFTAG to
-function hasEffectCondition(rActor, sEffect, rEffectSpell)
-	return hasEffect(rActor, sEffect, nil, false, true, rEffectSpell);
+-- KEL Adding tags and IFTAG to hasEffect. Also bNoConditionals to avoid loops with getWoundPercent in ActorMananger and Overlay stuff in Tokenmanager (see Note 2 in ActorManager)
+function hasEffectCondition(rActor, sEffect, rEffectSpell, bNoConditionals)
+	return hasEffect(rActor, sEffect, nil, false, true, rEffectSpell, bNoConditionals);
 end
--- KEL add counter to hasEffect needed for dis/adv
-function hasEffect(rActor, sEffect, rTarget, bTargetedOnly, bIgnoreEffectTargets, rEffectSpell)
+-- KEL add counter to hasEffect needed for dis/adv; adding bNoConditionals
+function hasEffect(rActor, sEffect, rTarget, bTargetedOnly, bIgnoreEffectTargets, rEffectSpell, bNoConditionals)
 	if not sEffect or not rActor then
 		return false, 0;
 	end
@@ -885,46 +885,58 @@ function hasEffect(rActor, sEffect, rTarget, bTargetedOnly, bIgnoreEffectTargets
 			for kEffectComp, sEffectComp in ipairs(aEffectComps) do
 				local rEffectComp = parseEffectComp(sEffectComp);
 				-- Check conditionals
-				-- KEL Adding TAG for SIMMUNE
-				if rEffectComp.type == "IF" then
-					if not checkConditional(rActor, v, rEffectComp.remainder, rTarget, false, rEffectSpell) then
-						break;
-					end
-				elseif rEffectComp.type == "NIF" then
-					if checkConditional(rActor, v, rEffectComp.remainder, rTarget, false, rEffectSpell) then
-						break;
-					end
-				elseif rEffectComp.type == "IFT" then
-					if not rTarget then
-						break;
-					end
-					if not checkConditional(rTarget, v, rEffectComp.remainder, rActor, false, rEffectSpell) then
-						break;
-					end
-					bIFT = true;
-				elseif rEffectComp.type == "NIFT" then
-					if rActor.aTargets and not rTarget then
-						-- if ( #rActor.aTargets[1] > 0 ) and not rTarget then
-						break;
-						-- end
-					end
-					if checkConditional(rTarget, v, rEffectComp.remainder, rActor, false, rEffectSpell) then
-						break;
-					end
-					if rTarget then
+				-- KEL Adding TAG for SIMMUNE; adding bNoConditionals to avoid loops
+				if not bNoConditionals then
+					if rEffectComp.type == "IF" then
+						if not checkConditional(rActor, v, rEffectComp.remainder, rTarget, false, rEffectSpell) then
+							break;
+						end
+					elseif rEffectComp.type == "NIF" then
+						if checkConditional(rActor, v, rEffectComp.remainder, rTarget, false, rEffectSpell) then
+							break;
+						end
+					elseif rEffectComp.type == "IFT" then
+						if not rTarget then
+							break;
+						end
+						if not checkConditional(rTarget, v, rEffectComp.remainder, rActor, false, rEffectSpell) then
+							break;
+						end
 						bIFT = true;
+					elseif rEffectComp.type == "NIFT" then
+						if rActor.aTargets and not rTarget then
+							-- if ( #rActor.aTargets[1] > 0 ) and not rTarget then
+							break;
+							-- end
+						end
+						if checkConditional(rTarget, v, rEffectComp.remainder, rActor, false, rEffectSpell) then
+							break;
+						end
+						if rTarget then
+							bIFT = true;
+						end
+					elseif rEffectComp.type == "IFTAG" then
+						if not rEffectSpell then
+							break;
+						elseif not checkTagConditional(rEffectComp.remainder, rEffectSpell) then
+							break;
+						end
+					elseif rEffectComp.type == "NIFTAG" then
+						if checkTagConditional(rEffectComp.remainder, rEffectSpell) then
+							break;
+						end
+					-- Check for match
+					elseif rEffectComp.original:lower() == sLowerEffect then
+						if bTargeted and not bIgnoreEffectTargets then
+							if EffectManager.isEffectTarget(v, rTarget) then
+								nMatch = kEffectComp;
+							end
+						elseif bTargetedOnly and bIFT then
+							nMatch = kEffectComp;
+						elseif not bTargetedOnly then
+							nMatch = kEffectComp;
+						end
 					end
-				elseif rEffectComp.type == "IFTAG" then
-					if not rEffectSpell then
-						break;
-					elseif not checkTagConditional(rEffectComp.remainder, rEffectSpell) then
-						break;
-					end
-				elseif rEffectComp.type == "NIFTAG" then
-					if checkTagConditional(rEffectComp.remainder, rEffectSpell) then
-						break;
-					end
-
 				-- Check for match
 				elseif rEffectComp.original:lower() == sLowerEffect then
 					if bTargeted and not bIgnoreEffectTargets then
@@ -977,19 +989,19 @@ function checkConditional(rActor, nodeEffect, aConditions, rTarget, aIgnore, rEf
 		local sLower = v:lower();
 		if sLower == DataCommon.healthstatusfull then
 			-- KEL Add true as second argument to avoid that effect icons check the stable effect all the time
-			local _,_,nPercentLethal = ActorManager35E.getWoundPercent(rActor, true);
+			local _,_,nPercentLethal = ActorManager35E.getWoundPercent(rActor);
 			if nPercentLethal > 0 then
 				bReturn = false;
 				break;
 			end
 		elseif sLower == DataCommon.healthstatushalf then
-			local _,_,nPercentLethal = ActorManager35E.getWoundPercent(rActor, true);
+			local _,_,nPercentLethal = ActorManager35E.getWoundPercent(rActor);
 			if nPercentLethal < .5 then
 				bReturn = false;
 				break;
 			end
 		elseif sLower == DataCommon.healthstatuswounded then
-			local _,_,nPercentLethal = ActorManager35E.getWoundPercent(rActor, true);
+			local _,_,nPercentLethal = ActorManager35E.getWoundPercent(rActor);
 			if nPercentLethal == 0 then
 				bReturn = false;
 				break;

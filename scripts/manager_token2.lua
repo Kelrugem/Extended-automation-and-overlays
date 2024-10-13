@@ -128,8 +128,8 @@ function setDeathOverlay(nodeCT, death, erase)
 	elseif sOptWO == "on" then
 		if nodeCT then
 			local rSource = ActorManager.resolveActor(nodeCT);
-			
-			if not EffectManager35E.hasEffectCondition(rSource, "noblood") then
+			-- KEL we have to stop the loop via manager-actor -> Overlay -> EffectManager (bloodied...)
+			if not EffectManager35E.hasEffectCondition(rSource, "noblood", "", true) then
 				if Session.IsHost then
 					local deathNode = DB.createChild(nodeCT, "death","number"); 
 					if deathNode then
