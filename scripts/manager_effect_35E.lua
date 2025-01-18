@@ -846,8 +846,8 @@ function getEffectsBonus(rActor, aEffectType, bModOnly, aFilter, rFilterActor, b
 	return aTotalDice, nTotalMod, nEffectCount;
 end
 -- KEL Adding tags and IFTAG to hasEffect. Also bNoConditionals to avoid loops with getWoundPercent in ActorMananger and Overlay stuff in Tokenmanager (see Note 2 in ActorManager)
-function hasEffectCondition(rActor, sEffect, rEffectSpell, bNoConditionals)
-	return hasEffect(rActor, sEffect, nil, false, true, rEffectSpell, bNoConditionals);
+function hasEffectCondition(rActor, sEffect, rEffectSpell, bNoConditionals, rTarget)
+	return hasEffect(rActor, sEffect, rTarget, false, true, rEffectSpell, bNoConditionals);
 end
 -- KEL add counter to hasEffect needed for dis/adv; adding bNoConditionals
 function hasEffect(rActor, sEffect, rTarget, bTargetedOnly, bIgnoreEffectTargets, rEffectSpell, bNoConditionals)
