@@ -1,5 +1,5 @@
 function onInit()
-    ActionSkill.modSkill = modSkill
+    ActionSkill.modSkill = modSkill;
     ActionsManager.registerModHandler("skill", modSkill);
 end
 
