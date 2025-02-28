@@ -118,14 +118,11 @@ function onSpellTargeting(rSource, aTargeting, rRolls)
 	return aTargeting;
 end
 -- KEL adding tags
-function getSpellCastRoll(rActor, rAction, tag)
+function getSpellCastRoll(rActor, rAction)
 	local rRoll = {};
 	rRoll.sType = "cast";
 	rRoll.aDice = {};
 	rRoll.nMod = 0;
-	-- KEL
-	rRoll.tags = tag;
-	-- END
 	
 	rRoll.sDesc = "[CAST";
 	if rAction.order and rAction.order > 1 then
@@ -134,7 +131,8 @@ function getSpellCastRoll(rActor, rAction, tag)
 	rRoll.sDesc = rRoll.sDesc .. "] " .. StringManager.capitalizeAll(rAction.label);
 	
 	-- KEL adding tags to chat message
-	if rRoll.tags then
+	if rAction.tags and next(rAction.tags) then
+		rRoll.tags = table.concat(rAction.tags, ";");
 		rRoll.sDesc = rRoll.sDesc .. " [TAGS: " .. rRoll.tags .. "]";
 	end
 	-- END
@@ -143,12 +141,11 @@ function getSpellCastRoll(rActor, rAction, tag)
 end
 -- END
 -- KEL adding tags
-function getCLCRoll(rActor, rAction, tag)
+function getCLCRoll(rActor, rAction)
 	local rRoll = {};
 	rRoll.sType = "clc";
 	rRoll.aDice = DiceRollManager.getActorDice({ "d20" }, rActor);
 	rRoll.nMod = rAction.clc or 0;
-	rRoll.tags = tag;
 	
 	rRoll.sDesc = "[CL CHECK";
 	if rAction.order and rAction.order > 1 then
@@ -158,17 +155,23 @@ function getCLCRoll(rActor, rAction, tag)
 	if rAction.sr == "no" then
 		rRoll.sDesc = rRoll.sDesc .. " [SR NOT ALLOWED]";
 	end
+
+	if rAction.tags and next(rAction.tags) then
+		rRoll.tags = table.concat(rAction.tags, ";");
+	end
 	
 	return rRoll;
 end
 -- END
 -- KEL adding tags
-function getSaveVsRoll(rActor, rAction, tag)
+function getSaveVsRoll(rActor, rAction)
 	local rRoll = {};
 	rRoll.sType = "spellsave";
 	rRoll.aDice = {};
 	-- KEL Save the new tags information (of the bottom line)
-	rRoll.tags = tag;
+	if rAction.tags and next(rAction.tags) then
+		rRoll.tags = table.concat(rAction.tags, ";");
+	end
 	-- KEL DC effect
 	local nDCMod, nDCCount = EffectManager35E.getEffectsBonus(rActor, {"DC"}, true, nil, nil, false, rRoll.tags);
 	rAction.savemod = rAction.savemod + nDCMod;

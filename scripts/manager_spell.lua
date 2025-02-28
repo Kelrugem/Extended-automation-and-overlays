@@ -934,9 +934,12 @@ function getSpellAction(rActor, nodeAction, sSubRoll)
 	rAction.label = DB.getValue(nodeAction, "...name", "");
 	rAction.order = getSpellActionOutputOrder(nodeAction);
 	-- KEL Save versus tags new variables and replace attribute
-	rAction.school = DB.getValue(nodeAction, "school", "");
-	rAction.stype = DB.getValue(nodeAction, "stype", "");
-	rAction.tags = DB.getValue(nodeAction, "othertags", "");
+	school = DB.getValue(nodeAction, "school", "");
+	stype = DB.getValue(nodeAction, "stype", "");
+	tags = DB.getValue(nodeAction, "othertags", ""):lower();
+	rAction.tags = StringManager.split(tags, ",;", true)
+	table.insert(rAction.tags, school)
+	table.insert(rAction.tags, stype)
 	rAction.replace = DB.getValue(nodeAction, "replacedc.ability", "");
 	-- Save overlay
 	rAction.spell = true;
@@ -1080,7 +1083,6 @@ function onSpellAction(draginfo, nodeAction, sSubRoll)
 	-- KEL CL effect
 	local nodeSpell = DB.getChild(nodeAction, "...");
 	local nodeActions = DB.createChild(nodeSpell, "actions");
-	local tag = "";
 	local range = "";
 	-- KEL If multiple cast actions: Important that all cast actions have the same tags? Also adding ranges
 	if nodeActions then
@@ -1089,7 +1091,6 @@ function onSpellAction(draginfo, nodeAction, sSubRoll)
 			for _, v in ipairs(OthernodeAction) do
 				if DB.getValue(v, "type") == "cast" then
 					rCastAction = SpellManager.getSpellAction(rActor, v);
-					tag = SpellManager.getTagsFromAction(rCastAction);
 					range = rCastAction.range;
 					break;
 				end
@@ -1116,21 +1117,21 @@ function onSpellAction(draginfo, nodeAction, sSubRoll)
 	local rCustom = nil;
 	if rAction.type == "cast" then
 		-- KEL Use Cast-specific tags (?)
-		local tagsSpec = SpellManager.getTagsFromAction(rAction);
+		-- local tagsSpec = SpellManager.getTagsFromAction(rAction);
 		if not rAction.subtype then
-			table.insert(rRolls, ActionSpell.getSpellCastRoll(rActor, rAction, tagsSpec));
+			table.insert(rRolls, ActionSpell.getSpellCastRoll(rActor, rAction));
 		end
 		
 		if not rAction.subtype or rAction.subtype == "atk" then
 			if rAction.range then
 				-- KEL add tag in getRoll itself, since that is need for IFTAG-KEEN; similar for following getRoll
-				local rRoll = ActionAttack.getRoll(rActor, rAction, tagsSpec);
+				local rRoll = ActionAttack.getRoll(rActor, rAction);
 				table.insert(rRolls, rRoll);
 			end
 		end
 
 		if not rAction.subtype or rAction.subtype == "clc" then
-			local rRoll = ActionSpell.getCLCRoll(rActor, rAction, tagsSpec);
+			local rRoll = ActionSpell.getCLCRoll(rActor, rAction);
 			if not rAction.subtype then
 				rRoll.sType = "castclc";
 				rRoll.aDice = {};
@@ -1140,7 +1141,7 @@ function onSpellAction(draginfo, nodeAction, sSubRoll)
 
 		if not rAction.subtype or rAction.subtype == "save" then
 			if rAction.save and rAction.save ~= "" then
-				local rRoll = ActionSpell.getSaveVsRoll(rActor, rAction, tagsSpec);
+				local rRoll = ActionSpell.getSaveVsRoll(rActor, rAction);
 				if not rAction.subtype then
 					rRoll.sType = "castsave";
 				end
@@ -1154,7 +1155,7 @@ function onSpellAction(draginfo, nodeAction, sSubRoll)
 			rAction.range = range;
 		end
 		
-		local rRoll = ActionDamage.getRoll(rActor, rAction, tag);
+		local rRoll = ActionDamage.getRoll(rActor, rAction);
 		-- END
 		if rAction.bSpellDamage then
 			rRoll.sType = "spdamage";
@@ -1166,7 +1167,7 @@ function onSpellAction(draginfo, nodeAction, sSubRoll)
 		
 	elseif rAction.type == "heal" then
 		-- KEL add tags
-		local rRoll = ActionHeal.getRoll(rActor, rAction, tag);
+		local rRoll = ActionHeal.getRoll(rActor, rAction);
 		-- END
 		table.insert(rRolls, rRoll);
 
@@ -1175,8 +1176,8 @@ function onSpellAction(draginfo, nodeAction, sSubRoll)
 		rRoll = ActionEffect.getRoll(draginfo, rActor, rAction);
 		if rRoll then
 			-- KEL adding tags, just in case :)
-			if tag then
-				rRoll.tags = tag;
+			if rAction.tags and next(rAction.tags) then
+				rRoll.tags = table.concat(rAction.tags, ";");
 			end
 			-- END
 			table.insert(rRolls, rRoll);
