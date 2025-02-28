@@ -45,6 +45,7 @@
 
       <!-- High-level scripts -->
     <script name="ActionsManagerKel" file="scripts/manager_actions.lua" />
+    <script name="CharManagerKel" file="scripts/manager_char.lua" />
     <script name="CombatManagerKel" file="scripts/manager_combat.lua" />
     <script name="CombatRecordManagerKel" file="scripts/manager_combat_record.lua" />
     <script name="OptionsInit" file="scripts/data_options_init.lua" />
@@ -62,7 +63,7 @@
     <script name="ActionSave" file="scripts/manager_action_save.lua" />
     <script name="ActionSpell" file="scripts/manager_action_spell.lua" />
     <script name="ActionSkill2" file="scripts/manager_action_skill.lua" />
-	<script name="KelToolbar" file="scripts/custom_toolbar.lua" />
+	  <script name="KelToolbar" file="scripts/custom_toolbar.lua" />
 
     <!-- Effect Builder -->
     <includefile source="effect_builder/editor_loader.xml" />
