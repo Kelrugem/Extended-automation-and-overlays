@@ -1110,7 +1110,6 @@ function onSpellAction(draginfo, nodeAction, sSubRoll)
 	local rCustom = nil;
 	if rAction.type == "cast" then
 		-- KEL Use Cast-specific tags (?)
-		-- local tagsSpec = SpellManager.getTagsFromAction(rAction);
 		if not rAction.subtype then
 			table.insert(rRolls, ActionSpell.getSpellCastRoll(rActor, rAction));
 		end
@@ -1198,28 +1197,6 @@ function onSpellAction(draginfo, nodeAction, sSubRoll)
 		ActionsManager.performMultiAction(draginfo, rActor, rRolls[1].sType, rRolls);
 	end
 end
-
--- KEL Getting tags from rAction
-function getTagsFromAction(rAction)
-	local tags = "";
-	local semicolon = ";";
-	
-	if not rAction then
-		return nil;
-	elseif not rAction.tags then
-		return nil;
-	end
-	
-	tags = rAction.stype .. semicolon .. rAction.school .. semicolon .. rAction.tags;
-	
-	local tagshelp = StringManager.parseWords(tags);
-	if not tagshelp[1] then
-		return nil;
-	end
-	
-	return tags;
-end
---END
 
 function getActionAbilityBonus(nodeAction)
 	local nodeSpellClass = DB.getChild(nodeAction, ".......");
