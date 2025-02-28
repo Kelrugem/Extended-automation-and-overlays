@@ -20,7 +20,7 @@ function getWeaponAttackRollStructures_new(nodeWeapon, nAttack)
     return rActor, rAttack
 end
 
-function getWeaponDamageRollStructures(nodeWeapon)
+function getWeaponDamageRollStructures_new(nodeWeapon)
     rActor, rDamage = getWeaponDamageRollStructures_original(nodeWeapon)
     if not rDamage then
         return rActor, rDamage
