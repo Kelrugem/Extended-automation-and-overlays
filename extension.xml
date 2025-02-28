@@ -63,7 +63,7 @@
     <script name="ActionSave" file="scripts/manager_action_save.lua" />
     <script name="ActionSpell" file="scripts/manager_action_spell.lua" />
     <script name="ActionSkill2" file="scripts/manager_action_skill.lua" />
-	  <script name="KelToolbar" file="scripts/custom_toolbar.lua" />
+    <script name="KelToolbar" file="scripts/custom_toolbar.lua" />
 
     <!-- Effect Builder -->
     <includefile source="effect_builder/editor_loader.xml" />
