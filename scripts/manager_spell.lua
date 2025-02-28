@@ -1075,8 +1075,7 @@ function getSpellAction(rActor, nodeAction, sSubRoll)
 
 		rAction.sUnits = DB.getValue(nodeAction, "durunit", "");
 	end
-	
-	Debug.chat("getSpellAction", rAction);
+
 	return rAction;
 end
 
@@ -1168,9 +1167,7 @@ function onSpellAction(draginfo, nodeAction, sSubRoll)
 			table.insert(rRolls, rRoll);
 		end
 	end
-	
-	
-	Debug.chat("onSpellAction", rRolls);
+
 	if #rRolls > 0 then
 		ActionsManager.performMultiAction(draginfo, rActor, rRolls[1].sType, rRolls);
 	end
