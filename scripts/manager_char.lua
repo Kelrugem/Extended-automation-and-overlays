@@ -15,7 +15,7 @@ function getWeaponAttackRollStructures_new(nodeWeapon, nAttack)
     end
 
     local sProperties = DB.getValue(nodeWeapon, "properties", ""):lower()
-    rAttack.tags = StringManager.split(sProperties, ",", true)
+    rAttack.tags = StringManager.split(sProperties, ",;", true)
 
     return rActor, rAttack
 end
@@ -27,7 +27,7 @@ function getWeaponDamageRollStructures(nodeWeapon)
     end
 
     local sProperties = DB.getValue(nodeWeapon, "properties", ""):lower()
-    rDamage.tags = StringManager.split(sProperties, ",", true)
+    rDamage.tags = StringManager.split(sProperties, ",;", true)
 
     return rActor, rDamage
 end
