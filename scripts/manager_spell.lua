@@ -1081,20 +1081,13 @@ function onSpellAction(draginfo, nodeAction, sSubRoll)
 		return;
 	end
 	-- KEL CL effect
-	local nodeSpell = DB.getChild(nodeAction, "...");
-	local nodeActions = DB.createChild(nodeSpell, "actions");
-	local range = "";
+	local rCastAction;
 	-- KEL If multiple cast actions: Important that all cast actions have the same tags? Also adding ranges
-	if nodeActions then
-		local OthernodeAction = DB.getChildList(nodeActions);
-		if OthernodeAction then
-			for _, v in ipairs(OthernodeAction) do
-				if DB.getValue(v, "type") == "cast" then
-					rCastAction = SpellManager.getSpellAction(rActor, v);
-					range = rCastAction.range;
-					break;
-				end
-			end
+	local nodeSpellActions = DB.getChildList(nodeAction, "..")
+	for _, v in nodeSpellActions do
+		if DB.getValue(v, "type") == "cast" then
+			rCastAction = SpellManager.getSpellAction(rActor, v);
+			break;
 		end
 	end
 	local aAddDice, nAddMod, nEffectCount = EffectManager35E.getEffectsBonus(rActor, "CL", false, nil, nil, false, tag);
@@ -1151,12 +1144,16 @@ function onSpellAction(draginfo, nodeAction, sSubRoll)
 		
 	elseif rAction.type == "damage" then
 		-- KEL add range and tag stuff to spells
-		if range ~= "" then
-			rAction.range = range;
+		if rCastAction then
+			if rCastAction.range then
+				rAction.range = rCastAction.range;
+			end
+			if rCastAction.tags then
+				rAction.tags = rCastAction.tags;
+			end
 		end
-		
-		local rRoll = ActionDamage.getRoll(rActor, rAction);
 		-- END
+		local rRoll = ActionDamage.getRoll(rActor, rAction);
 		if rAction.bSpellDamage then
 			rRoll.sType = "spdamage";
 		else
@@ -1167,8 +1164,16 @@ function onSpellAction(draginfo, nodeAction, sSubRoll)
 		
 	elseif rAction.type == "heal" then
 		-- KEL add tags
-		local rRoll = ActionHeal.getRoll(rActor, rAction);
+		if rCastAction then
+			if rCastAction.range then
+				rAction.range = rCastAction.range;
+			end
+			if rCastAction.tags then
+				rAction.tags = rCastAction.tags;
+			end
+		end
 		-- END
+		local rRoll = ActionHeal.getRoll(rActor, rAction);
 		table.insert(rRolls, rRoll);
 
 	elseif rAction.type == "effect" then
@@ -1176,8 +1181,13 @@ function onSpellAction(draginfo, nodeAction, sSubRoll)
 		rRoll = ActionEffect.getRoll(draginfo, rActor, rAction);
 		if rRoll then
 			-- KEL adding tags, just in case :)
-			if rAction.tags and next(rAction.tags) then
-				rRoll.tags = table.concat(rAction.tags, ";");
+			if rCastAction then
+				if rCastAction.range then
+					rAction.range = rCastAction.range;
+				end
+				if rCastAction.tags then
+					rAction.tags = rCastAction.tags;
+				end
 			end
 			-- END
 			table.insert(rRolls, rRoll);
