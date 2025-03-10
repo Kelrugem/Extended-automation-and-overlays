@@ -1064,7 +1064,13 @@ function checkConditionalHelper(rActor, sEffect, rTarget, aIgnore, rEffectSpell)
 	end
 	for _,v in ipairs(aEffects) do
 		local nActive = DB.getValue(v, "isactive", 0);
-		if nActive ~= 0 and not StringManager.contains(aIgnore, v.getPath()) then
+		-- COMPATIBILITY FOR ADVANCED EFFECTS
+		-- to add support for AE in other extensions, make this change
+		-- Check effect is from used weapon.
+		-- original line: if nActive ~= 0 and not StringManager.contains(aIgnore, v.getPath()) then
+		if ((not AdvancedEffects and nActive ~= 0) or (AdvancedEffects and AdvancedEffects.isValidCheckEffect(rActor,v))) and not StringManager.contains(aIgnore, v.getPath()) then
+		-- END COMPATIBILITY FOR ADVANCED EFFECTS
+		
 			-- Parse each effect label
 			local sLabel = DB.getValue(v, "label", "");
 			local aEffectComps = EffectManager.parseEffect(sLabel);
