@@ -8,7 +8,7 @@ function onInit()
 	ActionsManager.registerResultHandler("heal", onHeal);
 end
 
-function getRoll(rActor, rAction, tag)
+function getRoll(rActor, rAction)
 	local rRoll = {};
 	rRoll.sType = "heal";
 	rRoll.aDice = {};
