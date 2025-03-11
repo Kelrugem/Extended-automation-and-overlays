@@ -1088,7 +1088,9 @@ function onSpellAction(draginfo, nodeAction, sSubRoll)
 		return;
 	end
 	-- KEL CL effect
-	local aAddDice, nAddMod, nEffectCount = EffectManager35E.getEffectsBonus(rActor, "CL", false, nil, nil, false, tag);
+	local rFirstCastAction = SpellManager.getFirstCastAction(nodeAction);
+	local sFirstCastTags = table.concat(rFirstCastAction.tags, ";");
+	local aAddDice, nAddMod, nEffectCount = EffectManager35E.getEffectsBonus(rActor, "CL", false, nil, nil, false, sFirstCastTags);
 	local nClMod = 0;
 	if nEffectCount > 0 then
 		nClMod = StringManager.evalDice(aAddDice, nAddMod);
@@ -1141,7 +1143,7 @@ function onSpellAction(draginfo, nodeAction, sSubRoll)
 		
 	elseif rAction.type == "damage" then
 		-- KEL add range and tag stuff to spells
-		decorateActionWithCastMetadata(nodeAction, rAction);
+		SpellManager.decorateActionWithCastMetadata(rAction, rFirstCastAction);
 		-- END
 		local rRoll = ActionDamage.getRoll(rActor, rAction);
 		if rAction.bSpellDamage then
@@ -1154,14 +1156,14 @@ function onSpellAction(draginfo, nodeAction, sSubRoll)
 		
 	elseif rAction.type == "heal" then
 		-- KEL add tags
-		decorateActionWithCastMetadata(nodeAction, rAction);
+		SpellManager.decorateActionWithCastMetadata(rAction, rFirstCastAction);
 		-- END
 		local rRoll = ActionHeal.getRoll(rActor, rAction);
 		table.insert(rRolls, rRoll);
 
 	elseif rAction.type == "effect" then
 		local rRoll;
-		decorateActionWithCastMetadata(nodeAction, rAction);
+		SpellManager.decorateActionWithCastMetadata(rAction, rFirstCastAction);
 		rRoll = ActionEffect.getRoll(draginfo, rActor, rAction);
 		if rRoll then
 			table.insert(rRolls, rRoll);
@@ -1173,9 +1175,9 @@ function onSpellAction(draginfo, nodeAction, sSubRoll)
 	end
 end
 
--- KEL get cast metadata (tags, range, etc) for non cast actions 
-function decorateActionWithCastMetadata(nodeAction, rAction)
-	local rCastAction;
+-- KEL get first cast action to extract tags, range, etc
+function getFirstCastAction(nodeAction)
+	local rCastAction = {};
 	-- KEL If multiple cast actions: Important that all cast actions have the same tags? Also adding ranges
 	local nodeSpellActions = DB.getChildList(nodeAction, "..")	for _, v in ipairs(nodeSpellActions) do
 		if DB.getValue(v, "type") == "cast" then
@@ -1183,13 +1185,17 @@ function decorateActionWithCastMetadata(nodeAction, rAction)
 			break;
 		end
 	end
-	if rCastAction then
-		if rCastAction.range then
-			rAction.range = rCastAction.range;
-		end
-		if rCastAction.tags then
-			rAction.tags = rCastAction.tags;
-		end
+	return rCastAction;
+end
+-- END
+
+-- KEL decorate action with cast metadata (tags, range, etc)
+function decorateActionWithCastMetadata(rAction, rCastAction)
+	if rCastAction.range and not rAction.range then
+		rAction.range = rCastAction.range;
+	end
+	if rCastAction.tags and not rAction.tags then
+		rAction.tags = rCastAction.tags;
 	end
 end
 -- END
