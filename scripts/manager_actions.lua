@@ -12,16 +12,16 @@ function onInit()
 end
 
 function getTargeting(rSource, rTarget, sDragType, rRolls)
-	local aTargeting = OldgetTargeting(rSource, rTarget, sDragType, rRolls);
+	local tTargetGroups = OldgetTargeting(rSource, rTarget, sDragType, rRolls);
 	-- KEL Adding target informations to rSource, too
 	if rSource then
 		rSource.aTargets = false;
-		if (#aTargeting[1] > 0) then
+		if (#tTargetGroups[1] > 0) then
 			rSource.aTargets = true;
 		end
 	end
 	
-	return aTargeting;
+	return tTargetGroups;
 end
 
 function roll(rSource, vTargets, rRoll, bMultiTarget)

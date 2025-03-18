@@ -520,7 +520,7 @@ function getDefenseValue(rAttacker, rDefender, rRoll)
 	-- DETERMINE ATTACK TYPE AND DEFENSE
 	local sAttackType = "M";
 	if rRoll.sType == "attack" then
-		sAttackType = string.match(sAttack, "%[ATTACK.*%((%w+)%)%]");
+		sAttackType = ActionAttackCore.decodeRangeText(sAttack);
 	end
 	local bOpportunity = string.match(sAttack, "%[OPPORTUNITY%]");
 	local bTouch = true;

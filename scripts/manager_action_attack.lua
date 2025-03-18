@@ -38,7 +38,6 @@ function notifyApplyAttack(rSource, rTarget, rRoll)
 		return;
 	end
 
-	rRoll.bSecret = rRoll.bTower;
 	rRoll.sResults = table.concat(rRoll.aMessages, " ");
 
 	local msgOOB = UtilityManager.encodeRollToOOB(rRoll);
@@ -73,7 +72,7 @@ function onTargeting(rSource, aTargeting, rRolls)
 		if #aTargets > 1 then
 			for _,vRoll in ipairs(rRolls) do
 				if not string.match(vRoll.sDesc, "%[FULL%]") then
-					vRoll.bRemoveOnMiss = "true";
+					vRoll.bRemoveOnMiss = true;
 				end
 			end
 		end
@@ -115,14 +114,7 @@ function getRoll(rActor, rAction, tag)
 		end
 		rRoll.sDesc = rRoll.sDesc .. "] " .. StringManager.capitalizeAll(rAction.label);
 	else
-		rRoll.sDesc = "[ATTACK";
-		if rAction.order and rAction.order > 1 then
-			rRoll.sDesc = rRoll.sDesc .. " #" .. rAction.order;
-		end
-		if rAction.range then
-			rRoll.sDesc = rRoll.sDesc .. " (" .. rAction.range .. ")";
-		end
-		rRoll.sDesc = rRoll.sDesc .. "] " .. StringManager.capitalizeAll(rAction.label);
+		rRoll.sDesc = ActionAttackCore.encodeActionText(rAction);
 	end
 	
 	-- Add ability modifiers
@@ -286,10 +278,7 @@ function modAttack(rSource, rTarget, rRoll)
 		-- Determine attack type
 		local sAttackType = nil;
 		if rRoll.sType == "attack" then
-			sAttackType = string.match(rRoll.sDesc, "%[ATTACK.*%((%w+)%)%]");
-			if not sAttackType then
-				sAttackType = "M";
-			end
+			sAttackType = ActionAttackCore.decodeRangeText(rRoll.sDesc);
 		elseif rRoll.sType == "grapple" then
 			sAttackType = "M";
 		end
@@ -485,7 +474,7 @@ function modAttack(rSource, rTarget, rRoll)
 end
 
 function onAttack(rSource, rTarget, rRoll)
-	ActionAttack.decodeAttackRoll(rRoll);
+	ActionAttackCore.decodeRollData(rRoll);
 	
 	local rMessage = ActionsManager.createActionMessage(rSource, rRoll);
 
@@ -822,7 +811,7 @@ function onPostAttackResolve(rSource, rTarget, rRoll, rMessage)
 end
 
 function onGrapple(rSource, rTarget, rRoll)
-	ActionAttack.decodeAttackRoll(rRoll);
+	ActionAttackCore.decodeRollData(rRoll);
 
 	if DataCommon.isPFRPG() then
 		ActionAttack.onAttack(rSource, rTarget, rRoll);
@@ -909,19 +898,6 @@ function onMissChance(rSource, rTarget, rRoll)
 	-- END
 end
 
-function decodeAttackRoll(rRoll)
-	-- Rebuild detail fields if dragging from chat window
-	if not rRoll.nOrder then
-		rRoll.nOrder = tonumber(rRoll.sDesc:match("%[ATTACK.-#(%d+)")) or nil;
-	end
-	if not rRoll.sRange then
-		rRoll.sRange = rRoll.sDesc:match("%[ATTACK.-%((%w+)%)%]");
-	end
-	if not rRoll.sLabel then
-		rRoll.sLabel = StringManager.trim(rRoll.sDesc:match("%[ATTACK.-%]([^%[]+)"));
-	end
-end
-
 function applyAttack(rSource, rTarget, rRoll)
 	local msgShort = {font = "msgfont"};
 	local msgLong = {font = "msgfont"};
@@ -979,7 +955,7 @@ function applyAttack(rSource, rTarget, rRoll)
 		msgLong.icon = "roll_attack";
 	end
 		
-	ActionsManager.outputResult(rRoll.bSecret, rSource, rTarget, msgLong, msgShort);
+	ActionsManager.outputResult(rRoll.bTower, rSource, rTarget, msgLong, msgShort);
 end
 
 aCritState = {};

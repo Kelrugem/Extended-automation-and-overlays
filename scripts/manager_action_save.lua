@@ -37,7 +37,7 @@ function notifyApplySave(rSource, rRoll)
 	if rRoll.bTower then
 		msgOOB.nSecret = 1;
 	else
-		msgOOB.nSecret = 0;
+		msgOOB.nSecret = rRoll.bSecret and 1 or 0;
 	end
 	msgOOB.sDesc = rRoll.sDesc;
 	msgOOB.nTotal = ActionsManager.total(rRoll);
@@ -46,7 +46,7 @@ function notifyApplySave(rSource, rRoll)
 	msgOOB.sSaveResult = rRoll.sSaveResult;
 	-- KEL adding tags
 	msgOOB.tags = rRoll.tags;
-	if rRoll.bRemoveOnMiss then msgOOB.nRemoveOnMiss = 1; end
+	msgOOB.nRemoveOnMiss = rRoll.bRemoveOnMiss and 1 or 0;
 
 	msgOOB.sSourceNode = ActorManager.getCreatureNodeName(rSource);
 	if rRoll.sSource ~= "" then
@@ -79,9 +79,7 @@ function performVsRoll(draginfo, rActor, sSave, nTargetDC, bSecretRoll, rSource,
 		rRoll.bSecret = true;
 	end
 	rRoll.nTarget = nTargetDC;
-	if bRemoveOnMiss then
-		rRoll.bRemoveOnMiss = "true";
-	end
+	rRoll.bRemoveOnMiss = bRemoveOnMiss;
 	if sSaveDesc then
 		rRoll.sSaveDesc = sSaveDesc;
 	end

@@ -298,15 +298,7 @@ function getRoll(rActor, rAction, tag)
 	rRoll.nMod = 0;
 	rRoll.tags = tag;
 -- END
-	rRoll.sDesc = "[DAMAGE";
-	if rAction.order and rAction.order > 1 then
-		rRoll.sDesc = rRoll.sDesc .. " #" .. rAction.order;
-	end
-	if rAction.range then
-		rRoll.sDesc = rRoll.sDesc .. " (" .. rAction.range ..")";
-		rRoll.range = rAction.range;
-	end
-	rRoll.sDesc = rRoll.sDesc .. "] " .. StringManager.capitalizeAll(rAction.label);
+	rRoll.sDesc = ActionDamageCore.encodeActionText(rAction);
 
 	-- Save the damage clauses in the roll structure
 	rRoll.clauses = rAction.clauses;
@@ -2024,7 +2016,7 @@ function decodeDamageText(nDamage, sDamageDesc)
 		rDamageOutput.bCritical = string.match(sDamageDesc, "%[CRITICAL%]");
 
 		-- Determine range
-		rDamageOutput.sRange = string.match(sDamageDesc, "%[DAMAGE %((%w)%)%]") or "";
+		rDamageOutput.sRange = ActionDamageCore.decodeRangeText(sDamageDesc);
 		rDamageOutput.aDamageFilter = {};
 		if rDamageOutput.sRange == "M" then
 			table.insert(rDamageOutput.aDamageFilter, "melee");
@@ -2198,8 +2190,8 @@ function applyDamage(rSource, rTarget, bSecret, sRollType, sDamage, nTotal, bImm
 		-- Handle evasion and half damage
 		local isAvoided = false;
 		local isHalf = sDamage:match("%[HALF%]");
-		local sAttack = sDamage:match("%[DAMAGE[^]]*%] ([^[]+)");
-		if sAttack then
+		local sAttack = ActionDamageCore.decodeLabelText(sDamage);
+		if (sAttack or "") ~= "" then
 			local sDamageState = ActionDamage.getDamageState(rSource, rTarget, StringManager.trim(sAttack));
 			if sDamageState == "none" then
 				isAvoided = true;
@@ -2551,7 +2543,7 @@ end
 
 function applyFailedStabilization(rActor)
 	local sDamageTypeOutput = "Damage";
-	local sDamage = "[DAMAGE] Dying";
+	local sDamage = string.format("[%s] Dying", Interface.getString("action_damage_tag"));
 	local nTotal = 1;
 
 	local nTotalHP = 0;
