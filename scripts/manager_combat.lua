@@ -114,7 +114,7 @@ function rollStandardEntryInit(tInit)
 	end
 		
 	-- Iterate through list looking for other creatures with same name
-	local nLastInit = nil;
+	local tInit.nInitMatch = nil;
 	local sEntryFaction = DB.getValue(tInit.nodeEntry, "friendfoe", "");
 	for _,nodeCT in pairs(CombatManager.getCombatantNodes()) do
 		if DB.getName(nodeCT) ~= DB.getName(tInit.nodeEntry) then
@@ -123,7 +123,7 @@ function rollStandardEntryInit(tInit)
 				if sTemp == sStripName then
 					local nChildInit = DB.getValue(nodeCT, "initresult", 0);
 					if nChildInit ~= -10000 then
-						nLastInit = nChildInit;
+						tInit.nInitMatch = nChildInit;
 					end
 				end
 			end
@@ -132,7 +132,7 @@ function rollStandardEntryInit(tInit)
 	
 	-- If we found similar creatures, then match the initiative of the last one found; otherwise, roll
 	-- KEL FFOS
-	local nInitResult = nLastInit or CombatManager.helperRollRandomInit(tInit);
+	local nInitResult = tInit.nInitMatch or CombatManager.helperRollRandomInit(tInit);
 	DB.setValue(tInit.nodeEntry, "initresult", "number", nInitResult);
 	if sOptFFOS == "on" then
 		if nCurrent == 0 and not bHasUncDodge then

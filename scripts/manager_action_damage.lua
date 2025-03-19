@@ -183,12 +183,12 @@ function handleApplyDamage(msgOOB)
 	if not isFortif then
 		ActionDamage.applyDamage(rSource, rTarget, (tonumber(msgOOB.nSecret) == 1), msgOOB.sRollType, msgOOB.sDamage, nTotal, bSImmune, bSFortif, msgOOB.tags);
 	else
-		local aRollFortif = { sType = "fortification", aDice = DiceRollManager.getActorDice(bDice, rTarget), nMod = 0, aType = msgOOB.sRollType, aMessagetext = msgOOB.sDamage, aTotal = nTotal, aTags = msgOOB.tags};
+		local aRollFortif = { sType = "fortification", aDice = DiceRollManager.getActorDice(bDice, rTarget), nMod = 0, aType = msgOOB.sRollType, aMessagetext = msgOOB.sDamage, nTotal = nTotal, aTags = msgOOB.tags};
 		-- rDamageOutput = ActionDamage.decodeDamageText(nTotal, msgOOB.sDamage);
 		if tonumber(msgOOB.nSecret) == 1 then
-			aRollFortif.bTower = "true";
+			aRollFortif.bTower = true;
 		else
-			aRollFortif.bTower = "false";
+			aRollFortif.bTower = false;
 		end
 		if rTarget then
 			for k, _ in pairs(rDamageOutput.aDamageTypes) do
@@ -202,8 +202,8 @@ function handleApplyDamage(msgOOB)
 					end
 				end
 				if #aSrcDmgClauseTypes > 0 then
-					aRollFortif.ImmuneAll = tostring(bSImmune["all"]);
-					aRollFortif.FortifAll = tostring(bSFortif["all"]);
+					aRollFortif.bImmuneAll = bSImmune["all"];
+					aRollFortif.bFortifAll = bSFortif["all"];
 					aRollFortif[k] = tostring(bSImmune[k]);
 					aRollFortif[l] = tostring(bSFortif[k]);
 					local aVSFortifEffect, aVSFortifCount = EffectManager35E.getEffectsBonusByType(rSource, "VSFORTIF", true, nil, rTarget, false, msgOOB.tags);
@@ -221,7 +221,7 @@ function handleApplyDamage(msgOOB)
 				end
 			end
 		end
-		ActionsManager.roll(rSource, rTarget, aRollFortif);
+		ActionsManager.roll(rTarget, rSource, aRollFortif);
 	end
 
 	-- KEL TDMG
@@ -1795,13 +1795,13 @@ end
 
 -- KEL Fortification roll
 function onFortification(rSource, rTarget, rRoll)
-	local rDamageOutput = ActionDamage.decodeDamageText(tonumber(rRoll.aTotal), rRoll.aMessagetext);
+	local rDamageOutput = ActionDamage.decodeDamageText(rRoll.nTotal, rRoll.aMessagetext);
 	local FortifSuccess = {};
 	local m = 1;
 	local bImmune = {};
 	local bFortif = {};
 	local MaxFortifMod = {};
-	local bSecrets = ActionDamage.toboolean(rRoll.bTower);
+	local bSecrets = rRoll.bTower;
 	if rTarget then
 		for k, v in pairs(rDamageOutput.aDamageTypes) do
 			local l = "KELFORTIF " .. k;
@@ -1814,8 +1814,8 @@ function onFortification(rSource, rTarget, rRoll)
 				end
 			end
 			if #aSrcDmgClauseTypes > 0 then
-				bImmune["all"] = ActionDamage.toboolean(rRoll.ImmuneAll);
-				bFortif["all"] = ActionDamage.toboolean(rRoll.FortifAll);
+				bImmune["all"] = rRoll.bImmuneAll;
+				bFortif["all"] = rRoll.bFortifAll;
 				bImmune[k] = ActionDamage.toboolean(rRoll[k]);
 				bFortif[k] = ActionDamage.toboolean(rRoll[l]);
 				MaxFortifMod[k] = tonumber(rRoll[q]);
@@ -1906,7 +1906,7 @@ function onFortification(rSource, rTarget, rRoll)
 			end
 		end
 	end
-	applyDamage(rSource, rTarget, bSecrets, rRoll.aType, rRoll.aMessagetext, tonumber(rRoll.aTotal), bImmune, FortifSuccess, rRoll.aTags);
+	applyDamage(rSource, rTarget, bSecrets, rRoll.aType, rRoll.aMessagetext, rRoll.nTotal, bImmune, FortifSuccess, rRoll.aTags);
 end
 -- END
 -- Collapse damage clauses by damage type (in the original order, if possible)
