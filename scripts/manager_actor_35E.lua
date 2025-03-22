@@ -528,16 +528,16 @@ function getDefenseValue(rAttacker, rDefender, rRoll)
 		bTouch = string.match(sAttack, "%[TOUCH%]");
 	end
 	-- KEL Putting this definition already here, was for implementing ghost armor but maybe I do not need this anymore
-	local bIncorporealAttack = string.match(sAttack, "%[INCORPOREAL%]");
+	local bIncorporealAttack = sAttack:match("%[INCORPOREAL%]");
 	-- if string.match(sAttack, "%[INCORPOREAL%]") then
 		-- bIncorporealAttack = true;
 	-- end
 	-- KEL check for uncanny dodge here not needed, but maybe a security check?
-	local bFlatFooted = string.match(sAttack, "%[FF%]");
-	local nCover = tonumber(string.match(sAttack, "%[COVER %-(%d)%]")) or 0;
-	local bConceal = string.match(sAttack, "%[CONCEAL%]");
-	local bTotalConceal = string.match(sAttack, "%[TOTAL CONC%]");
-	local bAttackerBlinded = string.match(sAttack, "%[BLINDED%]");
+	local bFlatFooted = sAttack:match("%[FF%]");
+	local nCover = tonumber(sAttack:match("%[COVER %-(%d)%]")) or 0;
+	local bConceal = sAttack:match("%[CONCEAL%]");
+	local bTotalConceal = sAttack:match("%[TOTAL CONC%]");
+	local bAttackerBlinded = sAttack:match("%[BLINDED%]");
 
 	-- Determine the defense database node name
 	local nDefense = 10;

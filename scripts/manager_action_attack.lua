@@ -116,6 +116,7 @@ function getRoll(rActor, rAction, tag)
 	else
 		rRoll.sDesc = ActionAttackCore.encodeActionText(rAction);
 	end
+	rRoll.sRange = rAction.range;
 	
 	-- Add ability modifiers
 	if rAction.stat then
@@ -148,6 +149,9 @@ function getRoll(rActor, rAction, tag)
 		rRoll.sDesc = rRoll.sDesc .. " [ACTION]";
 	end
 	-- END
+	
+	-- Legacy
+	rRoll.range = rAction.range;
 	
 	return rRoll;
 end
@@ -216,6 +220,9 @@ end
 
 function modAttack(rSource, rTarget, rRoll)
 	ActionAttack.clearCritState(rSource);
+	
+	ActionAttackCore.decodeRollData(rRoll);
+	
 	local aAddDesc = {};
 	local aAddDice = {};
 	local nAddMod = 0;
@@ -275,14 +282,6 @@ function modAttack(rSource, rTarget, rRoll)
 	end
 	
 	if rSource then
-		-- Determine attack type
-		local sAttackType = nil;
-		if rRoll.sType == "attack" then
-			sAttackType = ActionAttackCore.decodeRangeText(rRoll.sDesc);
-		elseif rRoll.sType == "grapple" then
-			sAttackType = "M";
-		end
-
 		-- Determine ability used
 		local sActionStat = nil;
 		local sModStat = string.match(rRoll.sDesc, "%[MOD:(%w+)%]");
@@ -290,18 +289,18 @@ function modAttack(rSource, rTarget, rRoll)
 			sActionStat = DataCommon.ability_stol[sModStat];
 		end
 		if not sActionStat then
-			if sAttackType == "M" then
+			if rRoll.sRange == "M" then
 				sActionStat = "strength";
-			elseif sAttackType == "R" then
+			elseif rRoll.sRange == "R" then
 				sActionStat = "dexterity";
 			end
 		end
 
 		-- Build attack filter
 		local aAttackFilter = {};
-		if sAttackType == "M" then
+		if rRoll.sRange == "M" then
 			table.insert(aAttackFilter, "melee");
-		elseif sAttackType == "R" then
+		elseif rRoll.sRange == "R" then
 			table.insert(aAttackFilter, "ranged");
 		end
 		if bOpportunity then
@@ -319,7 +318,7 @@ function modAttack(rSource, rTarget, rRoll)
 		elseif EffectManager35E.hasEffect(rSource, "Invisible", nil, false, false, rRoll.tags) then
 			-- KEL blind fight, skipping checking effects for now (for performance and to avoid problems with On Skip etc.)
 			local bBlindFight = ActorManager35E.hasSpecialAbility(rTarget, "Blind-Fight", true, false, false);
-			if sAttackType == "R" or not bBlindFight then
+			if rRoll.sRange == "R" or not bBlindFight then
 				bEffects = true;
 				nAddMod = nAddMod + 2;
 				if not ActorManager35E.hasSpecialAbility(rTarget, "Uncanny Dodge", false, false, true) then
@@ -384,7 +383,7 @@ function modAttack(rSource, rTarget, rRoll)
 			table.insert(aAddDesc, "[BLINDED]");
 		end
 		if not DataCommon.isPFRPG() then
-			if EffectManager35E.hasEffect(rSource, "Incorporeal", nil, false, false, rRoll.tags) and sAttackType == "M" and not string.match(string.lower(rRoll.sDesc), "incorporeal touch") then
+			if EffectManager35E.hasEffect(rSource, "Incorporeal", nil, false, false, rRoll.tags) and (rRoll.sRange == "M") and not string.match(string.lower(rRoll.sDesc), "incorporeal touch") then
 				bEffects = true;
 				table.insert(aAddDesc, "[INCORPOREAL]");
 			end
@@ -425,7 +424,7 @@ function modAttack(rSource, rTarget, rRoll)
 		end
 		-- KEL see https://www.fantasygrounds.com/forums/showthread.php?74770-EffectManager-for-condition-in-3-5E
 		if EffectManager.hasCondition(rSource, "Prone") then
-			if sAttackType == "M" then
+			if rRoll.sRange == "M" then
 				bEffects = true;
 				nAddMod = nAddMod - 4;
 			end

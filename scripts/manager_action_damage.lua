@@ -311,6 +311,7 @@ function getRoll(rActor, rAction, tag)
 
 	-- Encode the damage types
 	ActionDamage.encodeDamageTypes(rRoll);
+	rRoll.sRange = rAction.range;
 
 	-- Encode meta tags
 	if rAction.meta then
@@ -320,6 +321,9 @@ function getRoll(rActor, rAction, tag)
 			rRoll.sDesc = rRoll.sDesc .. " [MAXIMIZE]";
 		end
 	end
+	
+	-- Legacy
+	rRoll.range = rAction.range;
 
 	return rRoll;
 end
@@ -447,7 +451,7 @@ function getTargetDamageRoll(rTarget, rSource, aAttackFilter, tags)
 			-- rRoll.sDesc = "[DAMAGE";
 			-- if rAction.range then
 				-- rRoll.sDesc = rRoll.sDesc .. " (" .. rAction.range ..")";
-				-- rRoll.range = rAction.range;
+				-- rRoll.sRange = rAction.range;
 			-- end
 			rRoll.sDesc = "[TARGET DAMAGE] ";
 
@@ -517,19 +521,19 @@ function onDamage(rSource, rTarget, rRoll)
 	end
 
 	-- KEL for TDMG and tags
-	local aAttackFilter = "";
-	if rRoll.range == "R" then
-		aAttackFilter = "ranged"
-	elseif rRoll.range == "M" then
-		aAttackFilter = "melee";
-	end
+	-- local aAttackFilter = "";
+	-- if rRoll.sRange == "R" then
+		-- aAttackFilter = "ranged"
+	-- elseif rRoll.sRange == "M" then
+		-- aAttackFilter = "melee";
+	-- end
 	local tag = nil;
 	if rRoll.tags then
 		tag = rRoll.tags;
 	end
 
 	-- Apply damage to the PC or CT entry referenced
-	ActionDamage.notifyApplyDamage(rSource, rTarget, rRoll.bTower, rRoll.sType, rMessage.text, nTotal, aAttackFilter, tag);
+	ActionDamage.notifyApplyDamage(rSource, rTarget, rRoll.bTower, rRoll.sType, rMessage.text, nTotal, rRoll.tAttackFilter, tag);
 	-- END
 end
 
@@ -560,6 +564,8 @@ end
 --
 
 function setupModRoll(rRoll, rSource, rTarget)
+	ActionDamageCore.decodeRollData(rRoll);
+	
 	ActionDamage.decodeDamageTypes(rRoll);
 	CombatManager2.addRightClickDiceToClauses(rRoll);
 
@@ -570,9 +576,9 @@ function setupModRoll(rRoll, rSource, rTarget)
 		rRoll.bCritical = true;
 	end
 	rRoll.tAttackFilter = {};
-	if rRoll.range == "R" then
+	if rRoll.sRange == "R" then
 		table.insert(rRoll.tAttackFilter, "ranged");
-	elseif rRoll.range == "M" then
+	elseif rRoll.sRange == "M" then
 		table.insert(rRoll.tAttackFilter, "melee");
 	end
 	-- KEl adding precision handle
@@ -777,7 +783,7 @@ function applyConditionsToModRoll(rRoll, rSource, rTarget)
 			rRoll.nEffectMod = rRoll.nEffectMod - 2;
 			rRoll.bEffects = true;
 		end
-		if EffectManager35E.hasEffect(rSource, "Incorporeal", nil, false, false, rRoll.tags) and (rRoll.range == "M")
+		if EffectManager35E.hasEffect(rSource, "Incorporeal", nil, false, false, rRoll.tags) and (rRoll.sRange == "M")
 				and not rRoll.sDesc:lower():match("incorporeal touch") then
 			rRoll.bEffects = true;
 			table.insert(rRoll.tNotifications, "[INCORPOREAL]");
