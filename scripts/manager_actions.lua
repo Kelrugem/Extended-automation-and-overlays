@@ -12,49 +12,41 @@ function onInit()
 end
 
 function getTargeting(rSource, rTarget, sDragType, rRolls)
-	local aTargeting = OldgetTargeting(rSource, rTarget, sDragType, rRolls);
+	local tTargetGroups = OldgetTargeting(rSource, rTarget, sDragType, rRolls);
 	-- KEL Adding target informations to rSource, too
 	if rSource then
 		rSource.aTargets = false;
-		if (#aTargeting[1] > 0) then
+		if (#tTargetGroups[1] > 0) then
 			rSource.aTargets = true;
 		end
 	end
 	
-	return aTargeting;
+	return tTargetGroups;
 end
 
 function roll(rSource, vTargets, rRoll, bMultiTarget)
 	if rRoll and rRoll.aDice then
 		if #(rRoll.aDice) > 0 then
-			rRoll.originaldicenumber = #rRoll.aDice;
+			rRoll.nOriginaldicenumber = #rRoll.aDice;
 		else
-			rRoll.originaldicenumber = 0;
+			rRoll.nOriginaldicenumber = 0;
 		end
 	else
-		rRoll.originaldicenumber = 0;
+		rRoll.nOriginaldicenumber = 0;
 	end
-	if rRoll.originaldicenumber ~= 0 then
+	if rRoll.nOriginaldicenumber ~= 0 then
 		local _, nAdvantage = EffectManager35E.hasEffect(rSource, "keladvantage", nil, false, false, rRoll.tags);
 		local _, nDisAdvantage = EffectManager35E.hasEffect(rSource, "keldisadvantage", nil, false, false, rRoll.tags);
 		
-		rRoll.adv = ( tonumber(rRoll.adv) or 0 ) + nAdvantage - nDisAdvantage;
+		rRoll.nAdv = ( rRoll.nAdv or 0 ) + nAdvantage - nDisAdvantage;
 		
 		if ModifierManager.getKey("ADV") then
-			rRoll.adv = 1;
+			rRoll.nAdv = 1;
 		elseif ModifierManager.getKey("DISADV") then
-			rRoll.adv = -1;
+			rRoll.nAdv = -1;
 		end
 		
-		if rRoll.adv > 0 then
-			local i = 1;
-			local slot = i + 1;
-			while rRoll.aDice[i] do
-				table.insert(rRoll.aDice, slot, rRoll.aDice[i]);
-				i = i + 2;
-				slot = i+1;
-			end
-		elseif rRoll.adv < 0 then
+		if rRoll.nAdv ~= 0 then
 			local i = 1;
 			local slot = i + 1;
 			while rRoll.aDice[i] do
@@ -70,9 +62,9 @@ end
 function resolveAction(rSource, rTarget, rRoll)
 	if rRoll and rRoll.aDice and ( #rRoll.aDice > 0 ) then
 		
-		rRoll.adv = tonumber(rRoll.adv) or 0;
+		rRoll.nAdv = rRoll.nAdv or 0;
 		
-		if rRoll.adv > 0 then
+		if rRoll.nAdv > 0 then
 			local i = 1;
 			local slot = i+1;
 			local sDropped = "";
@@ -98,7 +90,7 @@ function resolveAction(rSource, rTarget, rRoll)
 			end
 			rRoll.sDesc = rRoll.sDesc .. " [ADV]" .. " [DROPPED " .. sDropped .. "]";
 			rRoll.aDice.expr = nil;
-		elseif rRoll.adv < 0 then
+		elseif rRoll.nAdv < 0 then
 			local i = 1;
 			local slot = i+1;
 			local sDropped = "";
@@ -147,13 +139,12 @@ function total(rRoll)
 			j = j+1;
 		end
 	end
-	if rRoll.originaldicenumber then
-		rRoll.originaldicenumber = tonumber(rRoll.originaldicenumber);
-		if rRoll.aDice and ( #rRoll.aDice > rRoll.originaldicenumber ) then
+	if rRoll.nOriginaldicenumber then
+		if rRoll.aDice and ( #rRoll.aDice > rRoll.nOriginaldicenumber ) then
 		
-			rRoll.adv = tonumber(rRoll.adv) or 0;
+			rRoll.nAdv = rRoll.nAdv or 0;
 			
-			if rRoll.adv > 0 then
+			if rRoll.nAdv > 0 then
 				local i = 1;
 				local slot = i+1;
 				while corrector[i] do
@@ -165,7 +156,7 @@ function total(rRoll)
 					i = i + 1;
 					slot = i+1;
 				end
-			elseif rRoll.adv < 0 then
+			elseif rRoll.nAdv < 0 then
 				local i = 1;
 				local slot = i+1;
 				while corrector[i] do

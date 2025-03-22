@@ -183,12 +183,12 @@ function handleApplyDamage(msgOOB)
 	if not isFortif then
 		ActionDamage.applyDamage(rSource, rTarget, (tonumber(msgOOB.nSecret) == 1), msgOOB.sRollType, msgOOB.sDamage, nTotal, bSImmune, bSFortif, msgOOB.tags);
 	else
-		local aRollFortif = { sType = "fortification", aDice = DiceRollManager.getActorDice(bDice, rTarget), nMod = 0, aType = msgOOB.sRollType, aMessagetext = msgOOB.sDamage, aTotal = nTotal, aTags = msgOOB.tags};
+		local aRollFortif = { sType = "fortification", aDice = DiceRollManager.getActorDice(bDice, rTarget), nMod = 0, aType = msgOOB.sRollType, aMessagetext = msgOOB.sDamage, nTotal = nTotal, aTags = msgOOB.tags};
 		-- rDamageOutput = ActionDamage.decodeDamageText(nTotal, msgOOB.sDamage);
 		if tonumber(msgOOB.nSecret) == 1 then
-			aRollFortif.bTower = "true";
+			aRollFortif.bTower = true;
 		else
-			aRollFortif.bTower = "false";
+			aRollFortif.bTower = false;
 		end
 		if rTarget then
 			for k, _ in pairs(rDamageOutput.aDamageTypes) do
@@ -202,8 +202,8 @@ function handleApplyDamage(msgOOB)
 					end
 				end
 				if #aSrcDmgClauseTypes > 0 then
-					aRollFortif.ImmuneAll = tostring(bSImmune["all"]);
-					aRollFortif.FortifAll = tostring(bSFortif["all"]);
+					aRollFortif.bImmuneAll = bSImmune["all"];
+					aRollFortif.bFortifAll = bSFortif["all"];
 					aRollFortif[k] = tostring(bSImmune[k]);
 					aRollFortif[l] = tostring(bSFortif[k]);
 					local aVSFortifEffect, aVSFortifCount = EffectManager35E.getEffectsBonusByType(rSource, "VSFORTIF", true, nil, rTarget, false, msgOOB.tags);
@@ -221,7 +221,7 @@ function handleApplyDamage(msgOOB)
 				end
 			end
 		end
-		ActionsManager.roll(rSource, rTarget, aRollFortif);
+		ActionsManager.roll(rTarget, rSource, aRollFortif);
 	end
 
 	-- KEL TDMG
@@ -298,15 +298,7 @@ function getRoll(rActor, rAction, tag)
 	rRoll.nMod = 0;
 	rRoll.tags = tag;
 -- END
-	rRoll.sDesc = "[DAMAGE";
-	if rAction.order and rAction.order > 1 then
-		rRoll.sDesc = rRoll.sDesc .. " #" .. rAction.order;
-	end
-	if rAction.range then
-		rRoll.sDesc = rRoll.sDesc .. " (" .. rAction.range ..")";
-		rRoll.range = rAction.range;
-	end
-	rRoll.sDesc = rRoll.sDesc .. "] " .. StringManager.capitalizeAll(rAction.label);
+	rRoll.sDesc = ActionDamageCore.encodeActionText(rAction);
 
 	-- Save the damage clauses in the roll structure
 	rRoll.clauses = rAction.clauses;
@@ -319,6 +311,7 @@ function getRoll(rActor, rAction, tag)
 
 	-- Encode the damage types
 	ActionDamage.encodeDamageTypes(rRoll);
+	rRoll.sRange = rAction.range;
 
 	-- Encode meta tags
 	if rAction.meta then
@@ -328,6 +321,9 @@ function getRoll(rActor, rAction, tag)
 			rRoll.sDesc = rRoll.sDesc .. " [MAXIMIZE]";
 		end
 	end
+	
+	-- Legacy
+	rRoll.range = rAction.range;
 
 	return rRoll;
 end
@@ -455,7 +451,7 @@ function getTargetDamageRoll(rTarget, rSource, aAttackFilter, tags)
 			-- rRoll.sDesc = "[DAMAGE";
 			-- if rAction.range then
 				-- rRoll.sDesc = rRoll.sDesc .. " (" .. rAction.range ..")";
-				-- rRoll.range = rAction.range;
+				-- rRoll.sRange = rAction.range;
 			-- end
 			rRoll.sDesc = "[TARGET DAMAGE] ";
 
@@ -525,19 +521,19 @@ function onDamage(rSource, rTarget, rRoll)
 	end
 
 	-- KEL for TDMG and tags
-	local aAttackFilter = "";
-	if rRoll.range == "R" then
-		aAttackFilter = "ranged"
-	elseif rRoll.range == "M" then
-		aAttackFilter = "melee";
-	end
+	-- local aAttackFilter = "";
+	-- if rRoll.sRange == "R" then
+		-- aAttackFilter = "ranged"
+	-- elseif rRoll.sRange == "M" then
+		-- aAttackFilter = "melee";
+	-- end
 	local tag = nil;
 	if rRoll.tags then
 		tag = rRoll.tags;
 	end
 
 	-- Apply damage to the PC or CT entry referenced
-	ActionDamage.notifyApplyDamage(rSource, rTarget, rRoll.bTower, rRoll.sType, rMessage.text, nTotal, aAttackFilter, tag);
+	ActionDamage.notifyApplyDamage(rSource, rTarget, rRoll.bTower, rRoll.sType, rMessage.text, nTotal, rRoll.tAttackFilter, tag);
 	-- END
 end
 
@@ -568,6 +564,8 @@ end
 --
 
 function setupModRoll(rRoll, rSource, rTarget)
+	ActionDamageCore.decodeRollData(rRoll);
+	
 	ActionDamage.decodeDamageTypes(rRoll);
 	CombatManager2.addRightClickDiceToClauses(rRoll);
 
@@ -578,9 +576,9 @@ function setupModRoll(rRoll, rSource, rTarget)
 		rRoll.bCritical = true;
 	end
 	rRoll.tAttackFilter = {};
-	if rRoll.range == "R" then
+	if rRoll.sRange == "R" then
 		table.insert(rRoll.tAttackFilter, "ranged");
-	elseif rRoll.range == "M" then
+	elseif rRoll.sRange == "M" then
 		table.insert(rRoll.tAttackFilter, "melee");
 	end
 	-- KEl adding precision handle
@@ -785,7 +783,7 @@ function applyConditionsToModRoll(rRoll, rSource, rTarget)
 			rRoll.nEffectMod = rRoll.nEffectMod - 2;
 			rRoll.bEffects = true;
 		end
-		if EffectManager35E.hasEffect(rSource, "Incorporeal", nil, false, false, rRoll.tags) and (rRoll.range == "M")
+		if EffectManager35E.hasEffect(rSource, "Incorporeal", nil, false, false, rRoll.tags) and (rRoll.sRange == "M")
 				and not rRoll.sDesc:lower():match("incorporeal touch") then
 			rRoll.bEffects = true;
 			table.insert(rRoll.tNotifications, "[INCORPOREAL]");
@@ -1803,13 +1801,13 @@ end
 
 -- KEL Fortification roll
 function onFortification(rSource, rTarget, rRoll)
-	local rDamageOutput = ActionDamage.decodeDamageText(tonumber(rRoll.aTotal), rRoll.aMessagetext);
+	local rDamageOutput = ActionDamage.decodeDamageText(rRoll.nTotal, rRoll.aMessagetext);
 	local FortifSuccess = {};
 	local m = 1;
 	local bImmune = {};
 	local bFortif = {};
 	local MaxFortifMod = {};
-	local bSecrets = ActionDamage.toboolean(rRoll.bTower);
+	local bSecrets = rRoll.bTower;
 	if rTarget then
 		for k, v in pairs(rDamageOutput.aDamageTypes) do
 			local l = "KELFORTIF " .. k;
@@ -1822,8 +1820,8 @@ function onFortification(rSource, rTarget, rRoll)
 				end
 			end
 			if #aSrcDmgClauseTypes > 0 then
-				bImmune["all"] = ActionDamage.toboolean(rRoll.ImmuneAll);
-				bFortif["all"] = ActionDamage.toboolean(rRoll.FortifAll);
+				bImmune["all"] = rRoll.bImmuneAll;
+				bFortif["all"] = rRoll.bFortifAll;
 				bImmune[k] = ActionDamage.toboolean(rRoll[k]);
 				bFortif[k] = ActionDamage.toboolean(rRoll[l]);
 				MaxFortifMod[k] = tonumber(rRoll[q]);
@@ -1914,7 +1912,7 @@ function onFortification(rSource, rTarget, rRoll)
 			end
 		end
 	end
-	applyDamage(rSource, rTarget, bSecrets, rRoll.aType, rRoll.aMessagetext, tonumber(rRoll.aTotal), bImmune, FortifSuccess, rRoll.aTags);
+	applyDamage(rSource, rTarget, bSecrets, rRoll.aType, rRoll.aMessagetext, rRoll.nTotal, bImmune, FortifSuccess, rRoll.aTags);
 end
 -- END
 -- Collapse damage clauses by damage type (in the original order, if possible)
@@ -2024,7 +2022,7 @@ function decodeDamageText(nDamage, sDamageDesc)
 		rDamageOutput.bCritical = string.match(sDamageDesc, "%[CRITICAL%]");
 
 		-- Determine range
-		rDamageOutput.sRange = string.match(sDamageDesc, "%[DAMAGE %((%w)%)%]") or "";
+		rDamageOutput.sRange = ActionDamageCore.decodeRangeText(sDamageDesc);
 		rDamageOutput.aDamageFilter = {};
 		if rDamageOutput.sRange == "M" then
 			table.insert(rDamageOutput.aDamageFilter, "melee");
@@ -2198,8 +2196,8 @@ function applyDamage(rSource, rTarget, bSecret, sRollType, sDamage, nTotal, bImm
 		-- Handle evasion and half damage
 		local isAvoided = false;
 		local isHalf = sDamage:match("%[HALF%]");
-		local sAttack = sDamage:match("%[DAMAGE[^]]*%] ([^[]+)");
-		if sAttack then
+		local sAttack = ActionDamageCore.decodeLabelText(sDamage);
+		if (sAttack or "") ~= "" then
 			local sDamageState = ActionDamage.getDamageState(rSource, rTarget, StringManager.trim(sAttack));
 			if sDamageState == "none" then
 				isAvoided = true;
@@ -2551,7 +2549,7 @@ end
 
 function applyFailedStabilization(rActor)
 	local sDamageTypeOutput = "Damage";
-	local sDamage = "[DAMAGE] Dying";
+	local sDamage = string.format("[%s] Dying", Interface.getString("action_damage_tag"));
 	local nTotal = 1;
 
 	local nTotalHP = 0;

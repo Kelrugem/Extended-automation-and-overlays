@@ -10,7 +10,7 @@ function onInit()
 	OldnextRound = CombatManager.nextRound;
 	CombatManager.nextRound = CombatManagerKel.nextRound;
 	
-	CombatManager.rollStandardEntryInit = CombatManagerKel.rollStandardEntryInit;
+	CombatManager.helperRollEntryInit = CombatManagerKel.helperRollEntryInit;
 end
 
 function nextActor(bSkipBell, bNoRoundAdvance)
@@ -39,7 +39,7 @@ function nextRound(nRounds)
 	-- END
 end
 
-function rollStandardEntryInit(tInit)
+function helperRollEntryInit(tInit)
 	if not tInit or not tInit.nodeEntry then
 		return;
 	end
@@ -66,78 +66,49 @@ function rollStandardEntryInit(tInit)
 		end
 	end
 	-- END
-
-	-- For PCs, we always roll unique initiative
-	if CombatManager.isPlayerCT(tInit.nodeEntry) then
-		-- KEL FFOS
-		local nInitResult = CombatManager.helperRollRandomInit(tInit);
-		DB.setValue(tInit.nodeEntry, "initresult", "number", nInitResult);
-		if sOptFFOS == "on" then
-			if nCurrent == 0 and not bHasUncDodge then
-				EffectManager.addEffect("", "", tInit.nodeEntry, { sName = "Flatfooted", nDuration = 1, nInit = nInitResult, nGMOnly = 0 }, false);
-			end
-		end
-		-- END
-		return;
-	end
 	
-	-- For NPCs, if NPC init option is not group, then roll unique initiative
-	local sOptINIT = OptionsManager.getOption("INIT");
-	if sOptINIT ~= "group" then
+	if tInit.nInitMatch then
+		DB.setValue(tInit.nodeEntry, "initresult", "number", tInit.nInitMatch);
 		-- KEL FFOS
-		local nInitResult = CombatManager.helperRollRandomInit(tInit);
-		DB.setValue(tInit.nodeEntry, "initresult", "number", nInitResult);
 		if sOptFFOS == "on" then
 			if nCurrent == 0 and not bHasUncDodge then
-				EffectManager.addEffect("", "", tInit.nodeEntry, { sName = "Flatfooted", nDuration = 1, nInit = nInitResult, nGMOnly = 1 }, false);
+				EffectManager.addEffect("", "", tInit.nodeEntry, { sName = "Flatfooted", nDuration = 1, nInit = tInit.nInitMatch, nGMOnly = 1 }, false);
 			end
 		end
 		-- END
 		return;
 	end
 
-	-- For NPCs with group option enabled
+	tInit.nTotal = CombatManager.helperRollRandomInit(tInit);
+	DB.setValue(tInit.nodeEntry, "initresult", "number", tInit.nTotal);
 	
-	-- Get the entry's database node name and creature name
-	local sStripName = CombatManager.stripCreatureNumber(DB.getValue(tInit.nodeEntry, "name", ""));
-	if sStripName == "" then
-		-- KEL FFOS
-		local nInitResult = CombatManager.helperRollRandomInit(tInit);
-		DB.setValue(tInit.nodeEntry, "initresult", "number", nInitResult);
-		if sOptFFOS == "on" then
-			if nCurrent == 0 and not bHasUncDodge then
-				EffectManager.addEffect("", "", tInit.nodeEntry, { sName = "Flatfooted", nDuration = 1, nInit = nInitResult, nGMOnly = 1 }, false);
-			end
-		end
-		-- END
-		return;
-	end
-		
-	-- Iterate through list looking for other creatures with same name
-	local nLastInit = nil;
-	local sEntryFaction = DB.getValue(tInit.nodeEntry, "friendfoe", "");
-	for _,nodeCT in pairs(CombatManager.getCombatantNodes()) do
-		if DB.getName(nodeCT) ~= DB.getName(tInit.nodeEntry) then
-			if DB.getValue(nodeCT, "friendfoe", "") == sEntryFaction then
-				local sTemp = CombatManager.stripCreatureNumber(DB.getValue(nodeCT, "name", ""));
-				if sTemp == sStripName then
-					local nChildInit = DB.getValue(nodeCT, "initresult", 0);
-					if nChildInit ~= -10000 then
-						nLastInit = nChildInit;
-					end
-				end
-			end
-		end
-	end
-	
-	-- If we found similar creatures, then match the initiative of the last one found; otherwise, roll
 	-- KEL FFOS
-	local nInitResult = nLastInit or CombatManager.helperRollRandomInit(tInit);
-	DB.setValue(tInit.nodeEntry, "initresult", "number", nInitResult);
-	if sOptFFOS == "on" then
-		if nCurrent == 0 and not bHasUncDodge then
-			EffectManager.addEffect("", "", nodeEntry, { sName = "Flatfooted", nDuration = 1, nInit = nInitResult, nGMOnly = 1 }, false);
+	if CombatManager.isPlayerCT(tInit.nodeEntry) then
+		if sOptFFOS == "on" then
+			if nCurrent == 0 and not bHasUncDodge then
+				EffectManager.addEffect("", "", tInit.nodeEntry, { sName = "Flatfooted", nDuration = 1, nInit = tInit.nTotal, nGMOnly = 0 }, false);
+			end
+		end
+	else
+		if sOptFFOS == "on" then
+			if nCurrent == 0 and not bHasUncDodge then
+				EffectManager.addEffect("", "", tInit.nodeEntry, { sName = "Flatfooted", nDuration = 1, nInit = tInit.nTotal, nGMOnly = 1 }, false);
+			end
 		end
 	end
 	-- END
+
+	local rMessage = {
+		font = "systemfont",
+		icon = "portrait_gm_token",
+		type = "init",
+		text = string.format("[INIT] %s", DB.getValue(tInit.nodeEntry, "name", "")),
+		diemodifier = tInit.nTotal,
+		diceskipexpr = true,
+		secret = true,
+	};
+	if (tInit.sSuffix or "") ~= "" then
+		rMessage.text = string.format("%s %s", rMessage.text, tInit.sSuffix);
+	end
+	Comm.addChatMessage(rMessage);
 end
