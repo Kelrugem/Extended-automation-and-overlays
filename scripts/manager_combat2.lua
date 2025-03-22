@@ -710,9 +710,8 @@ function clearExpiringEffects(bShort)
 	function checkEffectExpire(nodeEffect, bShort)
 		local sLabel = DB.getValue(nodeEffect, "label", "");
 		local nDuration = DB.getValue(nodeEffect, "duration", 0);
-		local sApply = DB.getValue(nodeEffect, "apply", "");
 		
-		if nDuration ~= 0 or sApply ~= "" or sLabel == "" then
+		if nDuration ~= 0 or sLabel == "" then
 			if bShort and (nDuration > 50) then
 				DB.setValue(nodeEffect, "duration", "number", nDuration - 50);
 			else

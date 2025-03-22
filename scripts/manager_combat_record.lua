@@ -25,33 +25,33 @@ function handleCombatAddInitDnD(tCustom)
 		end
 	end
 	-- END
-	local nInitKel;
+	local nInit;
 	if sOptINIT == "group" then
 		if tCustom.nodeCTLastMatch then
-			nInitKel = DB.getValue(tCustom.nodeCTLastMatch, "initresult", 0);
+			nInit = DB.getValue(tCustom.nodeCTLastMatch, "initresult", 0);
 			-- KEL FFOS
 			if (sOptFFOS == "on") and (nCurrent == 0) and not bHasUncDodge then
-				EffectManager.addEffect("", "", tCustom.nodeCT, { sName = "Flatfooted", nDuration = 1, nInit = nInitKel, nGMOnly = 1 }, false);
+				EffectManager.addEffect("", "", tCustom.nodeCT, { sName = "Flatfooted", nDuration = 1, nInit = nInit, nGMOnly = 1 }, false);
 			end
 			-- END
 		else
-			nInitKel = math.random(20) + DB.getValue(tCustom.nodeCT, "init", 0);
+			nInit = math.random(20) + DB.getValue(tCustom.nodeCT, "init", 0);
 			-- KEL FFOS
 			if (sOptFFOS == "on") and (nCurrent == 0) and not bHasUncDodge then
-				EffectManager.addEffect("", "", tCustom.nodeCT, { sName = "Flatfooted", nDuration = 1, nInit = nInitKel, nGMOnly = 1 }, false);
+				EffectManager.addEffect("", "", tCustom.nodeCT, { sName = "Flatfooted", nDuration = 1, nInit = nInit, nGMOnly = 1 }, false);
 			end
 			--END
 		end
 	elseif sOptINIT == "on" then
-		nInitKel = math.random(20) + DB.getValue(tCustom.nodeCT, "init", 0);
+		nInit = math.random(20) + DB.getValue(tCustom.nodeCT, "init", 0);
 		-- KEL FFOS
 		if (sOptFFOS == "on") and (nCurrent == 0) and not bHasUncDodge then
-			EffectManager.addEffect("", "", tCustom.nodeCT, { sName = "Flatfooted", nDuration = 1, nInit = nInitKel, nGMOnly = 1 }, false);
+			EffectManager.addEffect("", "", tCustom.nodeCT, { sName = "Flatfooted", nDuration = 1, nInit = nInit, nGMOnly = 1 }, false);
 		end
 		-- END
 	else
 		return;
 	end
 
-	DB.setValue(tCustom.nodeCT, "initresult", "number", nInitKel);
+	DB.setValue(tCustom.nodeCT, "initresult", "number", nInit);
 end
