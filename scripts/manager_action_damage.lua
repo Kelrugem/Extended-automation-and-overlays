@@ -521,19 +521,19 @@ function onDamage(rSource, rTarget, rRoll)
 	end
 
 	-- KEL for TDMG and tags
-	local aAttackFilter = "";
-	if rRoll.sRange == "R" then
-		aAttackFilter = "ranged"
-	elseif rRoll.sRange == "M" then
-		aAttackFilter = "melee";
-	end
+	-- local aAttackFilter = "";
+	-- if rRoll.sRange == "R" then
+		-- aAttackFilter = "ranged"
+	-- elseif rRoll.sRange == "M" then
+		-- aAttackFilter = "melee";
+	-- end
 	local tag = nil;
 	if rRoll.tags then
 		tag = rRoll.tags;
 	end
 
 	-- Apply damage to the PC or CT entry referenced
-	ActionDamage.notifyApplyDamage(rSource, rTarget, rRoll.bTower, rRoll.sType, rMessage.text, nTotal, aAttackFilter, tag);
+	ActionDamage.notifyApplyDamage(rSource, rTarget, rRoll.bTower, rRoll.sType, rMessage.text, nTotal, rRoll.tAttackFilter, tag);
 	-- END
 end
 
