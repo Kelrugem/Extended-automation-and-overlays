@@ -194,7 +194,7 @@ function modSave(rSource, rTarget, rRoll)
 		local _, nADVSAV = EffectManager35E.hasEffect(rSource, "ADVSAV", rSaveSource, false, false, rRoll.tags);
 		local _, nDISSAV = EffectManager35E.hasEffect(rSource, "DISSAV", rSaveSource, false, false, rRoll.tags);
 		
-		rRoll.adv = #aADVSAV + nADVSAV - (#aDISSAV + nDISSAV);
+		rRoll.nAdv = #aADVSAV + nADVSAV - (#aDISSAV + nDISSAV);
 		
 		local aSaveEffects = EffectManager35E.getEffectsByType(rSource, "SAVE", aSaveFilter, rSaveSource, false, rRoll.tags);
 		-- END
