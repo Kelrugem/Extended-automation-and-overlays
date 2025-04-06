@@ -55,7 +55,7 @@ function modSkill(rSource, rTarget, rRoll)
 		local aDisSkill = EffectManager35E.getEffectsByType(rSource, "DISSKILL", aSkillFilter, rTarget, false, rRoll.tags);
 		local _, nAdvSkill = EffectManager35E.hasEffect(rSource, "ADVSKILL", rTarget, false, false, rRoll.tags);
 		local _, nDisSkill = EffectManager35E.hasEffect(rSource, "DISSKILL", rTarget, false, false, rRoll.tags);
-		rRoll.adv = #aAdvSkill + nAdvSkill - #aDisSkill - nDisSkill;
+		rRoll.nAdv = #aAdvSkill + nAdvSkill - #aDisSkill - nDisSkill;
 		-- END
 		
 		-- Get effects

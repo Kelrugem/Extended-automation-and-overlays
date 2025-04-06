@@ -365,7 +365,7 @@ function modAttack(rSource, rTarget, rRoll)
 		local _, nGRANTADVATK = EffectManager35E.hasEffect(rTarget, "GRANTADVATK", rSource, false, false, rRoll.tags);
 		local _, nGRANTDISATK = EffectManager35E.hasEffect(rTarget, "GRANTDISATK", rSource, false, false, rRoll.tags);
 		
-		rRoll.adv = #aADVATK + #aGRANTADVATK + nADVATK + nGRANTADVATK - (#aDISATK + #aGRANTDISATK + nDISATK + nGRANTDISATK);
+		rRoll.nAdv = #aADVATK + #aGRANTADVATK + nADVATK + nGRANTADVATK - (#aDISATK + #aGRANTDISATK + nDISATK + nGRANTDISATK);
 		-- END
 		if rRoll.sType == "grapple" then
 			local aPFDice, nPFMod, nPFCount = EffectManager35E.getEffectsBonus(rSource, {"CMB"}, false, aAttackFilter, rTarget, false, rRoll.tags);
@@ -752,7 +752,7 @@ function onAttackResolve(rSource, rTarget, rRoll, rMessage)
 			AttackType = string.match(rRoll.sDesc, "%[ATTACK.*%((%w+)%)%]");
 		end
 		if ActorManager35E.hasSpecialAbility(rSource, "Blind-Fight", true, false, false) and AttackType == "M" then
-			rMissChanceRoll.adv = ( rMissChanceRoll.adv or 0 ) + 1;
+			rMissChanceRoll.nAdv = ( rMissChanceRoll.nAdv or 0 ) + 1;
 			rMissChanceRoll.sDesc = rMissChanceRoll.sDesc .. " [BLIND-FIGHT]";
 		end
 		-- END

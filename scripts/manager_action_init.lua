@@ -120,7 +120,7 @@ function modRoll(rSource, rTarget, rRoll)
 		end
 		-- KEL adding adv
 		local bEffects, aEffectDice, nEffectMod, nAdv = getEffectAdjustments(rSource, sActionStat);
-		rRoll.adv = nAdv;
+		rRoll.nAdv = nAdv;
 		-- END
 		if bEffects then
 			for _,vDie in ipairs(aEffectDice) do
