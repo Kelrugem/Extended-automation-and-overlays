@@ -1151,28 +1151,21 @@ end
 
 -- KEL TAG
 function checkTagConditional(aConditions, rEffectSpell)
-	if rEffectSpell then
-		local tagshelp = StringManager.parseWords(rEffectSpell);
-		if not tagshelp[1] then
-			return false;
-		end
-
-		local i = 1;
-
-		for _,v in ipairs(aConditions) do
-			while tagshelp[i] do
-				if tagshelp[i] == v then
-					return true;
-				end
-				i = i + 1;
+	if not rEffectSpell or rEffectSpell == "" then
+		return false;
+	end
+	local aTags = StringManager.split(rEffectSpell, ";")
+	for _, condition in ipairs(aConditions) do
+		for _, tag in ipairs(aTags) do
+			if condition == tag then
+				return true;
 			end
-			i = 1;
 		end
 	end
 	return false;
 end
 
--- RM RANGE
+-- KEL RM RANGE
 function checkRangeConditional(source, sEffect, target)
 	if not source or not target then
 		return false;
@@ -1218,3 +1211,4 @@ function checkRangeConditional(source, sEffect, target)
 	end
 	return false;
 end
+-- END
