@@ -1800,7 +1800,7 @@ function toboolean(sName)
 end
 
 -- KEL Fortification roll
-function onFortification(rSource, rTarget, rRoll)
+function onFortification(rTarget, rSource, rRoll)
 	local rDamageOutput = ActionDamage.decodeDamageText(tonumber(rRoll.aTotal), rRoll.aMessagetext);
 	local FortifSuccess = {};
 	local m = 1;
@@ -1854,7 +1854,7 @@ function onFortification(rSource, rTarget, rRoll)
 							aRoll.nMod = rRoll.nMod;
 							aRoll.sDesc = "[FORTIFICATION CHANCE " .. MaxFortifMod[k] .. "]" .. "[vs. " .. k .. "]" .. "[to " .. ActorManager.getDisplayName(rTarget) .. "]";
 							-- aRoll.bSecret = rRoll.bSecret;
-							local rMessage = ActionsManager.createActionMessage(rSource, aRoll);
+							local rMessage = ActionsManager.createActionMessage(rTarget, aRoll);
 							-- rMessage.secret = aRoll.bSecret;
 							if ActorManager.isPC(rTarget) then
 								rMessage.secret = false;
@@ -1889,7 +1889,7 @@ function onFortification(rSource, rTarget, rRoll)
 							aRoll.nMod = rRoll.nMod;
 							aRoll.sDesc = "[FORTIFICATION CHANCE " .. MaxFortifMod[k] .. "]" .. "[vs. " .. k .. "]" .. "[to " .. ActorManager.getDisplayName(rTarget) .. "]";
 							-- aRoll.bSecret = rRoll.bSecret;
-							local rMessage = ActionsManager.createActionMessage(rSource, aRoll);
+							local rMessage = ActionsManager.createActionMessage(rTarget, aRoll);
 							-- KEL overwrite secret info, for PCs this should be visible. This roll is done on the host side and therefore you have to overwrite this again (especially when GM rolls are hidden)
 							-- rMessage.secret = aRoll.bSecret;
 							if ActorManager.isPC(rTarget) then
