@@ -290,14 +290,17 @@ function performStabilizationRoll(rActor)
 
 	ActionsManager.performAction(nil, rActor, rRoll);
 end
--- KEL adding tags
-function getRoll(rActor, rAction, tag)
+
+function getRoll(rActor, rAction)
 	local rRoll = {};
 	rRoll.sType = "damage";
 	rRoll.aDice = {};
 	rRoll.nMod = 0;
-	rRoll.tags = tag;
--- END
+	-- KEL adding tags
+	if rAction.tags and next(rAction.tags) then
+		rRoll.tags = table.concat(rAction.tags, ";");
+	end
+	-- END
 	rRoll.sDesc = ActionDamageCore.encodeActionText(rAction);
 
 	-- Save the damage clauses in the roll structure

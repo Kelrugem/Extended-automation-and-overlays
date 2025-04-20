@@ -7,14 +7,17 @@ function onInit()
 	ActionsManager.registerModHandler("heal", modHeal);
 	ActionsManager.registerResultHandler("heal", onHeal);
 end
--- KEL adding tags
-function getRoll(rActor, rAction, tag)
+
+function getRoll(rActor, rAction)
 	local rRoll = {};
 	rRoll.sType = "heal";
 	rRoll.aDice = {};
 	rRoll.nMod = 0;
-	rRoll.tags = tag;
--- END
+	-- KEL adding tags
+	if rAction.tags and next(rAction.tags) then
+		rRoll.tags = table.concat(rAction.tags, ";");
+	end
+	-- END
 	
 	rRoll.sDesc = "[HEAL";
 	if rAction.order and rAction.order > 1 then
