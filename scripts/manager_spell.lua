@@ -1089,7 +1089,12 @@ function onSpellAction(draginfo, nodeAction, sSubRoll)
 	end
 	-- KEL CL effect
 	local rFirstCastAction = SpellManager.getFirstCastAction(nodeAction);
-	local sFirstCastTags = table.concat(rFirstCastAction.tags, ";");
+	local sFirstCastTags = "";
+	if rFirstCastAction.tags then
+		sFirstCastTags = table.concat(rFirstCastAction.tags, ";");
+	else
+		sFirstCastTags = nil;
+	end
 	local aAddDice, nAddMod, nEffectCount = EffectManager35E.getEffectsBonus(rActor, "CL", false, nil, nil, false, sFirstCastTags);
 	local nClMod = 0;
 	if nEffectCount > 0 then
