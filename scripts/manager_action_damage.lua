@@ -183,7 +183,7 @@ function handleApplyDamage(msgOOB)
 	if not isFortif then
 		ActionDamage.applyDamage(rSource, rTarget, (tonumber(msgOOB.nSecret) == 1), msgOOB.sRollType, msgOOB.sDamage, nTotal, bSImmune, bSFortif, msgOOB.tags);
 	else
-		local aRollFortif = { sType = "fortification", aDice = DiceRollManager.getActorDice(bDice, rTarget), nMod = 0, aType = msgOOB.sRollType, aMessagetext = msgOOB.sDamage, nTotal = nTotal, aTags = msgOOB.tags};
+		local aRollFortif = { sType = "fortification", aDice = DiceRollManager.getActorDice(bDice, rTarget), nMod = 0, aType = msgOOB.sRollType, aMessagetext = msgOOB.sDamage, aTotal = nTotal, aTags = msgOOB.tags};
 		-- rDamageOutput = ActionDamage.decodeDamageText(nTotal, msgOOB.sDamage);
 		if tonumber(msgOOB.nSecret) == 1 then
 			aRollFortif.bTower = true;
@@ -524,19 +524,19 @@ function onDamage(rSource, rTarget, rRoll)
 	end
 
 	-- KEL for TDMG and tags
-	-- local aAttackFilter = "";
-	-- if rRoll.sRange == "R" then
-		-- aAttackFilter = "ranged"
-	-- elseif rRoll.sRange == "M" then
-		-- aAttackFilter = "melee";
-	-- end
+	local aAttackFilter = "";
+	if rRoll.sRange == "R" then
+		aAttackFilter = "ranged"
+	elseif rRoll.sRange == "M" then
+		aAttackFilter = "melee";
+	end
 	local tag = nil;
 	if rRoll.tags then
 		tag = rRoll.tags;
 	end
 
 	-- Apply damage to the PC or CT entry referenced
-	ActionDamage.notifyApplyDamage(rSource, rTarget, rRoll.bTower, rRoll.sType, rMessage.text, nTotal, rRoll.tAttackFilter, tag);
+	ActionDamage.notifyApplyDamage(rSource, rTarget, rRoll.bTower, rRoll.sType, rMessage.text, nTotal, aAttackFilter, tag);
 	-- END
 end
 
@@ -1803,8 +1803,8 @@ function toboolean(sName)
 end
 
 -- KEL Fortification roll
-function onFortification(rSource, rTarget, rRoll)
-	local rDamageOutput = ActionDamage.decodeDamageText(rRoll.nTotal, rRoll.aMessagetext);
+function onFortification(rTarget, rSource, rRoll)
+	local rDamageOutput = ActionDamage.decodeDamageText(tonumber(rRoll.aTotal), rRoll.aMessagetext);
 	local FortifSuccess = {};
 	local m = 1;
 	local bImmune = {};
@@ -1857,7 +1857,7 @@ function onFortification(rSource, rTarget, rRoll)
 							aRoll.nMod = rRoll.nMod;
 							aRoll.sDesc = "[FORTIFICATION CHANCE " .. MaxFortifMod[k] .. "]" .. "[vs. " .. k .. "]" .. "[to " .. ActorManager.getDisplayName(rTarget) .. "]";
 							-- aRoll.bSecret = rRoll.bSecret;
-							local rMessage = ActionsManager.createActionMessage(rSource, aRoll);
+							local rMessage = ActionsManager.createActionMessage(rTarget, aRoll);
 							-- rMessage.secret = aRoll.bSecret;
 							if ActorManager.isPC(rTarget) then
 								rMessage.secret = false;
@@ -1892,7 +1892,7 @@ function onFortification(rSource, rTarget, rRoll)
 							aRoll.nMod = rRoll.nMod;
 							aRoll.sDesc = "[FORTIFICATION CHANCE " .. MaxFortifMod[k] .. "]" .. "[vs. " .. k .. "]" .. "[to " .. ActorManager.getDisplayName(rTarget) .. "]";
 							-- aRoll.bSecret = rRoll.bSecret;
-							local rMessage = ActionsManager.createActionMessage(rSource, aRoll);
+							local rMessage = ActionsManager.createActionMessage(rTarget, aRoll);
 							-- KEL overwrite secret info, for PCs this should be visible. This roll is done on the host side and therefore you have to overwrite this again (especially when GM rolls are hidden)
 							-- rMessage.secret = aRoll.bSecret;
 							if ActorManager.isPC(rTarget) then
@@ -1915,7 +1915,7 @@ function onFortification(rSource, rTarget, rRoll)
 			end
 		end
 	end
-	applyDamage(rSource, rTarget, bSecrets, rRoll.aType, rRoll.aMessagetext, rRoll.nTotal, bImmune, FortifSuccess, rRoll.aTags);
+	applyDamage(rSource, rTarget, bSecrets, rRoll.aType, rRoll.aMessagetext, tonumber(rRoll.aTotal), bImmune, FortifSuccess, rRoll.aTags);
 end
 -- END
 -- Collapse damage clauses by damage type (in the original order, if possible)
