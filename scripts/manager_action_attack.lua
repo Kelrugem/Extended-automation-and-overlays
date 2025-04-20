@@ -97,7 +97,7 @@ function performRoll(draginfo, rActor, rAction)
 	ActionsManager.performAction(draginfo, rActor, rRoll);
 end
 -- KEL add tag argument
-function getRoll(rActor, rAction, tag)
+function getRoll(rActor, rAction)
 	local rRoll = {};
 	if rAction.cm then
 		rRoll.sType = "grapple";
@@ -130,7 +130,9 @@ function getRoll(rActor, rAction, tag)
 	
 	-- Add other modifiers
 	-- KEL compatibility with KEEN and iftag stuff; EDIT: Moving KEEN stuff such that it is targetable. Hence, saving crit value
-	rRoll.tags = tag;
+	if rAction.tags and next(rAction.tags) then
+		rRoll.tags = table.concat(rAction.tags, ";");
+	end
 	rRoll.crit = rAction.crit;
 	-- END
 	

@@ -1022,6 +1022,7 @@ function checkConditional(rActor, nodeEffect, aConditions, rTarget, aIgnore, rEf
 			local sSizeCheck = sLower:match("^size%s*%(([^)]+)%)$");
 			local sTypeCheck = sLower:match("^type%s*%(([^)]+)%)$");
 			local sCustomCheck = sLower:match("^custom%s*%(([^)]+)%)$");
+			local sRangeCheck = sLower:match("^range%s*%(([^)]+)%)$");
 			if sAlignCheck then
 				if not ActorCommonManager.isCreatureAlignmentDnD(rActor, sAlignCheck) then
 					bReturn = false;
@@ -1039,6 +1040,11 @@ function checkConditional(rActor, nodeEffect, aConditions, rTarget, aIgnore, rEf
 				end
 			elseif sCustomCheck then
 				if not checkConditionalHelper(rActor, sCustomCheck, rTarget, aIgnore, rEffectSpell) then
+					bReturn = false;
+					break;
+				end
+			elseif sRangeCheck then
+				if not checkRangeConditional(rActor, sRangeCheck, rTarget) then
 					bReturn = false;
 					break;
 				end
@@ -1142,25 +1148,67 @@ function checkConditionalHelper(rActor, sEffect, rTarget, aIgnore, rEffectSpell)
 
 	return false;
 end
+
 -- KEL TAG
 function checkTagConditional(aConditions, rEffectSpell)
-	if rEffectSpell then
-		local tagshelp = StringManager.parseWords(rEffectSpell);
-		if not tagshelp[1] then
-			return false;
-		end
-
-		local i = 1;
-
-		for _,v in ipairs(aConditions) do
-			while tagshelp[i] do
-				if tagshelp[i] == v then
-					return true;
-				end
-				i = i + 1;
+	if not rEffectSpell or rEffectSpell == "" then
+		return false;
+	end
+	local aTags = StringManager.split(rEffectSpell, ";")
+	for _, condition in ipairs(aConditions) do
+		for _, tag in ipairs(aTags) do
+			if condition == tag then
+				return true;
 			end
-			i = 1;
 		end
 	end
 	return false;
 end
+
+-- KEL RM RANGE
+function checkRangeConditional(source, sEffect, target)
+	if not source or not target then
+		return false;
+	end
+	local sInequality, sRange = sEffect:match("^([<>=]+)(%d+)");
+	if not sInequality or not sRange then
+		return false;
+	end
+	local nRange = tonumber(sRange);
+	if not nRange then
+		return false;
+	end
+	
+	local sourceNode = ActorManager.getCTNode(source);
+	local targetNode = ActorManager.getCTNode(target);
+
+	if not sourceNode or not targetNode then
+		return false;
+	end;
+	
+	local sourceToken = CombatManager.getTokenFromCT(sourceNode);
+	local targetToken = CombatManager.getTokenFromCT(targetNode);
+
+	if not sourceToken or not targetToken then
+		return false;
+	end
+	
+	nTokenDistance = Token.getDistanceBetween(sourceToken, targetToken);
+	
+	if not nTokenDistance then
+		return false;
+	end
+	if sInequality == "=" and nRange == nTokenDistance then
+		return true;
+	elseif sInequality == ">" and nTokenDistance > nRange then
+		return true;
+	elseif sInequality == "<" and nTokenDistance < nRange then
+		return true;
+	elseif sInequality == ">=" and nTokenDistance >= nRange then
+		return true;
+	elseif sInequality == "<=" and nTokenDistance <= nRange then
+		return true;
+	end
+	return false;
+end
+-- END

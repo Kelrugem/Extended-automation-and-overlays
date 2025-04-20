@@ -934,9 +934,19 @@ function getSpellAction(rActor, nodeAction, sSubRoll)
 	rAction.label = DB.getValue(nodeAction, "...name", "");
 	rAction.order = getSpellActionOutputOrder(nodeAction);
 	-- KEL Save versus tags new variables and replace attribute
-	rAction.school = DB.getValue(nodeAction, "school", "");
-	rAction.stype = DB.getValue(nodeAction, "stype", "");
-	rAction.tags = DB.getValue(nodeAction, "othertags", "");
+	school = DB.getValue(nodeAction, "school", ""):lower();
+	stype = DB.getValue(nodeAction, "stype", ""):lower();
+	tagsString = DB.getValue(nodeAction, "othertags", ""):lower();
+	tags = StringManager.split(tagsString, ",;", true)
+	if school ~= "" then
+		table.insert(tags, school)
+	end
+	if stype ~= "" then
+		table.insert(tags, stype)
+	end
+	if next(tags) then
+		rAction.tags = tags
+	end
 	rAction.replace = DB.getValue(nodeAction, "replacedc.ability", "");
 	-- Save overlay
 	rAction.spell = true;
@@ -1065,7 +1075,7 @@ function getSpellAction(rActor, nodeAction, sSubRoll)
 
 		rAction.sUnits = DB.getValue(nodeAction, "durunit", "");
 	end
-	
+
 	return rAction;
 end
 
@@ -1078,25 +1088,14 @@ function onSpellAction(draginfo, nodeAction, sSubRoll)
 		return;
 	end
 	-- KEL CL effect
-	local nodeSpell = DB.getChild(nodeAction, "...");
-	local nodeActions = DB.createChild(nodeSpell, "actions");
-	local tag = "";
-	local range = "";
-	-- KEL If multiple cast actions: Important that all cast actions have the same tags? Also adding ranges
-	if nodeActions then
-		local OthernodeAction = DB.getChildList(nodeActions);
-		if OthernodeAction then
-			for _, v in ipairs(OthernodeAction) do
-				if DB.getValue(v, "type") == "cast" then
-					rCastAction = SpellManager.getSpellAction(rActor, v);
-					tag = SpellManager.getTagsFromAction(rCastAction);
-					range = rCastAction.range;
-					break;
-				end
-			end
-		end
+	local rFirstCastAction = SpellManager.getFirstCastAction(nodeAction);
+	local sFirstCastTags = "";
+	if rFirstCastAction.tags then
+		sFirstCastTags = table.concat(rFirstCastAction.tags, ";");
+	else
+		sFirstCastTags = nil;
 	end
-	local aAddDice, nAddMod, nEffectCount = EffectManager35E.getEffectsBonus(rActor, "CL", false, nil, nil, false, tag);
+	local aAddDice, nAddMod, nEffectCount = EffectManager35E.getEffectsBonus(rActor, "CL", false, nil, nil, false, sFirstCastTags);
 	local nClMod = 0;
 	if nEffectCount > 0 then
 		nClMod = StringManager.evalDice(aAddDice, nAddMod);
@@ -1116,21 +1115,20 @@ function onSpellAction(draginfo, nodeAction, sSubRoll)
 	local rCustom = nil;
 	if rAction.type == "cast" then
 		-- KEL Use Cast-specific tags (?)
-		local tagsSpec = SpellManager.getTagsFromAction(rAction);
 		if not rAction.subtype then
-			table.insert(rRolls, ActionSpell.getSpellCastRoll(rActor, rAction, tagsSpec));
+			table.insert(rRolls, ActionSpell.getSpellCastRoll(rActor, rAction));
 		end
 		
 		if not rAction.subtype or rAction.subtype == "atk" then
 			if rAction.range then
 				-- KEL add tag in getRoll itself, since that is need for IFTAG-KEEN; similar for following getRoll
-				local rRoll = ActionAttack.getRoll(rActor, rAction, tagsSpec);
+				local rRoll = ActionAttack.getRoll(rActor, rAction);
 				table.insert(rRolls, rRoll);
 			end
 		end
 
 		if not rAction.subtype or rAction.subtype == "clc" then
-			local rRoll = ActionSpell.getCLCRoll(rActor, rAction, tagsSpec);
+			local rRoll = ActionSpell.getCLCRoll(rActor, rAction);
 			if not rAction.subtype then
 				rRoll.sType = "castclc";
 				rRoll.aDice = {};
@@ -1140,7 +1138,7 @@ function onSpellAction(draginfo, nodeAction, sSubRoll)
 
 		if not rAction.subtype or rAction.subtype == "save" then
 			if rAction.save and rAction.save ~= "" then
-				local rRoll = ActionSpell.getSaveVsRoll(rActor, rAction, tagsSpec);
+				local rRoll = ActionSpell.getSaveVsRoll(rActor, rAction);
 				if not rAction.subtype then
 					rRoll.sType = "castsave";
 				end
@@ -1150,12 +1148,9 @@ function onSpellAction(draginfo, nodeAction, sSubRoll)
 		
 	elseif rAction.type == "damage" then
 		-- KEL add range and tag stuff to spells
-		if range ~= "" then
-			rAction.range = range;
-		end
-		
-		local rRoll = ActionDamage.getRoll(rActor, rAction, tag);
+		SpellManager.decorateActionWithCastMetadata(rAction, rFirstCastAction);
 		-- END
+		local rRoll = ActionDamage.getRoll(rActor, rAction);
 		if rAction.bSpellDamage then
 			rRoll.sType = "spdamage";
 		else
@@ -1166,49 +1161,49 @@ function onSpellAction(draginfo, nodeAction, sSubRoll)
 		
 	elseif rAction.type == "heal" then
 		-- KEL add tags
-		local rRoll = ActionHeal.getRoll(rActor, rAction, tag);
+		SpellManager.decorateActionWithCastMetadata(rAction, rFirstCastAction);
 		-- END
+		local rRoll = ActionHeal.getRoll(rActor, rAction);
 		table.insert(rRolls, rRoll);
 
 	elseif rAction.type == "effect" then
 		local rRoll;
+		SpellManager.decorateActionWithCastMetadata(rAction, rFirstCastAction);
 		rRoll = ActionEffect.getRoll(draginfo, rActor, rAction);
 		if rRoll then
-			-- KEL adding tags, just in case :)
-			if tag then
-				rRoll.tags = tag;
-			end
-			-- END
 			table.insert(rRolls, rRoll);
 		end
 	end
-	
+
 	if #rRolls > 0 then
 		ActionsManager.performMultiAction(draginfo, rActor, rRolls[1].sType, rRolls);
 	end
 end
 
--- KEL Getting tags from rAction
-function getTagsFromAction(rAction)
-	local tags = "";
-	local semicolon = ";";
-	
-	if not rAction then
-		return nil;
-	elseif not rAction.tags then
-		return nil;
+-- KEL get first cast action to extract tags, range, etc
+function getFirstCastAction(nodeAction)
+	local rCastAction = {};
+	-- KEL If multiple cast actions: Important that all cast actions have the same tags? Also adding ranges
+	local nodeSpellActions = DB.getChildList(nodeAction, "..")	for _, v in ipairs(nodeSpellActions) do
+		if DB.getValue(v, "type") == "cast" then
+			rCastAction = SpellManager.getSpellAction(rActor, v);
+			break;
+		end
 	end
-	
-	tags = rAction.stype .. semicolon .. rAction.school .. semicolon .. rAction.tags;
-	
-	local tagshelp = StringManager.parseWords(tags);
-	if not tagshelp[1] then
-		return nil;
-	end
-	
-	return tags;
+	return rCastAction;
 end
---END
+-- END
+
+-- KEL decorate action with cast metadata (tags, range, etc)
+function decorateActionWithCastMetadata(rAction, rCastAction)
+	if rCastAction.range and not rAction.range then
+		rAction.range = rCastAction.range;
+	end
+	if rCastAction.tags and not rAction.tags then
+		rAction.tags = rCastAction.tags;
+	end
+end
+-- END
 
 function getActionAbilityBonus(nodeAction)
 	local nodeSpellClass = DB.getChild(nodeAction, ".......");
