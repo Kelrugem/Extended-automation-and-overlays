@@ -1022,7 +1022,9 @@ function checkConditional(rActor, nodeEffect, aConditions, rTarget, aIgnore, rEf
 			local sSizeCheck = sLower:match("^size%s*%(([^)]+)%)$");
 			local sTypeCheck = sLower:match("^type%s*%(([^)]+)%)$");
 			local sCustomCheck = sLower:match("^custom%s*%(([^)]+)%)$");
+			-- KEL Range check by rmilmine
 			local sRangeCheck = sLower:match("^range%s*%(([^)]+)%)$");
+			-- END
 			if sAlignCheck then
 				if not ActorCommonManager.isCreatureAlignmentDnD(rActor, sAlignCheck) then
 					bReturn = false;
@@ -1043,11 +1045,13 @@ function checkConditional(rActor, nodeEffect, aConditions, rTarget, aIgnore, rEf
 					bReturn = false;
 					break;
 				end
+			-- KEL Range check
 			elseif sRangeCheck then
 				if not checkRangeConditional(rActor, sRangeCheck, rTarget) then
 					bReturn = false;
 					break;
 				end
+			-- END
 			end
 		end
 	end
