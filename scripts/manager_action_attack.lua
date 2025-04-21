@@ -96,7 +96,7 @@ function performRoll(draginfo, rActor, rAction)
 	
 	ActionsManager.performAction(draginfo, rActor, rRoll);
 end
--- KEL add tag argument
+
 function getRoll(rActor, rAction)
 	local rRoll = {};
 	if rAction.cm then
