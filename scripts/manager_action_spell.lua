@@ -115,7 +115,7 @@ function onSpellTargeting(rSource, aTargeting, rRolls)
 
 	return aTargeting;
 end
--- KEL adding tags
+
 function getSpellCastRoll(rActor, rAction)
 	local rRoll = {};
 	rRoll.sType = "cast";
@@ -137,8 +137,7 @@ function getSpellCastRoll(rActor, rAction)
 	
 	return rRoll;
 end
--- END
--- KEL adding tags
+
 function getCLCRoll(rActor, rAction)
 	local rRoll = {};
 	rRoll.sType = "clc";
@@ -153,15 +152,14 @@ function getCLCRoll(rActor, rAction)
 	if rAction.sr == "no" then
 		rRoll.sDesc = rRoll.sDesc .. " [SR NOT ALLOWED]";
 	end
-
+	-- KEl
 	if rAction.tags and next(rAction.tags) then
 		rRoll.tags = table.concat(rAction.tags, ";");
 	end
-	
+	-- END
 	return rRoll;
 end
--- END
--- KEL adding tags
+
 function getSaveVsRoll(rActor, rAction)
 	local rRoll = {};
 	rRoll.sType = "spellsave";

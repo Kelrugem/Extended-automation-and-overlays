@@ -1168,7 +1168,9 @@ function onSpellAction(draginfo, nodeAction, sSubRoll)
 
 	elseif rAction.type == "effect" then
 		local rRoll;
+		-- KEL
 		SpellManager.decorateActionWithCastMetadata(rAction, rFirstCastAction);
+		-- END
 		rRoll = ActionEffect.getRoll(draginfo, rActor, rAction);
 		if rRoll then
 			table.insert(rRolls, rRoll);
