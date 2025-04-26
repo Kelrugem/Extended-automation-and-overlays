@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+
+<root>
+    <windowclass name="conditional_DISTANCE">
+        <script file="effect_builder/conditional/scripts/conditional_DISTANCE.lua" />
+		<margins control="0,0,0,2" />
+        <sheetdata>
+            <leftanchor_eb />
+            
+            <cycler_eb_ifs />
+
+            <cycler_eb_valueholder name="comparator">
+                <parameters>
+                    <defaultlabel mergerule="replace">=</defaultlabel>
+                    <labels>&gt;=|&gt;|&lt;|&lt;=</labels>
+                    <values>&gt;=|&gt;|&lt;|&lt;=</values>
+                </parameters>
+            </cycler_eb_valueholder>
+
+            <number_eb_valueholder name="distance" />
+        </sheetdata>
+    </windowclass>
+    <script name="loader_DISTANCE">
+        function onInit()
+            if Extension.isEffectBuilderRulesetPluginLoaded then
+                EditorManager.addEffectEditor(
+                    {
+                        value="CONDITIONAL_DISTANCE",
+                        categoryres="category_conditional",
+                        labelres="effect_conditional_distance",
+                        windowclass="conditional_DISTANCE"
+                    }
+                )
+            end
+        end
+    </script>
+</root>

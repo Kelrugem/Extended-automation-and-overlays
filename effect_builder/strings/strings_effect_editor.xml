@@ -7,6 +7,7 @@
     <string name="outgoing">Outgoing</string>
     <string name="incoming">Incoming</string>
     <string name="accuracy_bonus">Is Accurate?</string>
+    <string name="effect_conditional_distance">Is Distance?</string>
 
     <string name="effect_accc">Critical Confirmation AC</string>
     <string name="effect_cl">Caster Level</string>
