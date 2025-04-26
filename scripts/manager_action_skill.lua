@@ -13,11 +13,7 @@ function modSkill(rSource, rTarget, rRoll)
 		local bEffects = false;
 
 		-- Determine skill used
-		local sSkillLower = "";
-		local sSkill = string.match(rRoll.sDesc, "%[SKILL%] ([^[]+)");
-		if sSkill then
-			sSkillLower = string.lower(StringManager.trim(sSkill));
-		end
+		local sSkillLower = ActionCore.decodeLabelText(rRoll.sDesc, "action_skill_tag"):lower();
 
 		-- Determine ability used with this skill
 		local sActionStat = nil;

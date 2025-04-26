@@ -53,7 +53,7 @@ function handleApplyDamage(msgOOB)
 	local bSFortif = {};
 	local MaxFortifMod = {};
 	local bPFMode = DataCommon.isPFRPG();
-
+	-- KEL BCE support
 	if AdvancedEffects and rSource then
 		rSource.nodeItem = msgOOB.nodeItem;
  		rSource.nodeAmmo = msgOOB.nodeAmmo;
@@ -227,10 +227,10 @@ function handleApplyDamage(msgOOB)
 	-- KEL TDMG
 	if rTarget then
 		if string.match(msgOOB.sDamage, "%[DAMAGE") then
-			local sTargetNodeType, nodeTarget = ActorManager.getTypeAndNode(rTarget);
-			if nodeTarget and (sTargetNodeType == "pc") then
+			if ActorManager.isPC(rTarget) then
+				local nodeTarget = ActorManager.getCreatureNode(rTarget);
 				local sOwner = DB.getOwner(nodeTarget);
-				if sOwner ~= "" then
+				if (sOwner or "") ~= "" then
 					for _,vUser in ipairs(User.getActiveUsers()) do
 						if vUser == sOwner then
 							for _,vIdentity in ipairs(User.getActiveIdentities(vUser)) do
@@ -353,6 +353,8 @@ function modDamage(rSource, rTarget, rRoll)
 	end
 
 	if rSource then
+		ActionDamage.applyDmgBaseTypeEffectsToModRoll(rRoll, rSource, rTarget);
+		
 		ActionDamage.applyDmgEffectsToModRoll(rRoll, rSource, rTarget);
 		ActionDamage.applyConditionsToModRoll(rRoll, rSource, rTarget);
 		ActionDamage.applyEffectModNotificationToModRoll(rRoll);
@@ -800,7 +802,23 @@ function applyEffectModNotificationToModRoll(rRoll)
 		table.insert(rRoll.tNotifications, EffectManager.buildEffectOutput(sMod));
 	end
 end
--- KEL
+
+function applyDmgBaseTypeEffectsToModRoll(rRoll, rSource, rTarget)
+	if rRoll.clauses[1] then
+		local tDmgBaseTypeEffects = EffectManager35E.getEffectsByType(rSource, "DMGBASETYPE", nil, rTarget);
+		if #tDmgBaseTypeEffects > 0 then
+			local sNewDmgType = tDmgBaseTypeEffects[1].remainder[1];
+			if StringManager.contains(DataCommon.dmgtypes, sNewDmgType) then
+				if (rRoll.clauses[1].dmgtype or "") == "" then
+					rRoll.clauses[1].dmgtype = sNewDmgType;
+				else
+					rRoll.clauses[1].dmgtype = rRoll.clauses[1].dmgtype:gsub("^%w*", sNewDmgType);
+				end
+			end
+		end
+	end
+end
+
 function applyDmgTypeEffectsToModRoll(rRoll, rSource, rTarget)
 	local tAddDmgTypes = {};
 	local tDmgTypeEffects;
@@ -2070,35 +2088,44 @@ function decodeDamageText(nDamage, sDamageDesc)
 end
 -- KEL bImmune, bFortif, tags
 function applyDamage(rSource, rTarget, bSecret, sRollType, sDamage, nTotal, bImmune, bFortif, tags)
-	local nTotalHP = 0;
-	local nTempHP = 0;
-	local nNonlethal = 0;
-	local nWounds = 0;
-	local bPFMode = DataCommon.isPFRPG();
+	local nodeTarget;
+	if ActorManager.isPC(rTarget) then
+		nodeTarget = ActorManager.getCreatureNode(rTarget);
+	else
+		nodeTarget = ActorManager.getCTNode(rTarget);
+	end
+	if not nodeTarget then
+		return;
+	end
 
+	local bPFMode = DataCommon.isPFRPG();
 	local bRemoveTarget = false;
+	
 	-- KEL defining reverted and lifestealing rolls
 	local rRollHeal = {};
 	local rRollDamage = {};
 	local rRollSteal = {};
 	-- END
+	
 	-- Get health fields
+	local nTotalHP = 0;
+	local nTempHP = 0;
+	local nNonlethal = 0;
+	local nWounds = 0;
 	local sTargetNodeType, nodeTarget = ActorManager.getTypeAndNode(rTarget);
 	if not nodeTarget then
 		return;
 	end
-	if sTargetNodeType == "pc" then
+	if ActorManager.isPC(rTarget) then
 		nTotalHP = DB.getValue(nodeTarget, "hp.total", 0);
 		nTempHP = DB.getValue(nodeTarget, "hp.temporary", 0);
 		nNonlethal = DB.getValue(nodeTarget, "hp.nonlethal", 0);
 		nWounds = DB.getValue(nodeTarget, "hp.wounds", 0);
-	elseif sTargetNodeType == "ct" then
+	else
 		nTotalHP = DB.getValue(nodeTarget, "hp", 0);
 		nTempHP = DB.getValue(nodeTarget, "hptemp", 0);
 		nNonlethal = DB.getValue(nodeTarget, "nonlethal", 0);
 		nWounds = DB.getValue(nodeTarget, "wounds", 0);
-	else
-		return;
 	end
 
 	-- Remember current health status
@@ -2363,7 +2390,7 @@ function applyDamage(rSource, rTarget, bSecret, sRollType, sDamage, nTotal, bImm
 	end
 
 	-- Set health fields
-	if sTargetNodeType == "pc" then
+	if ActorManager.isPC(rTarget) then
 		DB.setValue(nodeTarget, "hp.temporary", "number", nTempHP);
 		DB.setValue(nodeTarget, "hp.wounds", "number", nWounds);
 		DB.setValue(nodeTarget, "hp.nonlethal", "number", nNonlethal);
@@ -2566,6 +2593,17 @@ function messageDamage(rSource, rTarget, bSecret, sDamageType, sDamageDesc, sTot
 end
 
 function applyFailedStabilization(rActor)
+	local nodeActor;
+	if ActorManager.isPC(rActor) then
+		nodeActor = ActorManager.getCreatureNode(rActor);
+	else
+		nodeActor = ActorManager.getCTNode(rActor);
+	end
+	if not nodeActor then
+		return;
+	end
+
+	-- Get health fields
 	local sDamageTypeOutput = "Damage";
 	local sDamage = string.format("[%s] Dying", Interface.getString("action_damage_tag"));
 	local nTotal = 1;
@@ -2576,21 +2614,14 @@ function applyFailedStabilization(rActor)
 
 	local aNotifications = {};
 
-	-- Get health fields
-	local sNodeType, nodeActor = ActorManager.getTypeAndNode(rActor);
-	if not nodeActor then
-		return;
-	end
-	if sNodeType == "pc" then
+	if ActorManager.isPC(rActor) then
 		nTotalHP = DB.getValue(nodeActor, "hp.total", 0);
 		nTempHP = DB.getValue(nodeActor, "hp.temporary", 0);
 		nWounds = DB.getValue(nodeActor, "hp.wounds", 0);
-	elseif sNodeType == "ct" then
+	else
 		nTotalHP = DB.getValue(nodeActor, "hp", 0);
 		nTempHP = DB.getValue(nodeActor, "hptemp", 0);
 		nWounds = DB.getValue(nodeActor, "wounds", 0);
-	else
-		return;
 	end
 
 	-- Remember current health status
@@ -2618,7 +2649,7 @@ function applyFailedStabilization(rActor)
 	end
 
 	-- Set health fields
-	if sNodeType == "pc" then
+	if ActorManager.isPC(rActor) then
 		DB.setValue(nodeActor, "hp.temporary", "number", nTempHP);
 		DB.setValue(nodeActor, "hp.wounds", "number", nWounds);
 	else

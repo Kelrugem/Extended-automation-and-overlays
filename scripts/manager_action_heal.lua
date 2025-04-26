@@ -19,11 +19,7 @@ function getRoll(rActor, rAction)
 	end
 	-- END
 	
-	rRoll.sDesc = "[HEAL";
-	if rAction.order and rAction.order > 1 then
-		rRoll.sDesc = rRoll.sDesc .. " #" .. rAction.order;
-	end
-	rRoll.sDesc = rRoll.sDesc .. "] " .. StringManager.capitalizeAll(rAction.label);
+	rRoll.sDesc = ActionHealCore.encodeActionText(rAction);
 
 	-- Save the heal clauses in the roll structure
 	rRoll.clauses = rAction.clauses;

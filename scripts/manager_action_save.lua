@@ -102,9 +102,9 @@ function getRoll(rActor, sSave, tags)
 	
 	-- Look up actor specific information
 	local sAbility = nil;
-	local sNodeType, nodeActor = ActorManager.getTypeAndNode(rActor);
+	local nodeActor = ActorManager.getCreatureNode(rActor);
 	if nodeActor then
-		if sNodeType == "pc" then
+		if ActorManager.isPC(rActor) then
 			rRoll.nMod = DB.getValue(nodeActor, "saves." .. sSave .. ".total", 0);
 			sAbility = DB.getValue(nodeActor, "saves." .. sSave .. ".ability", "");
 		else
@@ -112,7 +112,7 @@ function getRoll(rActor, sSave, tags)
 		end
 	end
 
-	rRoll.sDesc = "[SAVE] " .. StringManager.capitalizeAll(sSave);
+	rRoll.sDesc = ActionCore.encodeActionText({ label = sSave, }, "action_save_tag");
 	if sAbility and sAbility ~= "" then
 		if (sSave == "fortitude" and sAbility ~= "constitution") or
 				(sSave == "reflex" and sAbility ~= "dexterity") or
@@ -136,11 +136,7 @@ function modSave(rSource, rTarget, rRoll)
 	local nAddMod = 0;
 	
 	-- Determine save type
-	local sSave = nil;
-	local sSaveMatch = rRoll.sDesc:match("%[SAVE%] ([^[]+)");
-	if sSaveMatch then
-		sSave = StringManager.trim(sSaveMatch):lower();
-	end
+	local sSave = ActionCore.decodeLabelText(rRoll.sDesc, "action_save_tag"):lower();
 	
 	if rSource then
 		local bEffects = false;
@@ -163,7 +159,7 @@ function modSave(rSource, rTarget, rRoll)
 		
 		-- Build save filter
 		local aSaveFilter = {};
-		if sSave then
+		if (sSave or "") ~= "" then
 			table.insert(aSaveFilter, sSave);
 		end
 		
@@ -354,7 +350,7 @@ function applySave(rSource, rOrigin, rAction, sUser)
 	local sAttack = "";
 	local bHalfMatch = false;
 	if rAction.sSaveDesc then
-		sAttack = rAction.sSaveDesc:match("%[SAVE VS[^]]*%] ([^[]+)") or "";
+		sAttack = ActionCore.decodeLabelText(rAction.sSaveDesc, "action_savevs_tag");
 		bHalfMatch = (rAction.sSaveDesc:match("%[HALF ON SAVE%]") ~= nil);
 	end
 	rAction.sResult = "";
@@ -370,10 +366,7 @@ function applySave(rSource, rOrigin, rAction, sUser)
 			local bHalfDamage = bHalfMatch;
 			local bAvoidDamage = false;
 			if bHalfDamage then
-				local sSave = rAction.sDesc:match("%[SAVE%] (%w+)");
-				if sSave then
-					sSave = sSave:lower();
-				end
+				local sSave = ActionCore.decodeLabelText(rAction.sDesc, "action_save_tag"):lower();
 				if sSave == "reflex" then
 					-- KEL taking conditions into account for (improved) evasion and tags
 					if EffectManager35E.hasEffect(rSource, "Improved Evasion", nil, false, true, sEffectSpell) then 
@@ -428,10 +421,7 @@ function applySave(rSource, rOrigin, rAction, sUser)
 		if rSource then
 			local bHalfDamage = false;
 			if bHalfMatch then
-				local sSave = rAction.sDesc:match("%[SAVE%] (%w+)");
-				if sSave then
-					sSave = sSave:lower();
-				end
+				local sSave = ActionCore.decodeLabelText(rAction.sDesc, "action_save_tag"):lower();
 				if sSave == "reflex" then
 					-- KEL taking conditions into account for improved evasion and tags
 					if EffectManager35E.hasEffect(rSource, "Improved Evasion", nil, false, true, sEffectSpell) then

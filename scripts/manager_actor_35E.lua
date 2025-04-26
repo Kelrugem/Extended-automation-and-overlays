@@ -550,12 +550,12 @@ function getDefenseValue(rAttacker, rDefender, rRoll)
 		sDefenseStat3 = "strength";
 	end
 
-	local sDefenderNodeType, nodeDefender = ActorManager.getTypeAndNode(rDefender);
+	local nodeDefender = ActorManager.getCreatureNode(rDefender);
 	if not nodeDefender then
 		return nil, 0, 0, 0;
 	end
 
-	if sDefenderNodeType == "pc" then
+	if ActorManager.isPC(rDefender) then
 		if rRoll.sType == "attack" then
 			nDefense = DB.getValue(nodeDefender, "ac.totals.general", 10);
 			nFlatFootedMod = nDefense - DB.getValue(nodeDefender, "ac.totals.flatfooted", 10);
@@ -575,49 +575,55 @@ function getDefenseValue(rAttacker, rDefender, rRoll)
 				sDefenseStat3 = "strength";
 			end
 		end
-	elseif sDefenderNodeType == "ct" then
-		if rRoll.sType == "attack" then
-			nDefense = DB.getValue(nodeDefender, "ac_final", 10);
-			nFlatFootedMod = nDefense - DB.getValue(nodeDefender, "ac_flatfooted", 10);
-			nTouchMod = nDefense - DB.getValue(nodeDefender, "ac_touch", 10);
-		else
-			nDefense = DB.getValue(nodeDefender, "cmd", 10);
-			nFlatFootedMod = DB.getValue(nodeDefender, "ac_final", 10) - DB.getValue(nodeDefender, "ac_flatfooted", 10);
-		end
-	elseif sDefenderNodeType == "npc" then
-		if rRoll.sType == "attack" then
-			local sAC = DB.getValue(nodeDefender, "ac", "");
-			nDefense = tonumber(string.match(sAC, "^%s*(%d+)")) or 10;
+	else
+		local nodeCT = ActorManager.getCTNode(rDefender);
+		if nodeCT then
+			nodeDefender = nodeCT;
+			if rRoll.sType == "attack" then
+				nDefense = DB.getValue(nodeDefender, "ac_final", 10);
+				nFlatFootedMod = nDefense - DB.getValue(nodeDefender, "ac_flatfooted", 10);
+				nTouchMod = nDefense - DB.getValue(nodeDefender, "ac_touch", 10);
+			else
+				nDefense = DB.getValue(nodeDefender, "cmd", 10);
+				nFlatFootedMod = DB.getValue(nodeDefender, "ac_final", 10) - DB.getValue(nodeDefender, "ac_flatfooted", 10);
+			end
+		elseif ActorManager.isRecordType(rDefender, "npc") then
+			if rRoll.sType == "attack" then
+				local sAC = DB.getValue(nodeDefender, "ac", "");
+				nDefense = tonumber(string.match(sAC, "^%s*(%d+)")) or 10;
 
-			local sFlatFootedAC = string.match(sAC, "flat-footed (%d+)");
-			if sFlatFootedAC then
-				nFlatFootedMod = nDefense - tonumber(sFlatFootedAC);
+				local sFlatFootedAC = string.match(sAC, "flat-footed (%d+)");
+				if sFlatFootedAC then
+					nFlatFootedMod = nDefense - tonumber(sFlatFootedAC);
+				else
+					nFlatFootedMod = getAbilityBonus(rDefender, sDefenseStat);
+				end
+				
+				local sTouchAC = string.match(sAC, "touch (%d+)");
+				if sTouchAC then
+					nTouchMod = nDefense - tonumber(sTouchAC);
+				end
 			else
-				nFlatFootedMod = getAbilityBonus(rDefender, sDefenseStat);
-			end
-			
-			local sTouchAC = string.match(sAC, "touch (%d+)");
-			if sTouchAC then
-				nTouchMod = nDefense - tonumber(sTouchAC);
+				local sBABGrp = DB.getValue(nodeDefender, "babgrp", "");
+				local sMatch = string.match(sBABGrp, "CMD ([+-]?[0-9]+)");
+				if sMatch then
+					nDefense = tonumber(sMatch) or 10;
+				else
+					nDefense = 10;
+				end
+				
+				local sAC = DB.getValue(nodeDefender, "ac", "");
+				local nAC = tonumber(string.match(sAC, "^%s*(%d+)")) or 10;
+
+				local sFlatFootedAC = string.match(sAC, "flat-footed (%d+)");
+				if sFlatFootedAC then
+					nFlatFootedMod = nAC - (tonumber(sFlatFootedAC) or 10);
+				else
+					nFlatFootedMod = getAbilityBonus(rDefender, sDefenseStat);
+				end
 			end
 		else
-			local sBABGrp = DB.getValue(nodeDefender, "babgrp", "");
-			local sMatch = string.match(sBABGrp, "CMD ([+-]?[0-9]+)");
-			if sMatch then
-				nDefense = tonumber(sMatch) or 10;
-			else
-				nDefense = 10;
-			end
-			
-			local sAC = DB.getValue(nodeDefender, "ac", "");
-			local nAC = tonumber(string.match(sAC, "^%s*(%d+)")) or 10;
-
-			local sFlatFootedAC = string.match(sAC, "flat-footed (%d+)");
-			if sFlatFootedAC then
-				nFlatFootedMod = nAC - (tonumber(sFlatFootedAC) or 10);
-			else
-				nFlatFootedMod = getAbilityBonus(rDefender, sDefenseStat);
-			end
+			return nil, 0, 0, 0;
 		end
 	end
 
@@ -859,7 +865,7 @@ function getDefenseValue(rAttacker, rDefender, rRoll)
 		local nBonusStat = 0;
 		-- Kel Also here tags, everywhere :D
 		local nBonusStat1 = getAbilityEffectsBonus(rDefender, sDefenseStat, rRoll.tags);
-		if (sDefenderNodeType == "pc") and (nBonusStat1 > 0) then
+		if ActorManager.isPC(rDefender) and (nBonusStat1 > 0) then
 			if DB.getValue(nodeDefender, "encumbrance.armormaxstatbonusactive", 0) == 1 then
 				local nCurrentStatBonus = getAbilityBonus(rDefender, sDefenseStat);
 				local nMaxStatBonus = math.max(DB.getValue(nodeDefender, "encumbrance.armormaxstatbonus", 0), 0);
