@@ -77,7 +77,7 @@ function getRoll(rActor, bSecretRoll)
 	rRoll.aDice = DiceRollManager.getActorDice({ "d20" }, rActor);
 	rRoll.nMod = 0;
 	
-	rRoll.sDesc = "[INIT]";
+	rRoll.sDesc = string.format("[%s]", Interface.getString("action_init_tag"));
 	
 	rRoll.bSecret = bSecretRoll;
 

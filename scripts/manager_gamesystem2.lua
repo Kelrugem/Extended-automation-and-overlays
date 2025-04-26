@@ -65,23 +65,22 @@ function performConcentrationCheck(draginfo, rActor, nodeSpellClass)
 		local sSkill = "Concentration";
 		local nValue = 0;
 
-		local sNodeType, nodeActor = ActorManager.getTypeAndNode(rActor);
-		if not nodeActor then
-			return;
-		end
-		if sNodeType == "pc" then
+		if ActorManager.isPC(rActor) then
 			nValue = CharManager.getSkillValue(rActor, sSkill);
 		elseif ActorManager.isRecordType(rActor, "npc") then
-			local sSkills = DB.getValue(nodeActor, "skills", "");
-			local aSkillClauses = StringManager.split(sSkills, ",;\r", true);
-			for i = 1, #aSkillClauses do
-				local nStarts, nEnds, sLabel, sSign, sMod = string.find(aSkillClauses[i], "([%w%s%(%)]*[%w%(%)]+)%s*([%+%-]?)(%d*)");
-				if nStarts and string.lower(sSkill) == string.lower(sLabel) and sMod ~= "" then
-					nValue = tonumber(sMod) or 0;
-					if sSign == "-" or sSign == "–" then
-						nValue = 0 - nValue;
+			local nodeActor = ActorManager.getCreatureNode(rActor);
+			if nodeActor then
+				local sSkills = DB.getValue(nodeActor, "skills", "");
+				local aSkillClauses = StringManager.split(sSkills, ",;\r\n", true);
+				for i = 1, #aSkillClauses do
+					local nStarts, nEnds, sLabel, sSign, sMod = string.find(aSkillClauses[i], "([%w%s%(%)]*[%w%(%)]+)%s*([%+%-–]?)(%d*)");
+					if nStarts and string.lower(sSkill) == string.lower(sLabel) and sMod ~= "" then
+						nValue = tonumber(sMod) or 0;
+						if sSign == "-" or sSign == "–" then
+							nValue = 0 - nValue;
+						end
+						break;
 					end
-					break;
 				end
 			end
 		end

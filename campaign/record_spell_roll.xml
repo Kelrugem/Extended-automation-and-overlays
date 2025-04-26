@@ -259,95 +259,78 @@
 	<windowclass name="power_action_editor_damage_entry">
 		<margins control="0,0,0,5" />
 		<sheetdata>
-			<genericcontrol name="rightanchor">
-				<anchored width="0" height="0">
-					<top offset="2" />
-					<right />
-				</anchored>
-				<invisible />
-			</genericcontrol>
-			<button_idelete name="idelete">
-				<anchored to="rightanchor">
-					<top />
-					<right anchor="left" relation="relative" offset="-5" />
-				</anchored>
-			</button_idelete>
+			<anchor_listitem_left_sm />
+			<anchor_listitem_right_sm />
 
-			<basicdice name="dice">
-				<anchored position="insidetopleft" offset="5,2" width="60" height="20" />
-			</basicdice>
-			<label name="label_dicestatx">
-				<anchored to="dice" position="righthigh" offset="5,0" width="10" />
+			<button_listitem_idelete_left name="idelete">
+				<editmode>list_iedit</editmode>
+			</button_listitem_idelete_left>
+
+			<dice_listitem_left name="dice">
+				<anchored width="60" />
+			</dice_listitem_left>
+			<label_listitem_left name="label_dicestatx">
 				<static>x</static>
-				<center />
-			</label>
-			<button_stringcycler name="dicestat">
-				<anchored to="label_dicestatx" position="righthigh" offset="5,0" width="60" />
+			</label_listitem_left>
+			<stringcycler_listitem_left name="dicestat">
+				<anchored width="60" />
 				<parameters>
 					<defaultlabelres>dash</defaultlabelres>
 					<labelsres>cl|evencl|oddcl|thirdcl</labelsres>
 					<values>cl|halfcl|oddcl|thirdcl</values>
 				</parameters>
-			</button_stringcycler>
-			<label name="dicestatmaxparen">
-				<anchored to="dicestat" position="righthigh" offset="5,0" />
+			</stringcycler_listitem_left>
+			<label_listitem_left name="dicestatmaxparen">
 				<static>(</static>
-			</label>
-			<basicnumber name="dicestatmax">
-				<anchored to="dicestatmaxparen" position="righthigh" offset="5,0" width="20" height="20" />
+			</label_listitem_left>
+			<number_listitem_left name="dicestatmax">
+				<anchored width="20" />
 				<hideonvalue value="0" />
 				<tooltip textres="power_tooltip_dicemax" />
-			</basicnumber>
-			<label name="dicestatmaxparen2">
-				<anchored to="dicestatmax" position="righthigh" offset="5,0" />
+			</number_listitem_left>
+			<label_listitem_left name="dicestatmaxparen2">
 				<static>)</static>
-			</label>
-			<label name="label_plus">
-				<anchored to="dicestatmaxparen2" position="righthigh" offset="2,0" width="10" />
+			</label_listitem_left>
+			<label_listitem_left name="label_plus">
 				<static>+</static>
-			</label>
-			<basicnumber name="statmult">
-				<anchored to="label_plus" position="righthigh" offset="3,0" width="20" height="20" />
+			</label_listitem_left>
+			<number_listitem_left name="statmult">
+				<anchored width="20" />
 				<default>1</default>
 				<min>0.5</min>
 				<wheel>0.5</wheel>
 				<hideonvalue>1</hideonvalue>
 				<tooltip textres="power_tooltip_statmult" />
-			</basicnumber>
-			<label name="label_statmultx">
-				<anchored to="statmult" position="righthigh" offset="5,0" width="10" />
+			</number_listitem_left>
+			<label_listitem_left name="label_statmultx">
 				<static>x</static>
-				<center />
-			</label>
-			<cycler_ability name="stat">
-				<anchored to="label_statmultx" position="righthigh" offset="5,0" width="60" />
+			</label_listitem_left>
+			<stringcycler_listitem_left name="stat">
+				<anchored width="60" />
 				<parameters>
 					<defaultlabelres>dash</defaultlabelres>
 					<labelsres>cl|evencl|oddcl|thirdcl|str|dex|con|int|wis|cha</labelsres>
 					<values>cl|halfcl|oddcl|thirdcl|strength|dexterity|constitution|intelligence|wisdom|charisma</values>
 				</parameters>
-			</cycler_ability>
-			<label name="statmaxparen">
-				<anchored to="stat" position="righthigh" offset="5,0" />
+			</stringcycler_listitem_left>
+			<label_listitem_left name="statmaxparen">
 				<static>(</static>
-			</label>
-			<basicnumber name="statmax">
-				<anchored to="statmaxparen" position="righthigh" offset="5,0" width="20" height="20" />
+			</label_listitem_left>
+			<number_listitem_left name="statmax">
+				<anchored width="20" />
 				<hideonvalue value="0" />
 				<tooltip textres="power_tooltip_statmax" />
-			</basicnumber>
-			<label name="statmaxparen2">
-				<anchored to="statmax" position="righthigh" offset="5,0" />
+			</number_listitem_left>
+			<label_listitem_left name="statmaxparen2">
 				<static>)</static>
-			</label>
-			<label name="label_plus2">
-				<anchored to="statmaxparen2" position="righthigh" offset="2,0" width="10" />
+			</label_listitem_left>
+			<label_listitem_left name="label_plus2">
 				<static>+</static>
-			</label>
-			<basicnumber name="bonus">
-				<anchored to="label_plus2" position="righthigh" offset="2,0" width="30" height="20" />
+			</label_listitem_left>
+			<number_listitem_left name="bonus">
+				<anchored width="30" />
 				<hideonvalue>0</hideonvalue>
-			</basicnumber>
+			</number_listitem_left>
 			
 			<label name="label_type">
 				<anchored position="insidetopleft" offset="20,25" />
@@ -377,96 +360,78 @@
 	<windowclass name="power_action_editor_heal_entry">
 		<margins control="0,0,0,5" />
 		<sheetdata>
-			<genericcontrol name="rightanchor">
-				<anchored width="0" height="0">
-					<top offset="2" />
-					<right />
-				</anchored>
-				<invisible />
-			</genericcontrol>
-			<button_idelete name="idelete">
-				<anchored to="rightanchor">
-					<top />
-					<right anchor="left" relation="relative" offset="-5" />
-				</anchored>
-				<editmode>list_iedit</editmode>
-			</button_idelete>
+			<anchor_listitem_left_sm />
+			<anchor_listitem_right_sm />
 
-			<basicdice name="dice">
-				<anchored position="insidetopleft" offset="5,2" width="60" height="20" />
-			</basicdice>
-			<label name="label_dicestatx">
-				<anchored to="dice" position="righthigh" offset="5,0" width="10" />
+			<button_listitem_idelete_left name="idelete">
+				<editmode>list_iedit</editmode>
+			</button_listitem_idelete_left>
+
+			<dice_listitem_left name="dice">
+				<anchored width="60" />
+			</dice_listitem_left>
+			<label_listitem_left name="label_dicestatx">
 				<static>x</static>
-				<center />
-			</label>
-			<button_stringcycler name="dicestat">
-				<anchored to="label_dicestatx" position="righthigh" offset="5,0" width="60" />
+			</label_listitem_left>
+			<stringcycler_listitem_left name="dicestat">
+				<anchored width="60" />
 				<parameters>
 					<defaultlabelres>dash</defaultlabelres>
 					<labelsres>cl|evencl|oddcl|thirdcl</labelsres>
 					<values>cl|halfcl|oddcl|thirdcl</values>
 				</parameters>
-			</button_stringcycler>
-			<label name="dicestatmaxparen">
-				<anchored to="dicestat" position="righthigh" offset="5,0" />
+			</stringcycler_listitem_left>
+			<label_listitem_left name="dicestatmaxparen">
 				<static>(</static>
-			</label>
-			<basicnumber name="dicestatmax">
-				<anchored to="dicestatmaxparen" position="righthigh" offset="5,0" width="20" height="20" />
+			</label_listitem_left>
+			<number_listitem_left name="dicestatmax">
+				<anchored width="20" />
 				<hideonvalue value="0" />
 				<tooltip textres="power_tooltip_dicemax" />
-			</basicnumber>
-			<label name="dicestatmaxparen2">
-				<anchored to="dicestatmax" position="righthigh" offset="5,0" />
+			</number_listitem_left>
+			<label_listitem_left name="dicestatmaxparen2">
 				<static>)</static>
-			</label>
-			<label name="label_plus">
-				<anchored to="dicestatmaxparen2" position="righthigh" offset="2,0" width="10" />
+			</label_listitem_left>
+			<label_listitem_left name="label_plus">
 				<static>+</static>
-			</label>
-			<basicnumber name="statmult">
-				<anchored to="label_plus" position="righthigh" offset="3,0" width="20" height="20" />
+			</label_listitem_left>
+			<number_listitem_left name="statmult">
+				<anchored width="20" />
 				<default>1</default>
 				<min>0.5</min>
 				<wheel>0.5</wheel>
 				<hideonvalue>1</hideonvalue>
 				<tooltip textres="power_tooltip_statmult" />
-			</basicnumber>
-			<label name="label_statmultx">
-				<anchored to="statmult" position="righthigh" offset="5,0" width="10" />
+			</number_listitem_left>
+			<label_listitem_left name="label_statmultx">
 				<static>x</static>
-				<center />
-			</label>
-			<cycler_ability name="stat">
-				<anchored to="label_statmultx" position="righthigh" offset="5,0" width="60" />
+			</label_listitem_left>
+			<stringcycler_listitem_left name="stat">
+				<anchored width="60" />
 				<parameters>
 					<defaultlabelres>dash</defaultlabelres>
 					<labelsres>cl|evencl|oddcl|thirdcl|str|dex|con|int|wis|cha</labelsres>
 					<values>cl|halfcl|oddcl|thirdcl|strength|dexterity|constitution|intelligence|wisdom|charisma</values>
 				</parameters>
-			</cycler_ability>
-			<label name="statmaxparen">
-				<anchored to="stat" position="righthigh" offset="5,0" />
+			</stringcycler_listitem_left>
+			<label_listitem_left name="statmaxparen">
 				<static>(</static>
-			</label>
-			<basicnumber name="statmax">
-				<anchored to="statmaxparen" position="righthigh" offset="5,0" width="20" height="20" />
+			</label_listitem_left>
+			<number_listitem_left name="statmax">
+				<anchored width="20" />
 				<hideonvalue value="0" />
 				<tooltip textres="power_tooltip_statmax" />
-			</basicnumber>
-			<label name="statmaxparen2">
-				<anchored to="statmax" position="righthigh" offset="5,0" />
+			</number_listitem_left>
+			<label_listitem_left name="statmaxparen2">
 				<static>)</static>
-			</label>
-			<label name="label_plus2">
-				<anchored to="statmaxparen2" position="righthigh" offset="2,0" width="10" />
+			</label_listitem_left>
+			<label_listitem_left name="label_plus2">
 				<static>+</static>
-			</label>
-			<basicnumber name="bonus">
-				<anchored to="label_plus2" position="righthigh" offset="2,0" width="30" height="20" />
+			</label_listitem_left>
+			<number_listitem_left name="bonus">
+				<anchored width="30" />
 				<hideonvalue>0</hideonvalue>
-			</basicnumber>
+			</number_listitem_left>
 		</sheetdata>
 	</windowclass>
 	

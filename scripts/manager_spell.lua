@@ -981,8 +981,8 @@ function getSpellAction(rActor, nodeAction, sSubRoll)
 			rAction.modifier = DB.getValue(nodeAction, "atkmod", 0);
 			rAction.crit = 20;
 
-			local sNodeType, nodeActor = ActorManager.getTypeAndNode(rActor);
-			if sNodeType == "pc" then
+			if ActorManager.isPC(rActor) then
+				local nodeActor = ActorManager.getCreatureNode(rActor);
 				if rAction.range == "R" then
 					rAction.stat = DB.getValue(nodeActor, "attackbonus.ranged.ability", "");
 					if rAction.stat == "" then

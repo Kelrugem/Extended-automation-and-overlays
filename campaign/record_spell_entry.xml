@@ -7,22 +7,15 @@
 
 <root>
 	<!-- KEL Skill Buttons and making saveview a bit bigger -->
-	<template name="spell_action_saveview">
-		<string_spellactionview name="saveview">
-			<anchored to="saveviewlabel" position="righthigh" offset="7,0" width="77" />
-			<subroll>save</subroll>
-		</string_spellactionview>
-	</template>
-	<template name="spell_action_healtype">
-		<button_stringcycler name="healtype">
-			<anchored position="insidetopright" offset="40,2" width="40" />
-			<parameters>
-				<defaultlabelres>power_label_healtypenormal</defaultlabelres>
-				<labelsres>power_label_healtypetemp|power_label_healtypenonlethal</labelsres>
-				<values>temp|nl</values>
-			</parameters>
-		</button_stringcycler>
-	</template>
+	<windowclass name="power_action_cast" merge="join">
+		<sheetdata>
+			<string_spellactionview name="saveview">
+				<anchored to="saveviewlabel" position="righthigh" offset="7,0" width="77" />
+				<subroll>save</subroll>
+			</string_spellactionview>
+		</sheetdata>
+	</windowclass>
+	
 	<!-- KEL commented out until automated -->
 	<!-- <template name="spell_action_skillbutton"> -->
 		<!-- <button_spellaction name="skillbutton"> -->
