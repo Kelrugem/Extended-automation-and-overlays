@@ -2112,10 +2112,7 @@ function applyDamage(rSource, rTarget, bSecret, sRollType, sDamage, nTotal, bImm
 	local nTempHP = 0;
 	local nNonlethal = 0;
 	local nWounds = 0;
-	local sTargetNodeType, nodeTarget = ActorManager.getTypeAndNode(rTarget);
-	if not nodeTarget then
-		return;
-	end
+	
 	if ActorManager.isPC(rTarget) then
 		nTotalHP = DB.getValue(nodeTarget, "hp.total", 0);
 		nTempHP = DB.getValue(nodeTarget, "hp.temporary", 0);
