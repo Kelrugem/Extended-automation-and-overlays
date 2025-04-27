@@ -50,8 +50,9 @@ function helperRollEntryInit(tInit)
 	local sOptFFOS = OptionsManager.getOption("FFOS");
 	local bHasUncDodge = false;
 	if (sOptFFOS == "on") and (nCurrent == 0) then
-		local sSourceType, nodeSource = ActorManager.getTypeAndNode(rActor);
-		if sSourceType == "pc" then
+		local nodeSource;
+		if ActorManager.isPC(rActor) then
+			nodeSource = ActorManager.getCreatureNode(rActor);
 			for _,v in ipairs(DB.getChildList(nodeSource, "specialabilitylist")) do
 				local sAbilityname = string.lower(DB.getValue(v, "name", ""));
 				if string.match(sAbilityname, "improved uncanny dodge") or string.match(sAbilityname, "uncanny dodge") then
@@ -59,6 +60,7 @@ function helperRollEntryInit(tInit)
 				end
 			end
 		else
+			nodeSource = ActorManager.getCTNode(rActor);
 			local sAbilityname = string.lower(DB.getValue(nodeSource, "specialqualities", ""));
 			if string.match(sAbilityname, "improved uncanny dodge") or string.match(sAbilityname, "uncanny dodge") then
 				bHasUncDodge = true;
