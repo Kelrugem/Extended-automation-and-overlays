@@ -762,7 +762,7 @@ function applyDmgEffectsToModRoll(rRoll, rSource, rTarget)
 				table.insert(rRoll.clauses, rClause);
 
 				-- Add critical effect modifier
-				if rRoll.bCritical and not bEffectPrecision and not bEffectCritical and nEffectCritMult > 1 then
+				if rRoll.bCritical and not bEffectPrecision and not bEffectCritical and (nEffectCritMult > 1) and (#(v.dice) == 0) then
 					local rClauseCritical = {};
 					nCurrentMod = (v.mod * (nEffectCritMult - 1));
 					rClauseCritical.modifier = nCurrentMod;
