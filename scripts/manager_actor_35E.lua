@@ -214,7 +214,7 @@ function getAbilityEffectsBonus(rActor, sAbility, tags)
 	end
 
 	local nAbilityMod = 0;
-	local nAbilityScore = getAbilityScore(rActor, sAbility);
+	local nAbilityScore = ActorManager35E.getAbilityScore(rActor, sAbility);
 	if nAbilityScore > 0 and not DataCommon.isPFRPG() then
 		local nAbilityDamage = getAbilityDamage(rActor, sAbility);
 		
@@ -272,7 +272,7 @@ function getAbilityScore(rActor, sAbility)
 	
 	local sShort = string.sub(string.lower(sAbility), 1, 3);
 	if sNodeType == "pc" then
-		if sShort == "lev" then
+		if sShort == "lev" or sShort == "lvl" then
 			nStatScore = DB.getValue(nodeActor, "level", 0);
 		elseif sShort == "bab" then
 			nStatScore = DB.getValue(nodeActor, "attackbonus.base", 0);
@@ -292,7 +292,7 @@ function getAbilityScore(rActor, sAbility)
 			nStatScore = DB.getValue(nodeActor, "abilities.charisma.score", 0);
 		end
 	elseif ActorManager.isRecordType(rActor, "npc") then
-		if sShort == "lev" then
+		if sShort == "lev" or sShort == "lvl" then
 			nStatScore = tonumber(string.match(DB.getValue(nodeActor, "hd", ""), "^(%d+)")) or 0;
 		elseif sShort == "bab" then
 			nStatScore = 0;
@@ -356,7 +356,7 @@ function getAbilityBonus(rActor, sAbility)
 	end
 
 	-- GET ABILITY VALUE
-	local nStatScore = getAbilityScore(rActor, sStat);
+	local nStatScore = ActorManager35E.getAbilityScore(rActor, sStat);
 	if nStatScore < 0 then
 		return 0;
 	end
