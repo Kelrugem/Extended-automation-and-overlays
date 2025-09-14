@@ -154,7 +154,7 @@ function parseEffectComp(s)
 	local aRemainder = {};
 	local nRemainderIndex = 1;
 
-	local aWords, aWordStats = StringManager.parseWords(s, "/\\%.%[%]%(%):{}");
+	local aWords, aWordStats = StringManager.parseWords(s, "/\\%.%[%]%(%):{}@");
 	if #aWords > 0 then
 		sType = aWords[1]:match("^([^:]+):");
 		if sType then
@@ -320,7 +320,7 @@ end
 
 function evalAbilityHelper(rActor, sEffectAbility, nodeSpellClass)
 	-- KEL We add DCrumbs max stuff but we do it differently (espcially min is not needed)
-	local sSign, sModifier, sNumber, sShortAbility, nMax = sEffectAbility:match("^%[([%+%-%^]*)([HTQd]?)([%d]?)([A-Z][A-Z][A-Z]?)(%d*)%]$");
+	local sSign, sModifier, sNumber, sTag, nMax = sEffectAbility:match("^%[([%+%-%^]*)([HTQd]?)([%d]?)([A-Z]+)(%d*)%]$");
 	-- KEL adding rollable stats (for damage especially)
 	-- local sSign, sDieSides = sEffectAbility:match("^%[([%-%+]?)[dD]([%dF]+)%]$");
 	local sDie, sDesc = sEffectAbility:match("^%[%s*(%S+)%s*(.*)%]$");
@@ -351,30 +351,15 @@ function evalAbilityHelper(rActor, sEffectAbility, nodeSpellClass)
 			end
 		end
 	end
-	-- KEL Adding Effects to these attributes
+	-- KEL
 	local nAbility = nil;
-	if sShortAbility == "STR" then
-		nAbility = ActorManager35E.getAbilityBonus(rActor, "strength") + ActorManager35E.getAbilityEffectsBonus(rActor, "strength");
-	elseif sShortAbility == "DEX" then
-		nAbility = ActorManager35E.getAbilityBonus(rActor, "dexterity") + ActorManager35E.getAbilityEffectsBonus(rActor, "dexterity");
-	elseif sShortAbility == "CON" then
-		nAbility = ActorManager35E.getAbilityBonus(rActor, "constitution") + ActorManager35E.getAbilityEffectsBonus(rActor, "constitution");
-	elseif sShortAbility == "INT" then
-		nAbility = ActorManager35E.getAbilityBonus(rActor, "intelligence") + ActorManager35E.getAbilityEffectsBonus(rActor, "intelligence");
-	elseif sShortAbility == "WIS" then
-		nAbility = ActorManager35E.getAbilityBonus(rActor, "wisdom") + ActorManager35E.getAbilityEffectsBonus(rActor, "wisdom");
-	elseif sShortAbility == "CHA" then
-		nAbility = ActorManager35E.getAbilityBonus(rActor, "charisma") + ActorManager35E.getAbilityEffectsBonus(rActor, "charisma");
-	elseif sShortAbility == "LVL" then
-		nAbility = ActorManager35E.getAbilityBonus(rActor, "level");
-	elseif sShortAbility == "BAB" then
-		nAbility = ActorManager35E.getAbilityBonus(rActor, "bab");
-	elseif sShortAbility == "CL" then
-		if nodeSpellClass then
-			nAbility = DB.getValue(nodeSpellClass, "cl", 0);
-		end
-	elseif IsDie then
+	if IsDie then
 		nAbility = nMod;
+	elseif not sTag then
+			return 0;
+	else
+		local sAbility = DataCommon.ability_stol[sTag] or sTag;
+		nAbility = ActorManager35E.getAbilityBonus(rActor, sAbility) + ActorManager35E.getAbilityEffectsBonus(rActor, sAbility);
 	end
 
 	if nAbility and not IsDie then
@@ -433,7 +418,7 @@ function evalEffect(rActor, s, nodeSpellClass)
 			local sDie, sDesc = rEffectComp.remainder[i]:match("^%[%s*(%S+)%s*(.*)%]$");
 			-- KEL TQD stuff
 			if rEffectComp.remainder[i]:match("^%[([%+%-%^]*)([HTQd]?)([%d]?)([A-Z][A-Z][A-Z]?)(%d*)%]") or StringManager.isDiceString(sDie) then
-				local nAbility = evalAbilityHelper(rActor, rEffectComp.remainder[i], nodeSpellClass);
+				local nAbility = EffectManager35E.evalAbilityHelper(rActor, rEffectComp.remainder[i], nodeSpellClass);
 				if nAbility then
 					rEffectComp.mod = rEffectComp.mod + nAbility;
 					table.remove(rEffectComp.remainder, i);
