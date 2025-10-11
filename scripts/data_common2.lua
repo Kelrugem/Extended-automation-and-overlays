@@ -6,6 +6,8 @@
 -- KEL
 tnodex = {
 	"climbing",
+	"cowering",
+	"dying",
 	"running",
 	"squeezing",
 	"blinded",
@@ -17,7 +19,8 @@ tnodex = {
 	"helpless",
 	"grantca",
 	"flatfooted",
-	"flat-footed"
+	"flat-footed",
+	"stable"
 }
 
 iftagcomp = {

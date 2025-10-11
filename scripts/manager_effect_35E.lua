@@ -353,13 +353,14 @@ function evalAbilityHelper(rActor, sEffectAbility, nodeSpellClass)
 	end
 	-- KEL
 	local nAbility = nil;
-	if IsDie then
-		nAbility = nMod;
-	elseif not sTag then
-			return 0;
-	else
+	
+	if sTag then
 		local sAbility = DataCommon.ability_stol[sTag] or sTag;
 		nAbility = ActorManager35E.getAbilityBonus(rActor, sAbility) + ActorManager35E.getAbilityEffectsBonus(rActor, sAbility);
+	elseif IsDie then
+		nAbility = nMod;
+	else
+		return 0;
 	end
 
 	if nAbility and not IsDie then
