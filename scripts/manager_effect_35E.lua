@@ -356,7 +356,7 @@ function evalAbilityHelper(rActor, sEffectAbility, nodeSpellClass)
 	
 	if sTag then
 		local sAbility = DataCommon.ability_stol[sTag] or sTag;
-		nAbility = ActorManager35E.getAbilityBonus(rActor, sAbility) + ActorManager35E.getAbilityEffectsBonus(rActor, sAbility);
+		nAbility = ActorManager35E.getAbilityBonus(rActor, sAbility, nodeSpellClass) + ActorManager35E.getAbilityEffectsBonus(rActor, sAbility);
 	elseif IsDie then
 		nAbility = nMod;
 	else
