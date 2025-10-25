@@ -304,6 +304,8 @@ function getAbilityScore(rActor, sAbility, nodeSpellClass)
 			if sBAB then
 				nStatScore = tonumber(sBAB) or 0;
 			end
+		elseif sShort == "cl" and nodeSpellClass then
+			return DB.getValue(nodeSpellClass, "cl", 0);
 		elseif sShort == "cmb" then
 			nStatScore = 0;
 
