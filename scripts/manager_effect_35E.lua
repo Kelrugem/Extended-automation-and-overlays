@@ -1147,7 +1147,7 @@ function checkTagConditional(aConditions, rEffectSpell)
 	local aTags = StringManager.split(rEffectSpell, ";")
 	for _, condition in ipairs(aConditions) do
 		for _, tag in ipairs(aTags) do
-			if condition == tag then
+			if (condition:lower()) == tag then
 				return true;
 			end
 		end
