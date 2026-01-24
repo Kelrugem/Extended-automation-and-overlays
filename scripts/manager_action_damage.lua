@@ -547,8 +547,10 @@ function onStabilization(rSource, rTarget, rRoll)
 
 	local bSuccess = GameSystem.getStabilizationResult(rRoll);
 	if bSuccess then
+		rRoll.sResult = "success";
 		rMessage.text = rMessage.text .. " [SUCCESS]";
 	else
+		rRoll.sResult = "failure";
 		rMessage.text = rMessage.text .. " [FAILURE]";
 	end
 
@@ -562,6 +564,7 @@ function onStabilization(rSource, rTarget, rRoll)
 	else
 		ActionDamage.applyFailedStabilization(rSource);
 	end
+	GameManager.callEventFunctions("onSavePostResolve", rSource, nil, rRoll);
 end
 
 --
@@ -1210,6 +1213,7 @@ function matchAndOrClauses(aClausesOR, aMatchWords)
 end
 -- KEL bImmune, bFortif
 function getDamageAdjust(rSource, rTarget, nDamage, rDamageOutput, bImmune, bFortif, tags)
+	rDamageOutput.tResults = {};
 	-- SETUP
 	local nDamageAdjust = 0;
 	-- KEL REVERT
@@ -1248,6 +1252,9 @@ function getDamageAdjust(rSource, rTarget, nDamage, rDamageOutput, bImmune, bFor
 	-- IF IMMUNE ALL, THEN JUST HANDLE IT NOW
 	-- KEL add new output
 	if bImmune["all"] then
+		for kType,nType in pairs(rDamageOutput.aDamageTypes or {}) do
+			rDamageOutput.tResults[kType] = { nTotal = 0, nBase = nType, nResist = nType, };
+		end
 		return (0 - nDamage), 0, false, true, 0;
 	end
 
@@ -1353,6 +1360,7 @@ function getDamageAdjust(rSource, rTarget, nDamage, rDamageOutput, bImmune, bFor
 		-- KEL Order change; added FORTIF, HRESIST, REVERT
 		local nLocalDamageAdjust = 0;
 		local nLocalRevert = 0;
+		local nNonlethalAdjust = 0;
 		if #aSrcDmgClauseTypes > 0 then
 			-- CHECK FOR IMMUNITY (Must be immune to all damage types in damage source)
 			-- KEL FORTIF, HRESIST, RESIST now work like IMMUNE w.r.t. to damage types (see 3.3.7 patch notes)
@@ -1784,7 +1792,6 @@ function getDamageAdjust(rSource, rTarget, nDamage, rDamageOutput, bImmune, bFor
 			end
 
 			-- CALCULATE NONLETHAL DAMAGE
-			local nNonlethalAdjust = 0;
 			if (v + nLocalDamageAdjust) > 0 then
 				local bNonlethal = false;
 				for keyDmgType, sDmgType in pairs(aSrcDmgClauseTypes) do
@@ -1797,13 +1804,21 @@ function getDamageAdjust(rSource, rTarget, nDamage, rDamageOutput, bImmune, bFor
 					nNonlethalAdjust = v + nLocalDamageAdjust;
 				end
 			end
-
-			-- APPLY DAMAGE ADJUSTMENT FROM THIS DAMAGE CLAUSE TO OVERALL DAMAGE ADJUSTMENT
-			nDamageAdjust = nDamageAdjust + nLocalDamageAdjust - nNonlethalAdjust;
-			-- KEL Tracking reverted damage
-			nRevert = nRevert + nLocalRevert;
-			-- END
-			nNonlethal = nNonlethal + nNonlethalAdjust;
+		end
+		-- APPLY DAMAGE ADJUSTMENT FROM THIS DAMAGE CLAUSE TO OVERALL DAMAGE ADJUSTMENT
+		nDamageAdjust = nDamageAdjust + nLocalDamageAdjust - nNonlethalAdjust;
+		-- KEL Tracking reverted damage
+		nRevert = nRevert + nLocalRevert;
+		-- END
+		nNonlethal = nNonlethal + nNonlethalAdjust;
+		
+		-- KEL replacing bImmune with bImmune[k]
+		if bImmune[k] then
+			rDamageOutput.tResults[k] = { nTotal = 0, nBase = v, nResist = v, };
+		elseif nLocalDamageAdjust > 0 then
+			rDamageOutput.tResults[k] = { nTotal = (v + nLocalDamageAdjust), nBase = v, nVulnerable = nLocalDamageAdjust, };
+		else
+			rDamageOutput.tResults[k] = { nTotal = (v + nLocalDamageAdjust), nBase = v, nResist = -nLocalDamageAdjust, };
 		end
 	end
 
@@ -2480,6 +2495,15 @@ function applyDamage(rSource, rTarget, bSecret, sRollType, sDamage, nTotal, bImm
 	-- Remove target after applying damage
 	if bRemoveTarget and rSource and rTarget then
 		TargetingManager.removeTarget(ActorManager.getCTNodeName(rSource), ActorManager.getCTNodeName(rTarget));
+	end
+	
+	if rDamageOutput.sType == "damage" then
+		local tNotifyData = {
+			sType = "damage",
+			nTotal = nTotal,
+			tResults = rDamageOutput.tResults,
+		};
+		GameManager.callEventFunctions("onDamagePostResolve", rSource, rTarget, tNotifyData);
 	end
 end
 -- KEL See addMarker in the ImageDeathMarkerManager

@@ -23,7 +23,7 @@ function handleApplySave(msgOOB)
 	rAction.sSaveDesc = msgOOB.sSaveDesc;
 	rAction.nTarget = tonumber(msgOOB.nTarget) or 0;
 	rAction.bRemoveOnMiss = (tonumber(msgOOB.nRemoveOnMiss) == 1);
-	rAction.sSaveResult = msgOOB.sSaveResult;
+	rAction.sResult = msgOOB.sResult;
 	-- KEL adding tags
 	rAction.tags = msgOOB.tags;
 	
@@ -40,7 +40,7 @@ function notifyApplySave(rSource, rRoll)
 	msgOOB.nTotal = ActionsManager.total(rRoll);
 	msgOOB.sSaveDesc = rRoll.sSaveDesc;
 	msgOOB.nTarget = rRoll.nTarget;
-	msgOOB.sSaveResult = rRoll.sSaveResult;
+	msgOOB.sResult = rRoll.sResult;
 	-- KEL adding tags
 	msgOOB.tags = rRoll.tags;
 	msgOOB.nRemoveOnMiss = rRoll.bRemoveOnMiss and 1 or 0;
@@ -307,17 +307,17 @@ function onSave(rSource, rTarget, rRoll)
 		if #(rRoll.aDice) > 0 then
 			local nFirstDie = rRoll.aDice[1].result or 0;
 			if nFirstDie == 20 then
-				rRoll.sSaveResult = "autosuccess";
+				rRoll.sResult = "autosuccess";
 			elseif nFirstDie == 1 then
-				rRoll.sSaveResult = "autofailure";
+				rRoll.sResult = "autofailure";
 			end
 		end
-		if (rRoll.sSaveResult or "") == "" then
+		if (rRoll.sResult or "") == "" then
 			local nTarget = tonumber(rRoll.nTarget) or 0;
 			if rRoll.nTotal >= nTarget then
-				rRoll.sSaveResult = "success";
+				rRoll.sResult = "success";
 			else
-				rRoll.sSaveResult = "failure";
+				rRoll.sResult = "failure";
 			end
 		end
 		notifyApplySave(rSource, rRoll);
@@ -355,8 +355,8 @@ function applySave(rSource, rOrigin, rAction, sUser)
 	end
 	rAction.sResult = "";
 	
-	if rAction.sSaveResult == "autosuccess" or rAction.sSaveResult == "success" then
-		if rAction.sSaveResult == "autosuccess" then
+	if rAction.sResult == "autosuccess" or rAction.sResult == "success" then
+		if rAction.sResult == "autosuccess" then
 			msgLong.text = msgLong.text .. " [AUTOMATIC SUCCESS]";
 		else
 			msgLong.text = msgLong.text .. " [SUCCESS]";
@@ -412,7 +412,7 @@ function applySave(rSource, rOrigin, rAction, sUser)
 			end
 		end
 	else
-		if rAction.sSaveResult == "autofailure" then
+		if rAction.sResult == "autofailure" then
 			msgLong.text = msgLong.text .. " [AUTOMATIC FAILURE]";
 		else
 			msgLong.text = msgLong.text .. " [FAILURE]";

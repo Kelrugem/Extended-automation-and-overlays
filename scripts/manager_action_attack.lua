@@ -649,6 +649,8 @@ function onAttack(rSource, rTarget, rRoll)
 	ActionAttack.onPreAttackResolve(rSource, rTarget, rRoll, rMessage);
 	ActionAttack.onAttackResolve(rSource, rTarget, rRoll, rMessage);
 	ActionAttack.onPostAttackResolve(rSource, rTarget, rRoll, rMessage);
+	
+	GameManager.callEventFunctions("onAttackPostResolve", rSource, rTarget, rRoll);
 end
 
 function onPreAttackResolve(rSource, rTarget, rRoll, rMessage)
