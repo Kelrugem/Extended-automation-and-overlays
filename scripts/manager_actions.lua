@@ -16,7 +16,7 @@ function getTargeting(rSource, rTarget, sDragType, rRolls)
 	-- KEL Adding target informations to rSource, too
 	if rSource then
 		rSource.aTargets = false;
-		if (#tTargetGroups[1] > 0) then
+		if tTargetGroups and (#tTargetGroups > 0) and (#tTargetGroups[1] > 0) then
 			rSource.aTargets = true;
 		end
 	end

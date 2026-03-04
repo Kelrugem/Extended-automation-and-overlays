@@ -1898,11 +1898,11 @@ function onFortification(rTarget, rSource, rRoll)
 							if n.result <= MaxFortifMod[k] then
 								FortifSuccess[k] = true;
 								rMessage.text = rMessage.text .. "[ZERO DMG]";
-								rMessage.icon = "roll_attack_miss";
+								rMessage.icon = "action_attack_miss";
 							else
 								FortifSuccess[k] = false;
 								rMessage.text = rMessage.text .. "[FULL DMG]";
-								rMessage.icon = "roll_attack_hit";
+								rMessage.icon = "action_attack_hit";
 							end
 							Comm.deliverChatMessage(rMessage);
 						end
@@ -1934,11 +1934,11 @@ function onFortification(rTarget, rSource, rRoll)
 							if n.result <= MaxFortifMod[k] then
 								FortifSuccess[k] = true;
 								rMessage.text = rMessage.text .. "[ZERO DMG]";
-								rMessage.icon = "roll_attack_miss";
+								rMessage.icon = "action_attack_miss";
 							else
 								FortifSuccess[k] = false;
 								rMessage.text = rMessage.text .. "[FULL DMG]";
-								rMessage.icon = "roll_attack_hit";
+								rMessage.icon = "action_attack_hit";
 							end
 							Comm.deliverChatMessage(rMessage);
 						end
@@ -2592,11 +2592,11 @@ function messageDamage(rSource, rTarget, bSecret, sDamageType, sDamageDesc, sTot
 	if sDamageType == "Heal" or sDamageType == "Temporary hit points" or sDamageType == "Nonlethal heal" then
 -- END
 
-		msgShort.icon = "roll_heal";
-		msgLong.icon = "roll_heal";
+		msgShort.icon = "action_heal";
+		msgLong.icon = "action_heal";
 	else
-		msgShort.icon = "roll_damage";
-		msgLong.icon = "roll_damage";
+		msgShort.icon = "action_damage";
+		msgLong.icon = "action_damage";
 	end
 
 	msgShort.text = sDamageType .. " ->";

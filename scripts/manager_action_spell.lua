@@ -272,7 +272,7 @@ end
 function onSpellCast(rSource, rTarget, rRoll)
 	local rMessage = ActionsManager.createActionMessage(rSource, rRoll);
 	rMessage.dice = nil;
-	rMessage.icon = "roll_cast";
+	rMessage.icon = "action_cast";
 
 	if rTarget then
 		rMessage.text = rMessage.text .. " [at " .. ActorManager.getDisplayName(rTarget) .. "]";

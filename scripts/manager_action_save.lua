@@ -307,9 +307,9 @@ function onSave(rSource, rTarget, rRoll)
 		if #(rRoll.aDice) > 0 then
 			local nFirstDie = rRoll.aDice[1].result or 0;
 			if nFirstDie == 20 then
-				rRoll.sResult = "autosuccess";
+				rRoll.sResult = "critsuccess";
 			elseif nFirstDie == 1 then
-				rRoll.sResult = "autofailure";
+				rRoll.sResult = "critfailure";
 			end
 		end
 		if (rRoll.sResult or "") == "" then
@@ -345,7 +345,7 @@ function applySave(rSource, rOrigin, rAction, sUser)
 		msgLong.text = msgLong.text .. " [vs " .. ActorManager.getDisplayName(rOrigin) .. "]";
 	end
 	
-	msgShort.icon = "roll_cast";
+	msgShort.icon = "action_cast";
 		
 	local sAttack = "";
 	local bHalfMatch = false;
@@ -354,8 +354,8 @@ function applySave(rSource, rOrigin, rAction, sUser)
 		bHalfMatch = (rAction.sSaveDesc:match("%[HALF ON SAVE%]") ~= nil);
 	end
 	
-	if rAction.sResult == "autosuccess" or rAction.sResult == "success" then
-		if rAction.sResult == "autosuccess" then
+	if rAction.sResult == "critsuccess" or rAction.sResult == "success" then
+		if rAction.sResult == "critsuccess" then
 			msgLong.text = msgLong.text .. " [AUTOMATIC SUCCESS]";
 		else
 			msgLong.text = msgLong.text .. " [SUCCESS]";
@@ -411,7 +411,7 @@ function applySave(rSource, rOrigin, rAction, sUser)
 			end
 		end
 	else
-		if rAction.sResult == "autofailure" then
+		if rAction.sResult == "critfailure" then
 			msgLong.text = msgLong.text .. " [AUTOMATIC FAILURE]";
 		else
 			msgLong.text = msgLong.text .. " [FAILURE]";

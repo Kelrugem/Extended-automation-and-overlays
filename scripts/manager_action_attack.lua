@@ -839,7 +839,7 @@ function onMissChance(rSource, rTarget, rRoll)
 		rMessage.text = rMessage.text .. " [MISS]";
 		removeVar = true;
 		if rTarget then
-			rMessage.icon = "roll_attack_miss";
+			rMessage.icon = "action_attack_miss";
 			ActionAttack.clearCritState(rSource, rTarget);
 			-- KEL Adding Save Overlay
 			if rRoll.actionStuffForOverlay == "true" then
@@ -847,21 +847,21 @@ function onMissChance(rSource, rTarget, rRoll)
 			end
 			-- END
 		else
-			rMessage.icon = "roll_attack";
+			rMessage.icon = "action_attack";
 		end
 	else
 		bHit = true;
 		rMessage.text = rMessage.text .. " [HIT]";
 		removeVar = false;
 		if rTarget then
-			rMessage.icon = "roll_attack_hit";
+			rMessage.icon = "action_attack_hit";
 			-- KEL Adding Save Overlay
 			if rRoll.actionStuffForOverlay == "true" then
 				TokenManager3.setSaveOverlay(ActorManager.getCTNode(rTarget), -1);
 			end
 			-- END
 		else
-			rMessage.icon = "roll_attack";
+			rMessage.icon = "action_attack";
 		end
 	end
 	-- KEL Remove TARGET
@@ -929,26 +929,26 @@ function applyAttack(rSource, rTarget, rRoll)
 	end
 
 	-- Extra roll information
-	msgShort.icon = "roll_attack";
+	msgShort.icon = "action_attack";
 	if (rRoll.sResults or "") ~= "" then
 		msgLong.text = string.format("%s %s", msgLong.text, rRoll.sResults);
 		if rRoll.sResults:match("%[CRITICAL HIT%]") then
-			msgLong.icon = "roll_attack_crit";
+			msgLong.icon = "action_attack_crit";
 		elseif rRoll.sResults:match("HIT%]") then
-			msgLong.icon = "roll_attack_hit";
+			msgLong.icon = "action_attack_hit";
 		elseif rRoll.sResults:match("MISS%]") then
-			msgLong.icon = "roll_attack_miss";
+			msgLong.icon = "action_attack_miss";
 		-- KEL MirrorImageHandler compatibility
 		elseif rRoll.sResults:match("%[MISFIRE%]") then
-			msgLong.icon = "roll_attack_miss";
+			msgLong.icon = "action_attack_miss";
 		-- END
 		elseif rRoll.sResults:match("CRITICAL THREAT%]") then
-			msgLong.icon = "roll_attack_hit";
+			msgLong.icon = "action_attack_hit";
 		else
-			msgLong.icon = "roll_attack";
+			msgLong.icon = "action_attack";
 		end
 	else
-		msgLong.icon = "roll_attack";
+		msgLong.icon = "action_attack";
 	end
 		
 	ActionsManager.outputResult(rRoll.bTower, rSource, rTarget, msgLong, msgShort);
