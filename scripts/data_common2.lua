@@ -161,10 +161,17 @@ tNewEnergyTypes = {
 	"bypass"
 };
 
+tNewImmuneTypes = {
+	"bleed",
+	"injury"
+};
+
 function onInit()
 	ActionCore.addDamageType(tNewDmgTypes);
 	ActionCore.addSpecialDamageType(tNewDmgTypes);
 	ActionCore.addEnergyDamageType(tNewEnergyTypes);
+	ActionCore.addImmuneType(tNewImmuneTypes);
+	-- Keeping the following comments for reference right now
 	-- table.insert(DataCommon.targetableeffectcomps, "DMGS");
 	-- table.insert(DataCommon.targetableeffectcomps, "SR");
 	-- table.insert(DataCommon.targetableeffectcomps, "SIMMUNE");
@@ -172,11 +179,11 @@ function onInit()
 	-- table.insert(DataCommon.dmgtypes, "ghost touch");
 	-- table.insert(DataCommon.dmgtypes, "bleed");
 	-- table.insert(DataCommon.specialdmgtypes, "bleed");
-	table.insert(DataCommon.immunetypes, "bleed");
+	-- table.insert(DataCommon.immunetypes, "bleed");
 	-- table.insert(DataCommon.energytypes, "bleed");
 	-- table.insert(DataCommon.dmgtypes, "injury");
 	-- table.insert(DataCommon.specialdmgtypes, "injury");
-	table.insert(DataCommon.immunetypes, "injury");
+	-- table.insert(DataCommon.immunetypes, "injury");
 	-- table.insert(DataCommon.dmgtypes, "immunebypass");
 	-- table.insert(DataCommon.specialdmgtypes, "immunebypass");
 	-- table.insert(DataCommon.dmgtypes, "vorpal");
