@@ -140,10 +140,10 @@ conditions = {
 };
 
 function onInit()
-	table.insert(DataCommon.targetableeffectcomps, "DMGS");
-	table.insert(DataCommon.targetableeffectcomps, "SR");
-	table.insert(DataCommon.targetableeffectcomps, "SIMMUNE");
-	table.insert(DataCommon.targetableeffectcomps, "PROT");
+	--table.insert(DataCommon.targetableeffectcomps, "DMGS");
+	--table.insert(DataCommon.targetableeffectcomps, "SR");
+	--table.insert(DataCommon.targetableeffectcomps, "SIMMUNE");
+	--table.insert(DataCommon.targetableeffectcomps, "PROT");
 	table.insert(DataCommon.dmgtypes, "ghost touch");
 	table.insert(DataCommon.dmgtypes, "bleed");
 	table.insert(DataCommon.specialdmgtypes, "bleed");
