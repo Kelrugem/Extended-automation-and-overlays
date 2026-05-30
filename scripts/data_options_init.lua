@@ -1,7 +1,7 @@
 function onInit()
 	registerOptions();
 end
-
+-- registerOption2 is legacy now, I may need to copy that function from CoreRPG
 function registerOptions()
 	OptionsManager.registerOption2("FFOS",false, "option_header_overlays", "option_label_FFOS", "option_entry_cycler", 
 		{ labels = "option_val_on", values = "on", baselabel = "option_val_off", baseval = "off", default = "off" });

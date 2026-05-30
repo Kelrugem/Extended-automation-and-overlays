@@ -139,36 +139,69 @@ conditions = {
 	"unconscious"
 };
 
+tNewDmgTypes = {
+	"ghost touch",
+	"revheal"
+};
+
+tNewSpecialDmgTypes = {
+	"bleed",
+	"injury",
+	"immunebypass",
+	"vorpal",
+	"resistbypass",
+	"resisthalved",
+	"drbypass",
+	"bypass"
+};
+
+tNewEnergyTypes = {
+	"bleed",
+	"drbypass",
+	"bypass"
+};
+
+tNewImmuneTypes = {
+	"bleed",
+	"injury"
+};
+
 function onInit()
-	--table.insert(DataCommon.targetableeffectcomps, "DMGS");
-	--table.insert(DataCommon.targetableeffectcomps, "SR");
-	--table.insert(DataCommon.targetableeffectcomps, "SIMMUNE");
-	--table.insert(DataCommon.targetableeffectcomps, "PROT");
-	table.insert(DataCommon.dmgtypes, "ghost touch");
-	table.insert(DataCommon.dmgtypes, "bleed");
-	table.insert(DataCommon.specialdmgtypes, "bleed");
-	table.insert(DataCommon.immunetypes, "bleed");
-	table.insert(DataCommon.energytypes, "bleed");
-	table.insert(DataCommon.dmgtypes, "injury");
-	table.insert(DataCommon.specialdmgtypes, "injury");
-	table.insert(DataCommon.immunetypes, "injury");
-	table.insert(DataCommon.dmgtypes, "immunebypass");
-	table.insert(DataCommon.specialdmgtypes, "immunebypass");
-	table.insert(DataCommon.dmgtypes, "vorpal");
-	table.insert(DataCommon.specialdmgtypes, "vorpal");
-	table.insert(DataCommon.dmgtypes, "resistbypass");
-	table.insert(DataCommon.specialdmgtypes, "resistbypass");
-	table.insert(DataCommon.dmgtypes, "resisthalved");
-	table.insert(DataCommon.specialdmgtypes, "resisthalved");
-	table.insert(DataCommon.dmgtypes, "drbypass");
-	table.insert(DataCommon.specialdmgtypes, "drbypass");
-	table.insert(DataCommon.energytypes, "drbypass");
-	table.insert(DataCommon.dmgtypes, "bypass");
-	table.insert(DataCommon.specialdmgtypes, "bypass");
-	table.insert(DataCommon.energytypes, "bypass");
+	ActionCore.addDamageType(tNewDmgTypes);
+	ActionCore.addSpecialDamageType(tNewDmgTypes);
+	ActionCore.addEnergyDamageType(tNewEnergyTypes);
+	ActionCore.addImmuneType(tNewImmuneTypes);
+	-- Keeping the following comments for reference right now
+	-- table.insert(DataCommon.targetableeffectcomps, "DMGS");
+	-- table.insert(DataCommon.targetableeffectcomps, "SR");
+	-- table.insert(DataCommon.targetableeffectcomps, "SIMMUNE");
+	-- table.insert(DataCommon.targetableeffectcomps, "PROT");
+	-- table.insert(DataCommon.dmgtypes, "ghost touch");
+	-- table.insert(DataCommon.dmgtypes, "bleed");
+	-- table.insert(DataCommon.specialdmgtypes, "bleed");
+	-- table.insert(DataCommon.immunetypes, "bleed");
+	-- table.insert(DataCommon.energytypes, "bleed");
+	-- table.insert(DataCommon.dmgtypes, "injury");
+	-- table.insert(DataCommon.specialdmgtypes, "injury");
+	-- table.insert(DataCommon.immunetypes, "injury");
+	-- table.insert(DataCommon.dmgtypes, "immunebypass");
+	-- table.insert(DataCommon.specialdmgtypes, "immunebypass");
+	-- table.insert(DataCommon.dmgtypes, "vorpal");
+	-- table.insert(DataCommon.specialdmgtypes, "vorpal");
+	-- table.insert(DataCommon.dmgtypes, "resistbypass");
+	-- table.insert(DataCommon.specialdmgtypes, "resistbypass");
+	-- table.insert(DataCommon.dmgtypes, "resisthalved");
+	-- table.insert(DataCommon.specialdmgtypes, "resisthalved");
+	-- table.insert(DataCommon.dmgtypes, "drbypass");
+	-- table.insert(DataCommon.specialdmgtypes, "drbypass");
+	-- table.insert(DataCommon.energytypes, "drbypass");
+	-- table.insert(DataCommon.dmgtypes, "bypass");
+	-- table.insert(DataCommon.specialdmgtypes, "bypass");
+	-- table.insert(DataCommon.energytypes, "bypass");
 	-- KEL For Revert, not suggested as actual damage type
-	table.insert(DataCommon.dmgtypes, "revheal");
-	DataCommon.conditions = conditions;
+	-- table.insert(DataCommon.dmgtypes, "revheal");
+	-- DataCommon.conditions = conditions;
+	ActionCore.setConditions(conditions);
 	-- KEL Removing certain things for IFTAG parsing to avoid additional unneeded effects
 	table.remove(DataCommon.immunetypes, 8);
 	table.remove(DataCommon.immunetypes, 8);
