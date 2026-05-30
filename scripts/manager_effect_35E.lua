@@ -467,12 +467,25 @@ function getEffectsByType(rActor, sEffectType, aFilter, rFilterActor, bTargetedO
 	for _,v in ipairs(aEffects) do
 		-- Check active
 		local nActive = DB.getValue(v, "isactive", 0);
+		local sEffectTag = DB.getValue(v, "label", "");
 
 		-- COMPATIBILITY FOR ADVANCED EFFECTS
 		-- to add support for AE in other extensions, make this change
 		-- Check effect is from used weapon.
 		-- original line: if nActive ~= 0 then
-		if ((not AdvancedEffects and nActive ~= 0) or (AdvancedEffects and AdvancedEffects.isValidCheckEffect(rActor,v))) then
+		local tCheckData = EffectQueryManager.checkActorData(rActor, sEffectTag, false, v);
+		for k,effectData in pairs(tCheckData.tEffectsData) do
+			Debug.console("getEffectsByType effectData ", k, effectData);
+			for _, comp in pairs(effectData.tComps) do
+				Debug.console("getEffectsByType comp ", comp);
+				if comp.node == v then
+					Debug.console("getEffectsByType found matching effect ", k);
+					tCheckData.nEffectCheck = k;
+				end
+			end
+		end
+
+		if (GameManager.callFunction("onEffectCheckApply", tCheckData)) then
 		-- END COMPATIBILITY FOR ADVANCED EFFECTS
 
 			-- Check targeting
@@ -856,7 +869,9 @@ function hasEffect(rActor, sEffect, rTarget, bTargetedOnly, bIgnoreEffectTargets
 		-- COMPATIBILITY FOR ADVANCED EFFECTS
 		-- to add support for AE in other extensions, make this change
 		-- original line: if nActive ~= 0 then
-		if ((not AdvancedEffects and nActive ~= 0) or (AdvancedEffects and AdvancedEffects.isValidCheckEffect(rActor,v))) then
+		--Debug.console("hasEffect for " .. sEffect .. " against " .. DB.getValue(v, "label", "") .. " with active state of " .. nActive);
+		--Debug.console("rActor ", rActor, "v ", v);
+		if ((not AdvancedEffects and nActive ~= 0) or (AdvancedEffects and ActionsManagerD20AE.isValidCheckEffect(rActor,v))) then
 		-- END COMPATIBILITY FOR ADVANCED EFFECTS
 
 			-- Parse each effect label
@@ -1064,7 +1079,9 @@ function checkConditionalHelper(rActor, sEffect, rTarget, aIgnore, rEffectSpell)
 		-- to add support for AE in other extensions, make this change
 		-- Check effect is from used weapon.
 		-- original line: if nActive ~= 0 and not StringManager.contains(aIgnore, v.getPath()) then
-		if ((not AdvancedEffects and nActive ~= 0) or (AdvancedEffects and AdvancedEffects.isValidCheckEffect(rActor,v))) and not StringManager.contains(aIgnore, v.getPath()) then
+		--Debug.console("checkConditionalHelper for " .. sEffect .. " against " .. DB.getValue(v, "label", "") .. " with active state of " .. nActive);
+		--Debug.console("rActor ", rActor, "v ", v);
+		if ((not AdvancedEffects and nActive ~= 0) or (AdvancedEffects and ActionsManagerD20AE.isValidCheckEffect(rActor,v))) and not StringManager.contains(aIgnore, v.getPath()) then
 		-- END COMPATIBILITY FOR ADVANCED EFFECTS
 		
 			-- Parse each effect label
