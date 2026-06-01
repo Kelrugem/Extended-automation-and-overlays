@@ -15,6 +15,13 @@ function onInit()
 	EffectManager.setCustomOnEffectTextDecode(onEffectTextDecode);
 
 	EffectManager.setCustomOnEffectActorStartTurn(onEffectActorStartTurn);
+
+	_fnOrigOnActorGetBonus = GameManager.getFunction("onActorGetBonus");
+	GameManager.setFunction("onActorGetBonus", customOnActorGetBonus);
+end
+
+function customOnActorGetBonus(rActor, sKey, ...)
+	return ActorManager35E.getAbilityBonus(rActor, sKey, ...);
 end
 
 --
@@ -435,14 +442,20 @@ end
 
 function getCheckDataForEffect(rActor, v)
 	local sEffectTag = DB.getValue(v, "label", "");
+	--Debug.console("getCheckDataForEffect ", rActor, v, sEffectTag);
 	local tCheckData = EffectQueryManager.checkActorData(rActor, sEffectTag, false, v);
+	if not tCheckData then
+		return nil;
+	end
 	for k,effectData in pairs(tCheckData.tEffectsData) do
 		--Debug.console("getEffectsByType effectData ", k, effectData);
-		for _, comp in pairs(effectData.tComps) do
-			--Debug.console("getEffectsByType comp ", comp);
-			if comp.node == v then
-				--Debug.console("getEffectsByType found matching effect ", k);
-				tCheckData.nEffectCheck = k;
+		if effectData.tComps then
+			for _, comp in pairs(effectData.tComps) do
+				--Debug.console("getEffectsByType comp ", comp);
+				if comp.node == v then
+					--Debug.console("getEffectsByType found matching effect ", k);
+					tCheckData.nEffectCheck = k;
+				end
 			end
 		end
 	end

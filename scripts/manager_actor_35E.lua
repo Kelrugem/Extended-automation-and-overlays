@@ -1057,7 +1057,6 @@ end
 -- END
 
 function rest(rActor, sRestType)
-	Debug.console("Kel ActorManager35E.rest: ", ActorManager.getDisplayName(rActor), sRestType);
 	if not ActorCommonManager.restDefault(rActor, sRestType) then
 		return false;
 	end
