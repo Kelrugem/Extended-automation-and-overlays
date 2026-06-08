@@ -11,6 +11,9 @@ function onInit()
 	ActionsManager.registerTargetingHandler("cast", onSpellTargeting);
 	ActionsManager.registerTargetingHandler("clc", onSpellTargeting);
 	ActionsManager.registerTargetingHandler("spellsave", onSpellTargeting);
+	ActionsManager.registerTargetingHandler("spdamage", onSpellTargeting);
+	local spDmgHandler = GameSystem.actions["spdamage"];
+	spDmgHandler.sTargeting = "all";
 
 	ActionsManager.registerModHandler("castsave", modCastSave);
 	ActionsManager.registerModHandler("spellsave", modCastSave);

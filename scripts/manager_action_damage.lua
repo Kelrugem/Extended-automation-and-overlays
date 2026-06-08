@@ -41,7 +41,6 @@ function handleApplyDamage(msgOOB)
 	if rTarget then
 		rTarget.nOrder = msgOOB.nTargetOrder;
 	end
-	-- Debug.console(msgOOB);
 	local nTotal = tonumber(msgOOB.nTotal) or 0;
 
 	-- KEL Apply first Fortification roll if avalaible
@@ -313,7 +312,7 @@ function getRoll(rActor, rAction)
 	end
 
 	-- Encode the damage types
-	ActionDamage.encodeDamageTypes(rRoll);
+	-- ActionDamage.encodeDamageTypes(rRoll);
 	rRoll.sRange = rAction.range;
 
 	-- Encode meta tags

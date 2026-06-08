@@ -1156,7 +1156,6 @@ function onSpellAction(draginfo, nodeAction, sSubRoll)
 		else
 			rRoll.sType = "damage";
 		end
-		
 		table.insert(rRolls, rRoll);
 		
 	elseif rAction.type == "heal" then
