@@ -1095,15 +1095,9 @@ function checkConditionalHelper(rActor, sEffect, rTarget, aIgnore, rEffectSpell)
 	for _,v in ipairs(aEffects) do
 		local nActive = DB.getValue(v, "isactive", 0);
 		-- COMPATIBILITY FOR ADVANCED EFFECTS
-		-- to add support for AE in other extensions, make this change
-		-- Check effect is from used weapon.
-		if nActive ~= 0 and not StringManager.contains(aIgnore, v.getPath()) then
-			--Debug.console("checkConditionalHelper for " .. sEffect .. " against " .. DB.getValue(v, "label", "") .. " with active state of " .. nActive);
-			--Debug.console("rActor ", rActor, "v ", v);
-			
+		if nActive ~= 0 and not StringManager.contains(aIgnore, v.getPath()) then			
 			local tCheckData = getCheckDataForEffect(rActor, v);
-				--Debug.console("checkConditionalHelper tCheckData ", tCheckData);
-
+			-- Check effect is from used weapon.
 			if (GameManager.callFunction("onEffectCheckApply", tCheckData)) then
 			-- END COMPATIBILITY FOR ADVANCED EFFECTS
 			
