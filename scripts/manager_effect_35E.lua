@@ -1097,79 +1097,82 @@ function checkConditionalHelper(rActor, sEffect, rTarget, aIgnore, rEffectSpell)
 		-- COMPATIBILITY FOR ADVANCED EFFECTS
 		-- to add support for AE in other extensions, make this change
 		-- Check effect is from used weapon.
-		-- original line: if nActive ~= 0 and not StringManager.contains(aIgnore, v.getPath()) then
-		--Debug.console("checkConditionalHelper for " .. sEffect .. " against " .. DB.getValue(v, "label", "") .. " with active state of " .. nActive);
-		--Debug.console("rActor ", rActor, "v ", v);
-		local tCheckData = getCheckDataForEffect(rActor, v);
-			--Debug.console("checkConditionalHelper tCheckData ", tCheckData);
+		if nActive ~= 0 and not StringManager.contains(aIgnore, v.getPath()) then
+			--Debug.console("checkConditionalHelper for " .. sEffect .. " against " .. DB.getValue(v, "label", "") .. " with active state of " .. nActive);
+			--Debug.console("rActor ", rActor, "v ", v);
+			
+			local tCheckData = getCheckDataForEffect(rActor, v);
+				--Debug.console("checkConditionalHelper tCheckData ", tCheckData);
 
-		if (GameManager.callFunction("onEffectCheckApply", tCheckData)) then
-		-- END COMPATIBILITY FOR ADVANCED EFFECTS
-		
-			-- Parse each effect label
-			local sLabel = DB.getValue(v, "label", "");
-			local aEffectComps = EffectManager.parseEffect(sLabel);
+			if (GameManager.callFunction("onEffectCheckApply", tCheckData)) then
+			-- END COMPATIBILITY FOR ADVANCED EFFECTS
+			
+				-- Parse each effect label
+				local sLabel = DB.getValue(v, "label", "");
+				local aEffectComps = EffectManager.parseEffect(sLabel);
 
-			-- Iterate through each effect component looking for a type match
-			for _,sEffectComp in ipairs(aEffectComps) do
-				local rEffectComp = parseEffectComp(sEffectComp);
-				--Check conditionals
-				if rEffectComp.type == "IF" then
-					if not checkConditional(rActor, v, rEffectComp.remainder, rTarget, aIgnore, rEffectSpell) then
+				-- Iterate through each effect component looking for a type match
+				for _,sEffectComp in ipairs(aEffectComps) do
+					local rEffectComp = parseEffectComp(sEffectComp);
+					--Check conditionals
+					if rEffectComp.type == "IF" then
+						if not checkConditional(rActor, v, rEffectComp.remainder, rTarget, aIgnore, rEffectSpell) then
+							break;
+						end
+					elseif rEffectComp.type == "NIF" then
+						if checkConditional(rActor, v, rEffectComp.remainder, rTarget, aIgnore, rEffectSpell) then
+							break;
+						end
+					elseif rEffectComp.type == "IFTAG" then
 						break;
-					end
-				elseif rEffectComp.type == "NIF" then
-					if checkConditional(rActor, v, rEffectComp.remainder, rTarget, aIgnore, rEffectSpell) then
+					elseif rEffectComp.type == "NIFTAG" then
+						Debug.console("checkConditionalHelper NIFTAG");	
 						break;
-					end
-				elseif rEffectComp.type == "IFTAG" then
-					break;
-				elseif rEffectComp.type == "NIFTAG" then
-					break;
-				elseif rEffectComp.type == "IFT" then
-					if not rTarget then
-						break;
-					end
-					if not checkConditional(rTarget, v, rEffectComp.remainder, rActor, aIgnore, rEffectSpell) then
-						break;
-					end
-				elseif rEffectComp.type == "NIFT" then
-					if rActor.aTargets and not rTarget then
-						-- if ( #rActor.aTargets[1] > 0 ) and not rTarget then
-						break;
-						-- end
-					end
-					if checkConditional(rTarget, v, rEffectComp.remainder, rActor, aIgnore, rEffectSpell) then
-						break;
-					end
+					elseif rEffectComp.type == "IFT" then
+						if not rTarget then
+							break;
+						end
+						if not checkConditional(rTarget, v, rEffectComp.remainder, rActor, aIgnore, rEffectSpell) then
+							break;
+						end
+					elseif rEffectComp.type == "NIFT" then
+						if rActor.aTargets and not rTarget then
+							-- if ( #rActor.aTargets[1] > 0 ) and not rTarget then
+							break;
+							-- end
+						end
+						if checkConditional(rTarget, v, rEffectComp.remainder, rActor, aIgnore, rEffectSpell) then
+							break;
+						end
 
-				-- Check for match
-				-- KEL ignore effects which are on skip
-				elseif rEffectComp.original:lower() == sEffect and nActive == 1 then
-					if EffectManager.isTargetedEffect(v) then
-						if EffectManager.isEffectTarget(v, rTarget) then
+					-- Check for match
+					-- KEL ignore effects which are on skip
+					elseif rEffectComp.original:lower() == sEffect and nActive == 1 then
+						if EffectManager.isTargetedEffect(v) then
+							if EffectManager.isEffectTarget(v, rTarget) then
+								-- if nActive == 1 then
+								return true;
+								-- end
+							end
+						else
 							-- if nActive == 1 then
 							return true;
 							-- end
 						end
-					else
-						-- if nActive == 1 then
-						return true;
-						-- end
-					end
-				-- KEL Flatfooted improved
-				elseif sEffect == "nodex" and nActive == 1 then
-					local sLowerKel = rEffectComp.original:lower();
-					if StringManager.contains(DataCommon2.tnodex, sLowerKel) then
-						if EffectManager.isTargetedEffect(v) then
-							if EffectManager.isEffectTarget(v, rTarget) then
+					-- KEL Flatfooted improved
+					elseif sEffect == "nodex" and nActive == 1 then
+						local sLowerKel = rEffectComp.original:lower();
+						if StringManager.contains(DataCommon2.tnodex, sLowerKel) then
+							if EffectManager.isTargetedEffect(v) then
+								if EffectManager.isEffectTarget(v, rTarget) then
+									return true;
+								end
+							else
 								return true;
 							end
-						else
-							return true;
 						end
+					-- END
 					end
-				-- END
 				end
 			end
 		end
