@@ -999,10 +999,37 @@ function getDefenseValue(rAttacker, rDefender, rRoll)
 			nMissChance = math.max(50,nMissChance);
 		end
 	end
-	
+
+	--- SIZE EFFECTS NOW IN CORE/3.5E ---
+	nDefenseEffectMod = nDefenseEffectMod + ActorManager35E.getSizeEffectsBonusForDefender(rDefender, rRoll);
 	-- Return the final defense value
 	-- KEL ACCC output
 	return nDefense, 0, nDefenseEffectMod, nMissChance, nAdditionalDefenseForCC;
+end
+
+
+function getSizeEffectsBonusForDefender(rDefender, rRoll)
+	if not rDefender then
+		return 0;
+	end
+
+	local nActorSize, nBaseSize = ActorCommonManager.getSize(rDefender);
+	if nActorSize == nBaseSize then
+		return 0;
+	end
+
+	if rRoll.sType == "grapple" then
+		-- Larger grants bonus; Smaller grants penalty
+		nEffectBonus = nActorSize - nBaseSize;
+		nEffectBonus = nEffectBonus * 4;
+	else
+		-- Smaller grants bonus; Larger grants penalty
+		nActorSize = math.max(math.min(nActorSize, 4), -4);
+		nBaseSize = math.max(math.min(nBaseSize, 4), -4);
+		nEffectBonus = DataCommon.sizeCombatMod[nActorSize] - DataCommon.sizeCombatMod[nBaseSize];
+	end
+
+	return nEffectBonus;
 end
 
 -- BMOS's feat search etc., see also CharManager hasFeat and hasTrait
