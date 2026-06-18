@@ -721,8 +721,9 @@ function onDamage(rSource, rTarget, rRoll)
 	end
 
 	-- Apply damage to the PC or CT entry referenced
-	ActionDamage.notifyApplyDamage(rSource, rTarget, rRoll.bTower, rRoll.sType, rMessage.text, nTotal, aAttackFilter, tag);
+	--ActionDamage.notifyApplyDamage(rSource, rTarget, rRoll.bTower, rRoll.sType, rMessage.text, nTotal, aAttackFilter, tag);
 	-- END
+	GameManager.callFunction("onHealthApply", rSource, rTarget, rRoll);
 end
 
 function onStabilization(rSource, rTarget, rRoll)
