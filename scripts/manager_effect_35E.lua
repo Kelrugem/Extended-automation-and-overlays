@@ -1120,7 +1120,6 @@ function checkConditionalHelper(rActor, sEffect, rTarget, aIgnore, rEffectSpell)
 					elseif rEffectComp.type == "IFTAG" then
 						break;
 					elseif rEffectComp.type == "NIFTAG" then
-						Debug.console("checkConditionalHelper NIFTAG");	
 						break;
 					elseif rEffectComp.type == "IFT" then
 						if not rTarget then

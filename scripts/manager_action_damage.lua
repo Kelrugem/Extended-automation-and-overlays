@@ -757,8 +757,10 @@ end
 
 function setupModRoll(rRoll, rSource, rTarget)
 	ActionDamageCore.decodeRollData(rRoll);
-	
-	--ActionDamage.decodeDamageTypes(rRoll);
+
+	if not rRoll.clauses then
+		ActionDamage.decodeDamageTypes(rRoll);
+	end
 	CombatManager2.addRightClickDiceToClauses(rRoll);
 
 	rRoll.tNotifications = {};
