@@ -219,6 +219,7 @@ end
 function handleApplyDamage(msgOOB)
 	local rSource = ActorManager.resolveActor(msgOOB.sSourceNode);
 	local rTarget = ActorManager.resolveActor(msgOOB.sTargetNode);
+	local rRoll = msgOOB.rRoll;
 	local bImmune = {};
 	local bFortif = {};
 	if rTarget then
@@ -431,9 +432,11 @@ function handleApplyDamage(msgOOB)
 		end
 	end
 	-- END
+
+	GameManager.callFunction("onHealthApply", rSource, rTarget, rRoll);
 end
 -- KEL add attackfilter etc
-function notifyApplyDamage(rSource, rTarget, bSecret, sRollType, sDesc, nTotal, sAttackFilter, tag)
+function notifyApplyDamage(rSource, rTarget, rRoll, bSecret, sRollType, sDesc, nTotal, sAttackFilter, tag)
 	if not rTarget then
 		return;
 	end
@@ -457,6 +460,7 @@ function notifyApplyDamage(rSource, rTarget, bSecret, sRollType, sDesc, nTotal, 
 	msgOOB.sSourceNode = ActorManager.getCreatureNodeName(rSource);
 	msgOOB.sTargetNode = ActorManager.getCreatureNodeName(rTarget);
 	msgOOB.nTargetOrder = rTarget.nOrder;
+	msgOOB.rRoll = rRoll;
 
 	if AdvancedEffects and rSource then
 		msgOOB.nodeItem = rSource.nodeItem;
@@ -721,9 +725,8 @@ function onDamage(rSource, rTarget, rRoll)
 	end
 
 	-- Apply damage to the PC or CT entry referenced
-	--ActionDamage.notifyApplyDamage(rSource, rTarget, rRoll.bTower, rRoll.sType, rMessage.text, nTotal, aAttackFilter, tag);
+	ActionDamage.notifyApplyDamage(rSource, rTarget, rRoll, rRoll.bTower, rRoll.sType, rMessage.text, nTotal, aAttackFilter, tag);
 	-- END
-	GameManager.callFunction("onHealthApply", rSource, rTarget, rRoll);
 end
 
 function onStabilization(rSource, rTarget, rRoll)
