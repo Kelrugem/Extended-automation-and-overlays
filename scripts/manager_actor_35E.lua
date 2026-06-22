@@ -4,6 +4,7 @@
 --
 
 function onInit()
+	ActorCommonManager.setDefaultSizeHandling(true);
 	initActorHealth();
 
 	-- Add Extended AC Bonuses (https://github.com/FG-Unofficial-Developers-Guild/FG-PFRPG-ExtendedACBonusTypes)
