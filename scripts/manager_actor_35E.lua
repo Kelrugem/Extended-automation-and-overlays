@@ -4,7 +4,6 @@
 --
 
 function onInit()
-	ActorCommonManager.addDefaultSizeHandling();
 	initActorHealth();
 
 	-- Add Extended AC Bonuses (https://github.com/FG-Unofficial-Developers-Guild/FG-PFRPG-ExtendedACBonusTypes)
@@ -19,6 +18,8 @@ function onInit()
 	table.insert(DataCommon.bonustypes, "shieldenhancement");
 	table.insert(DataCommon.bonustypes, "naturalenhancement");
 	GameManager.setFunction("onActorRest", ActorManager35E.rest);
+	
+	ActorCommonManager.addDefaultSizeHandling();
 end
 
 
@@ -1097,4 +1098,92 @@ end
 function restPC(rActor, sRestType)
 	local nodeChar = ActorManager.getCreatureNode(rActor);
 	SpellManager.resetSpells(nodeChar);
+end
+
+
+--
+--	ABILITIES / TRAITS / 
+--
+
+function getListRecordByName(nodeActor, sList, s, bStartsWith)
+	if not nodeActor or ((sList or "") == "") or ((s or "") == "") then
+		return nil;
+	end
+	local sLower = StringManager.simplify(s);
+	for _,v in ipairs(DB.getChildList(nodeActor, sList)) do
+		if bStartsWith then
+			if StringManager.simplify(DB.getValue(v, "name", "")):match("^" .. sLower) then
+				return v;
+			end
+		else
+			if StringManager.simplify(DB.getValue(v, "name", "")) == sLower then
+				return v;
+			end
+		end
+	end
+	return nil;
+end
+function hasFieldValueByName(nodeActor, sField, s, bStartsWith, sDelimiter)
+	if not nodeActor or ((sField or "") == "") or ((s or "") == "") then
+		return nil;
+	end
+	local sLower = StringManager.simplify(s);
+	for _,s in ipairs(StringManager.splitByPattern(DB.getValue(nodeActor, sField, ""), sDelimiter or ",", true)) do
+		if bStartsWith then
+			if StringManager.simplify(s):match("^" .. sLower) then
+				return s;
+			end
+		else
+			if StringManager.simplify(s) == sLower then
+				return s;
+			end
+		end
+	end
+	return nil;
+end
+
+function hasFeat(vActor, s, bStartsWith)
+	local rActor = ActorManager.resolveActor(vActor);
+	if ActorManager.isPC(rActor) then
+		return ActorManager35E.hasPCFeat(ActorManager.getCreatureNode(rActor), s, bStartsWith)
+	elseif ActorManager.isRecordType(rActor, "npc") then
+		return ActorManager35E.hasNPCFeat(ActorManager.getCreatureNode(rActor), s, bStartsWith);
+	end
+	return false;
+end
+function hasPCFeat(nodeActor, s, bStartsWith)
+	return (ActorManager35E.getListRecordByName(nodeActor, "featlist", s, bStartsWith) ~= nil);
+end
+function hasNPCFeat(nodeActor, s, bStartsWith)
+	return (ActorManager35E.hasFieldValueByName(nodeActor, "feats", s, bStartsWith) ~= nil);
+end
+function hasSpecialAbility(vActor, s, bStartsWith)
+	local rActor = ActorManager.resolveActor(vActor);
+	if ActorManager.isPC(rActor) then
+		return ActorManager35E.hasPCSpecialAbility(ActorManager.getCreatureNode(rActor), s, bStartsWith)
+	elseif ActorManager.isRecordType(rActor, "npc") then
+		return ActorManager35E.hasNPCSpecialAbility(ActorManager.getCreatureNode(rActor), s, bStartsWith);
+	end
+	return false;
+end
+function hasPCSpecialAbility(nodeActor, s, bStartsWith)
+	return (ActorManager35E.getListRecordByName(nodeActor, "specialabilitylist", s, bStartsWith) ~= nil);
+end
+function hasNPCSpecialAbility(nodeActor, s, bStartsWith)
+	return (ActorManager35E.hasFieldValueByName(nodeActor, "specialqualities", s, bStartsWith, ";") ~= nil);
+end
+function hasTrait(vActor, s, bStartsWith)
+	local rActor = ActorManager.resolveActor(vActor);
+	if ActorManager.isPC(rActor) then
+		return ActorManager35E.hasPCTrait(ActorManager.getCreatureNode(rActor), s, bStartsWith)
+	elseif ActorManager.isRecordType(rActor, "npc") then
+		return ActorManager35E.hasNPCTrait(ActorManager.getCreatureNode(rActor), s, bStartsWith);
+	end
+	return false;
+end
+function hasPCTrait(nodeActor, s, bStartsWith)
+	return (ActorManager35E.getListRecordByName(nodeActor, "traitlist", s, bStartsWith) ~= nil);
+end
+function hasNPCTrait(nodeActor, s, bStartsWith)
+	return (ActorManager35E.hasFieldValueByName(nodeActor, "specialqualities", s, bStartsWith, ";") ~= nil);
 end

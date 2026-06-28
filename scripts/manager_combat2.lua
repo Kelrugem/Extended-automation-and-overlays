@@ -12,6 +12,7 @@ function onInit()
 	CombatManager.setCustomCombatReset(resetInit);
 	
 	ActorCommonManager.setDefaultSpaceReachFromActorSizeKey("D20");
+	
 	ActorCommonManager.setRecordTypeSpaceReachCallback("charsheet", ActorCommonManager.getSpaceReachFromSizeFieldCore);
 	ActorCommonManager.setRecordTypeSpaceReachCallback("npc", ActorCommonManager.getSpaceReachDnD3Legacy);
 	CombatRecordManager.setRecordTypePostAddCallback("npc", onNPCPostAdd);
@@ -111,7 +112,7 @@ function onNPCPostAdd(tCustom)
 	local sAC = DB.getValue(nodeNPC, "ac", "10");
 	DB.setValue(tCustom.nodeCT, "ac_final", "number", tonumber(string.match(sAC, "^(%d+)")) or 10);
 	DB.setValue(tCustom.nodeCT, "ac_touch", "number", tonumber(string.match(sAC, "touch (%d+)")) or 10);
-	local sFlatFooted = string.match(sAC, "flat[%-–]footed (%d+)");
+	local sFlatFooted = string.match(sAC, "flat[%-ï¿½]footed (%d+)");
 	if not sFlatFooted then
 		sFlatFooted = string.match(sAC, "flatfooted (%d+)");
 	end
@@ -790,7 +791,7 @@ function parseAttackLine(rActor, sLine)
 	local sOptANPC = OptionsManager.getOption("ANPC");
 
 	-- PARSE 'OR'/'AND' PHRASES
-	sLine = sLine:gsub("–", "-");
+	sLine = sLine:gsub("ï¿½", "-");
 	local aPhrasesOR, aSkipOR = ActionDamage.decodeAndOrClauses(sLine);
 
 	-- PARSE EACH ATTACK
