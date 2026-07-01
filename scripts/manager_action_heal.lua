@@ -9,33 +9,63 @@ function onInit()
 end
 
 function getRoll(rActor, rAction)
-	local rRoll = {};
-	rRoll.sType = "heal";
-	rRoll.aDice = {};
-	rRoll.nMod = 0;
+	local rRoll = {
+		sType = "heal",
+		sDesc = ActionHealCore.encodeActionText(rAction),
+		sLabel = StringManager.capitalizeAll(rAction.label),
+		nOrder = rAction.order,
+		aDice = {},
+		nMod = 0,
+		clauses = rAction.clauses or {},
+		bOngoing = rAction.bOngoing,
+		bNonlethal = rAction.bNonlethal,
+		sRange = rAction.range,
+		bSelfTarget = ((rAction and rAction.sTargeting or "") == "self"),
+		bSecret = rAction.bSecret,
+	};
 	-- KEL adding tags
 	if rAction.tags and next(rAction.tags) then
 		rRoll.tags = table.concat(rAction.tags, ";");
 	end
 	-- END
-	
-	rRoll.sDesc = ActionHealCore.encodeActionText(rAction);
-
-	-- Save the heal clauses in the roll structure
-	rRoll.clauses = rAction.clauses;
-	
-	-- Add the dice and modifiers
-	for _,vClause in pairs(rRoll.clauses) do
-		DiceRollManager.addHealDice(rRoll.aDice, vClause.dice, { healtype = rRoll.healtype });
-		rRoll.nMod = rRoll.nMod + vClause.modifier;
+	-- Handle various heal types
+	if (rAction.subtype or "") == "temp" then
+		rRoll.healtype = "temp";
+		rRoll.sDesc = rRoll.sDesc .. " [TEMP]";
+	elseif (rAction.subtype or "") == "sp" then
+		rRoll.healtype = "stamina";
+		rRoll.sDesc = rRoll.sDesc .. " [STAMINA]";
+	elseif (rAction.subtype or "") == "fheal" then
+		rRoll.sDesc = string.format("[FHEAL] %s", rAction.label);
+	elseif (rAction.subtype or "") == "regen" then
+		rRoll.sDesc = string.format("[REGEN] %s", rAction.label);
+	else
+		rRoll.healtype = rAction.subtype or "";
 	end
 
-	-- Encode the damage types
-	ActionHeal.encodeHealClauses(rRoll);
-
-	-- Handle temporary hit points
-	if rAction.subtype == "temp" then
-		rRoll.sDesc = rRoll.sDesc .. " [TEMP]";
+	-- Add the dice and modifiers
+	if rAction.dice or rAction.modifier then
+		table.insert(rRoll.clauses, { dice = rAction.dice or {}, modifier = rAction.modifier or 0, });
+	end
+	rRoll.nHealCost = 0;
+	rRoll.nHSMult = 0;
+	for _,tClause in pairs(rRoll.clauses) do
+		DiceRollManager.addHealDice(rRoll.aDice, tClause.dice, { healtype = rRoll.healtype });
+		rRoll.nMod = rRoll.nMod + (tClause.modifier or 0);
+		local sAbility = DataCommon.ability_ltos[tClause.stat];
+		if sAbility then
+			rRoll.sDesc = rRoll.sDesc .. string.format(" [MOD: %s (%s)]", sAbility, tClause.statmult or 1);
+		end
+		if GameManager.hasOption("healsurge") then
+			rRoll.nHealCost = rRoll.nHealCost + (tClause.cost or 0);
+			rRoll.nHSMult = rRoll.nHSMult + (tClause.basemult or 0);
+		end
+	end
+	if rRoll.nHealCost ~= 0 then
+		rRoll.sDesc = string.format("%s\r[COST %d]", rRoll.sDesc, rRoll.nHealCost);
+	end
+	if rRoll.nHSMult ~= 0 then
+		rRoll.sDesc = string.format("%s\r[HSV %d]", rRoll.sDesc, rRoll.nHSMult);
 	end
 
 -- KEL and bmos adding nonlethal healing
@@ -45,19 +75,26 @@ function getRoll(rActor, rAction)
 	end
 -- END
 
-	-- Encode meta tags
-	if rAction.meta then
-		if rAction.meta == "empower" then
-			rRoll.sDesc = rRoll.sDesc .. " [EMPOWER]";
-		elseif rAction.meta == "maximize" then
-			rRoll.sDesc = rRoll.sDesc .. " [MAXIMIZE]";
+	-- Encode metamagic
+	if GameManager.hasOption("metamagic") then
+		if rAction.meta then
+			if rAction.meta == "empower" then
+				rRoll.sDesc = string.format("%s [EMPOWER]", rRoll.sDesc);
+			elseif rAction.meta == "maximize" then
+				rRoll.sDesc = string.format("%s [MAXIMIZE]", rRoll.sDesc);
+			end
 		end
 	end
-	
-	-- Self targeting
-	if rAction.sTargeting == "self" then
-		rRoll.bSelfTarget = true;
+
+	-- Extra display text
+	if #(rAction.tAddText or {}) > 0 then
+		rRoll.sDesc = rRoll.sDesc .. "\r" .. table.concat(rAction.tAddText, "\r");
 	end
+
+	GameManager.callMultiKeyFunctionPostLayered("onActionPostGetRoll", rRoll.sType, rActor, rAction, rRoll);
+
+	-- Encode the damage types
+	ActionCore.encodeRollClauses(rRoll);
 
 	return rRoll;
 end
@@ -171,7 +208,7 @@ function onHeal(rSource, rTarget, rRoll)
 	-- Apply heal to target
 	local nTotal = ActionsManager.total(rRoll);
 	-- KEL add tags
-	ActionDamage.notifyApplyDamage(rSource, rTarget, rMessage.secret, rRoll.sType, rMessage.text, nTotal, nil, rRoll.tags);
+	ActionDamage.notifyApplyDamage(rSource, rTarget, rRoll, rMessage.secret, rRoll.sType, rMessage.text, nTotal, nil, rRoll.tags);
 	-- END
 end
 

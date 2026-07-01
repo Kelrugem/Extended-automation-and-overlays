@@ -441,8 +441,8 @@ function notifyApplyDamage(rSource, rTarget, rRoll, bSecret, sRollType, sDesc, n
 		return;
 	end
 
-	local msgOOB = {};
-	msgOOB.type = OOB_MSGTYPE_APPLYDMG;
+	local msgOOB = UtilityManager.encodeRollToOOB(rRoll);
+	msgOOB.type = ActionDamageD20.OOB_MSGTYPE_APPLYDMG;
 	-- KEL tdmg and tags
 	msgOOB.sFilter = sAttackFilter;
 	msgOOB.tags = tag;
@@ -460,14 +460,12 @@ function notifyApplyDamage(rSource, rTarget, rRoll, bSecret, sRollType, sDesc, n
 	msgOOB.sSourceNode = ActorManager.getCreatureNodeName(rSource);
 	msgOOB.sTargetNode = ActorManager.getCreatureNodeName(rTarget);
 	msgOOB.nTargetOrder = rTarget.nOrder;
-	msgOOB.rRoll = rRoll;
 
 	if AdvancedEffects and rSource then
 		msgOOB.nodeItem = rSource.nodeItem;
 		msgOOB.nodeAmmo = rSource.nodeAmmo;
 		msgOOB.nodeWeapon = rSource.nodeWeapon;
 	end
-
 	Comm.deliverOOBMessage(msgOOB, "");
 end
 
