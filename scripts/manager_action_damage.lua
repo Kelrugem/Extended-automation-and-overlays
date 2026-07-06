@@ -219,7 +219,7 @@ end
 function handleApplyDamage(msgOOB)
 	local rSource = ActorManager.resolveActor(msgOOB.sSourceNode);
 	local rTarget = ActorManager.resolveActor(msgOOB.sTargetNode);
-	local rRoll = msgOOB.rRoll;
+	local rRoll = UtilityManager.decodeRollFromOOB(msgOOB);
 	local bImmune = {};
 	local bFortif = {};
 	if rTarget then
