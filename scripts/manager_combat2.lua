@@ -1282,7 +1282,9 @@ function addRightClickDiceToClauses(rRoll)
 	if #rRoll.clauses > 0 then
 		local nOrigDamageDice = 0;
 		for _,vClause in ipairs(rRoll.clauses) do
-			nOrigDamageDice = nOrigDamageDice + #vClause.dice;
+			if vClause.dice then
+				nOrigDamageDice = nOrigDamageDice + #vClause.dice;
+			end
 		end
 		if #rRoll.aDice > nOrigDamageDice then
 			local v = rRoll.clauses[#rRoll.clauses].dice;
