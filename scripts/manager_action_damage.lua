@@ -367,7 +367,6 @@ function handleApplyDamage(msgOOB)
 		ActionDamage.applyDamage(rSource, rTarget, (tonumber(msgOOB.nSecret) == 1), msgOOB.sRollType, msgOOB.sDamage, nTotal, bSImmune, bSFortif, msgOOB.tags);
 	else
 		local aRollFortif = { sType = "fortification", aDice = DiceRollManager.getActorDice(bDice, rTarget), nMod = 0, aType = msgOOB.sRollType, aMessagetext = msgOOB.sDamage, aTotal = nTotal, aTags = msgOOB.tags};
-		-- rDamageOutput = ActionDamage.decodeDamageText(nTotal, msgOOB.sDamage);
 		if tonumber(msgOOB.nSecret) == 1 then
 			aRollFortif.bTower = true;
 		else
@@ -432,8 +431,6 @@ function handleApplyDamage(msgOOB)
 		end
 	end
 	-- END
-
-	GameManager.callFunction("onHealthApply", rSource, rTarget, rRoll);
 end
 -- KEL add attackfilter etc
 function notifyApplyDamage(rSource, rTarget, rRoll, bSecret, sRollType, sDesc, nTotal, sAttackFilter, tag)
@@ -843,7 +840,9 @@ function applyCriticalToModRoll(rRoll, rSource, rTarget)
 	local nDieIndex = 1;
 	local aNewClauses = {};
 	for _,vClause in ipairs(rRoll.clauses) do
-		nDieIndex = nDieIndex + #(vClause.dice);
+		if vClause.dice then
+			nDieIndex = nDieIndex + #(vClause.dice);
+		end;
 
 		table.insert(aNewClauses, vClause);
 
@@ -858,7 +857,10 @@ function applyCriticalToModRoll(rRoll, rSource, rTarget)
 				rNewClause.dmgtype = rNewClause.dmgtype .. ",critical";
 			end
 
-			local nDice = #(vClause.dice);
+			local nDice = 0;
+			if vClause.dice then
+				nDice = #(vClause.dice);
+			end;
 			local nMod = vClause.modifier or 0;
 
 			for i = 2, nMult do
