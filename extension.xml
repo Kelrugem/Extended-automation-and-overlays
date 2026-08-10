@@ -36,7 +36,6 @@
 
     <!-- Campaign -->
     <includefile source="campaign/template_char.xml" />
-    <includefile source="campaign/record_char_main.xml" />
     <includefile source="campaign/record_charmini_main.xml" />
     <includefile source="campaign/record_spell_roll.xml" />
     <includefile source="campaign/record_spell_entry.xml" />
