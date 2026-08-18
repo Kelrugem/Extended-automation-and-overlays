@@ -29,10 +29,6 @@
 
     <!-- Combat Tracker -->
     <includefile source="ct/ct_host_entry.xml" />
-    <includefile source="ct/ct_host_entry_section.xml" />
-
-    <!-- Common -->
-    <!-- <includefile source="common/template_toolbar.xml" /> -->
 
     <!-- Campaign -->
     <includefile source="campaign/template_char.xml" />
