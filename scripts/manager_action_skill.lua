@@ -122,4 +122,34 @@ function modSkill(rSource, rTarget, rRoll)
 			rRoll.sDesc = string.format("%s %s", rRoll.sDesc, EffectManager.buildEffectOutput(sMod));
 		end
 	end
+
+	applySizeEffectsToModRoll(rSource, rTarget, rRoll);
+end
+function applySizeEffectsToModRoll(rSource, _, rRoll)
+	if not rSource then
+		return;
+	end
+
+	ActionCore.decodeRollData(rRoll, "action_skill_tag");
+	local sSkillLower = rRoll.sLabel:lower();
+	if not StringManager.contains({ "fly", "hide", "stealth", }, sSkillLower) then
+		return;
+	end
+
+	local nActorSize, nBaseSize = ActorCommonManager.getSize(rSource);
+	if nActorSize == nBaseSize then
+		return;
+	end
+
+	-- Smaller grants bonus; Larger grants penalty
+	local nEffectBonus = nBaseSize - nActorSize;
+	if StringManager.contains({ "hide", "stealth", }, sSkillLower) then
+		nEffectBonus = nEffectBonus * 4;
+	else
+		nEffectBonus = nEffectBonus * 2;
+	end
+
+	rRoll.bEffects = true;
+	rRoll.nMod = rRoll.nMod + nEffectBonus;
+	table.insert(rRoll.tNotifications, string.format("[SIZE %+d]", nEffectBonus));
 end

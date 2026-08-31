@@ -933,6 +933,7 @@ function getSpellAction(rActor, nodeAction, sSubRoll)
 	rAction.type = sType;
 	rAction.label = DB.getValue(nodeAction, "...name", "");
 	rAction.order = getSpellActionOutputOrder(nodeAction);
+	rAction.nodeSpell = DB.getChild(nodeAction, "...");
 	-- KEL Save versus tags new variables and replace attribute
 	school = DB.getValue(nodeAction, "school", ""):lower();
 	stype = DB.getValue(nodeAction, "stype", ""):lower();
@@ -1156,7 +1157,6 @@ function onSpellAction(draginfo, nodeAction, sSubRoll)
 		else
 			rRoll.sType = "damage";
 		end
-		
 		table.insert(rRolls, rRoll);
 		
 	elseif rAction.type == "heal" then

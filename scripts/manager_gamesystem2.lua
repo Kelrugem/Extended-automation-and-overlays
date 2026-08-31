@@ -8,6 +8,7 @@
 function onInit()
 	-- GameSystem.actions = GameSystem2.actions;
 	GameSystem.actions["fortification"] = { };
+	table.insert(GameSystem.targetactions,"spdamage");
 	GameSystem.performConcentrationCheck = GameSystem2.performConcentrationCheck;
 end
 

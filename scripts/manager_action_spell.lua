@@ -11,6 +11,9 @@ function onInit()
 	ActionsManager.registerTargetingHandler("cast", onSpellTargeting);
 	ActionsManager.registerTargetingHandler("clc", onSpellTargeting);
 	ActionsManager.registerTargetingHandler("spellsave", onSpellTargeting);
+	ActionsManager.registerTargetingHandler("spdamage", onSpellTargeting);
+	local spDmgHandler = GameSystem.actions["spdamage"];
+	spDmgHandler.sTargeting = "all";
 
 	ActionsManager.registerModHandler("castsave", modCastSave);
 	ActionsManager.registerModHandler("spellsave", modCastSave);
@@ -22,6 +25,7 @@ function onInit()
 	ActionsManager.registerResultHandler("castsave", onCastSave);
 	ActionsManager.registerResultHandler("clc", onCLC);
 	ActionsManager.registerResultHandler("spellsave", onSpellSave);
+	ActionsManager.registerResultHandler("spellfailure", onSpellFailure);
 end
 
 function handleApplySave(msgOOB)
@@ -121,6 +125,7 @@ function getSpellCastRoll(rActor, rAction)
 	rRoll.sType = "cast";
 	rRoll.aDice = {};
 	rRoll.nMod = 0;
+	rRoll.sSpellPath = DB.getPath(rAction.nodeSpell);
 	
 	rRoll.sDesc = ActionCore.encodeActionText(rAction, "action_cast_tag");
 	
@@ -193,6 +198,17 @@ function getSaveVsRoll(rActor, rAction)
 	return rRoll;
 end
 -- END
+
+
+function performSpellFailureRoll(rActor, nTarget)
+	local rRoll = {
+		sType = "spellfailure",
+		sDesc = "[SPELL FAILURE CHECK]",
+		aDice = { "d100" },
+		nTarget = nTarget,
+	};
+	ActionsManager.roll(rActor, nil, rRoll);
+end
 function modCastSave(rSource, rTarget, rRoll)
 	if rSource then
 		local sActionStat = nil;
@@ -302,6 +318,95 @@ function onSpellCast(rSource, rTarget, rRoll)
 	end
 	
 	Comm.deliverChatMessage(rMessage);
+
+	ActionSpell.handleSpellFailure(rSource, rTarget, rRoll);
+end
+function handleSpellFailure(rSource, rTarget, rRoll)
+	local nodeSpell = DB.findNode(rRoll.sSpellPath);
+	local rActor = ActorManager.resolveActor(DB.getChild(nodeSpell, "......."));
+	handleSpellFailureConditions(rActor, nodeSpell);
+	handleSpellFailureComponents(rActor, nodeSpell);
+end
+function handleSpellFailureConditions(rActor, nodeSpell)
+	if not rActor or not nodeSpell then
+		return;
+	end
+
+	local tComponents = StringManager.splitByPattern( DB.getValue(nodeSpell, "components", ""):lower(), ",", true);
+
+	if EffectManager.hasCondition(rActor, "Silenced") and StringManager.contains(tComponents, "v") then
+		ChatManager.sendMessage(Interface.getString("cast_message_verbalwhilesilenced"), { sIcon = "action_error", rActor = rActor, });
+		return;
+	end
+
+	local sConcCond;
+	if EffectManager.hasCondition(rActor, "Pinned") then
+		if StringManager.contains(tComponents, "s") then
+			ChatManager.sendMessage(Interface.getString("cast_message_somaticwhilepinned"), { sIcon = "action_error", rActor = rActor, });
+			return;
+		end
+		sConcCond = "Pinned";
+	end
+	if not sConcCond and EffectManager.hasCondition(rActor, "Entangled") then
+		sConcCond = "Entangled";
+	end
+	if not sConcCond and EffectManager.hasCondition(rActor, "Grappled") then
+		sConcCond = "Grappled";
+	end
+	if sConcCond then
+		local sMsg = string.format(Interface.getString("cast_message_needconcentrationcheck"), sConcCond);
+		ChatManager.sendMessage(sMsg, { sIcon = "action_warning", rActor = rActor, });
+	end
+end
+function handleSpellFailureComponents(rActor, nodeSpell)
+	if not rActor or not nodeSpell then
+		return;
+	end
+
+	local sComponents = DB.getValue(nodeSpell, "components", "");
+	local tComponents = StringManager.splitByPattern(sComponents:lower(), ",", true);
+	if StringManager.contains(tComponents, "v") then
+		handleSpellFailureVerbal(rActor, nodeSpell);
+	end
+	if StringManager.contains(tComponents, "s") then
+		handleSpellFailureSomatic(rActor, nodeSpell);
+	end
+end
+function handleSpellFailureVerbal(rActor, nodeSpell)
+	local nVerbalSpellFailureChance = 0;
+	if EffectManager.hasCondition(rActor, "Deafened") then
+		nVerbalSpellFailureChance = 20;
+		ChatManager.Message(Interface.getString("cast_message_verbalwhiledeafened"), true, rActor);
+	end
+
+	if nVerbalSpellFailureChance > 0 then
+		if OptionsManager.isOption("AUTO_SPELL_FAILURE", "auto") then
+			ActionSpell.performSpellFailureRoll(rActor, nVerbalSpellFailureChance);
+		elseif OptionsManager.isOption("AUTO_SPELL_FAILURE", "prompt") then
+			local sMsg = string.format(Interface.getString("cast_message_verbal_prompt"), nVerbalSpellFailureChance);
+			ChatManager.sendMessage(sMsg, { sIcon = "action_warning", rActor = rActor, });
+		end
+	end
+end
+function handleSpellFailureSomatic(rActor, nodeSpell)
+	if EffectManager.hasCondition(rActor, "NSF") then
+		return;
+	end
+
+	local nSomaticSpellFailureChance = 0;
+	if ActorManager.isPC(rActor) then
+		nSomaticSpellFailureChance = DB.getValue(ActorManager.getCreatureNode(rActor), "encumbrance.spellfailure", 0);
+	end
+	nSomaticSpellFailureChance = nSomaticSpellFailureChance + EffectManager.getBonusMod(rActor, "SF");
+
+	if nSomaticSpellFailureChance > 0 then
+		if OptionsManager.isOption("AUTO_SPELL_FAILURE", "auto") then
+			ActionSpell.performSpellFailureRoll(rActor, nSomaticSpellFailureChance);
+		elseif OptionsManager.isOption("AUTO_SPELL_FAILURE", "prompt") then
+			local sMsg = string.format(Interface.getString("cast_message_somatic_prompt"), nSomaticSpellFailureChance);
+			ChatManager.sendMessage(sMsg, { sIcon = "action_warning", rActor = rActor, });
+		end
+	end
 end
 
 function onCastCLC(rSource, rTarget, rRoll)
@@ -396,4 +501,19 @@ function onSpellSave(rSource, rTarget, rRoll)
 
 	local rMessage = ActionsManager.createActionMessage(rSource, rRoll);
 	Comm.deliverChatMessage(rMessage);
+end
+
+function onSpellFailure(rSource, _, rRoll)
+	local msg = ActionsManager.createActionMessage(rSource, rRoll);
+	if rRoll.nTarget then
+		msg.text = StringManager.append(msg.text, string.format("[%d%%]", rRoll.nTarget), " ");
+		if rRoll.nTotal > rRoll.nTarget then
+			msg.icon = "action_save_success";
+			msg.text = StringManager.append(msg.text, "[SUCCEEDED]", "\r");
+		else
+			msg.icon = "action_save_failure";
+			msg.text = StringManager.append(msg.text, "[FAILED]", "\r");
+		end
+	end
+	Comm.deliverChatMessage(msg);
 end

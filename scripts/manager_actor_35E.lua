@@ -17,7 +17,11 @@ function onInit()
 	table.insert(DataCommon.bonustypes, "armorenhancement");
 	table.insert(DataCommon.bonustypes, "shieldenhancement");
 	table.insert(DataCommon.bonustypes, "naturalenhancement");
+	GameManager.setFunction("onActorRest", ActorManager35E.rest);
+	
+	ActorCommonManager.addDefaultSizeHandling();
 end
+
 
 --
 --	HEALTH
@@ -263,7 +267,7 @@ function getAbilityScore(rActor, sAbility, nodeSpellClass)
 	if not sAbility then
 		return -1;
 	end
-	local sNodeType, nodeActor = ActorManager.getTypeAndNode(rActor);
+	local nodeActor = ActorManager.getCreatureNode(rActor);
 	if not nodeActor then
 		return 0;
 	end
@@ -271,7 +275,7 @@ function getAbilityScore(rActor, sAbility, nodeSpellClass)
 	local nStatScore = -1;
 	
 	local sShort = string.sub(string.lower(sAbility), 1, 3);
-	if sNodeType == "pc" then
+	if ActorManager.isPC(nodeActor) then
 		if sShort == "lev" or sShort == "lvl" then
 			nStatScore = DB.getValue(nodeActor, "level", 0);
 		elseif sShort == "bab" then
@@ -293,7 +297,7 @@ function getAbilityScore(rActor, sAbility, nodeSpellClass)
 		elseif sShort == "cha" then
 			nStatScore = DB.getValue(nodeActor, "abilities.charisma.score", 0);
 		end
-	elseif ActorManager.isRecordType(rActor, "npc") then
+	elseif ActorManager.isRecordType(nodeActor, "npc") then
 		if sShort == "lev" or sShort == "lvl" then
 			nStatScore = tonumber(string.match(DB.getValue(nodeActor, "hd", ""), "^(%d+)")) or 0;
 		elseif sShort == "bab" then
@@ -366,8 +370,8 @@ function getAbilityBonus(rActor, sAbility, nodeSpellClass)
 	end
 	
 	if StringManager.contains(DataCommon.abilities, sStat) then
-		local sNodeType, nodeActor = ActorManager.getTypeAndNode(rActor);
-		if nodeActor and (sNodeType == "pc") then
+		local nodeActor = ActorManager.getCreatureNode(rActor);
+		if nodeActor and (ActorManager.isPC(nodeActor)) then
 			nStatVal = nStatVal + DB.getValue(nodeActor, "abilities." .. sStat .. ".bonusmodifier", 0);
 			
 			local nAbilityDamage = DB.getValue(nodeActor, "abilities." .. sStat .. ".damage", 0);
@@ -428,14 +432,14 @@ function getSpellDefense(rActor)
 end
 
 function getArmorComps(rActor)
-	local sNodeType, nodeActor = ActorManager.getTypeAndNode(rActor);
+	local nodeActor = ActorManager.getCreatureNode(rActor);
 	if not nodeActor then
 		return {};
 	end
 
 	local aComps = {};
 	
-	if sNodeType == "pc" then
+	if ActorManager.isPC(nodeActor) then
 		local nACBonusComp = DB.getValue(nodeActor, "ac.sources.armor", 0);
 		if nACBonusComp ~= 0 then
 			aComps["armor"] = nACBonusComp;
@@ -472,7 +476,7 @@ function getArmorComps(rActor)
 		if nACBonusComp ~= 0 then
 			aComps["misc"] = nACBonusComp;
 		end
-	elseif ActorManager.isRecordType(rActor, "npc") then
+	elseif ActorManager.isRecordType(nodeActor, "npc") then
 		local sAC = DB.getValue(nodeActor, "ac", ""):lower();
 		local nAC = tonumber(sAC:match("^(%d+)")) or 10;
 		local sACComps = sAC:match("%(([^)]+)%)");
@@ -559,7 +563,7 @@ function getDefenseValue(rAttacker, rDefender, rRoll)
 		return nil, 0, 0, 0;
 	end
 
-	if ActorManager.isPC(rDefender) then
+	if ActorManager.isPC(nodeDefender) then
 		if rRoll.sType == "attack" then
 			nDefense = DB.getValue(nodeDefender, "ac.totals.general", 10);
 			nFlatFootedMod = nDefense - DB.getValue(nodeDefender, "ac.totals.flatfooted", 10);
@@ -580,7 +584,7 @@ function getDefenseValue(rAttacker, rDefender, rRoll)
 			end
 		end
 	else
-		local nodeCT = ActorManager.getCTNode(rDefender);
+		local nodeCT = ActorManager.getCTNode(nodeDefender);
 		if nodeCT then
 			nodeDefender = nodeCT;
 			if rRoll.sType == "attack" then
@@ -591,7 +595,7 @@ function getDefenseValue(rAttacker, rDefender, rRoll)
 				nDefense = DB.getValue(nodeDefender, "cmd", 10);
 				nFlatFootedMod = DB.getValue(nodeDefender, "ac_final", 10) - DB.getValue(nodeDefender, "ac_flatfooted", 10);
 			end
-		elseif ActorManager.isRecordType(rDefender, "npc") then
+		elseif ActorManager.isRecordType(nodeDefender, "npc") then
 			if rRoll.sType == "attack" then
 				local sAC = DB.getValue(nodeDefender, "ac", "");
 				nDefense = tonumber(string.match(sAC, "^%s*(%d+)")) or 10;
@@ -631,7 +635,7 @@ function getDefenseValue(rAttacker, rDefender, rRoll)
 		end
 	end
 
-	nDefenseStatMod = getAbilityBonus(rDefender, sDefenseStat) + getAbilityBonus(rDefender, sDefenseStat2);
+	nDefenseStatMod = getAbilityBonus(nodeDefender, sDefenseStat) + getAbilityBonus(nodeDefender, sDefenseStat2);
 	
 	-- MAKE SURE FLAT-FOOTED AND TOUCH ADJUSTMENTS ARE POSITIVE
 	if nTouchMod < 0 then
@@ -997,10 +1001,37 @@ function getDefenseValue(rAttacker, rDefender, rRoll)
 			nMissChance = math.max(50,nMissChance);
 		end
 	end
-	
+
+	--- SIZE EFFECTS NOW IN CORE/3.5E ---
+	nDefenseEffectMod = nDefenseEffectMod + ActorManager35E.getSizeEffectsBonusForDefender(rDefender, rRoll);
 	-- Return the final defense value
 	-- KEL ACCC output
 	return nDefense, 0, nDefenseEffectMod, nMissChance, nAdditionalDefenseForCC;
+end
+
+
+function getSizeEffectsBonusForDefender(rDefender, rRoll)
+	if not rDefender then
+		return 0;
+	end
+
+	local nActorSize, nBaseSize = ActorCommonManager.getSize(rDefender);
+	if nActorSize == nBaseSize then
+		return 0;
+	end
+
+	if rRoll.sType == "grapple" then
+		-- Larger grants bonus; Smaller grants penalty
+		nEffectBonus = nActorSize - nBaseSize;
+		nEffectBonus = nEffectBonus * 4;
+	else
+		-- Smaller grants bonus; Larger grants penalty
+		nActorSize = math.max(math.min(nActorSize, 4), -4);
+		nBaseSize = math.max(math.min(nBaseSize, 4), -4);
+		nEffectBonus = DataCommon.sizeCombatMod[nActorSize] - DataCommon.sizeCombatMod[nBaseSize];
+	end
+
+	return nEffectBonus;
 end
 
 -- BMOS's feat search etc., see also CharManager hasFeat and hasTrait
@@ -1053,3 +1084,106 @@ function hasSpecialAbility(rActor, sSearchStringIni, bFeat, bTrait, bSpecialAbil
 	return false;
 end
 -- END
+
+function rest(rActor, sRestType)
+	if not ActorCommonManager.restDefault(rActor, sRestType) then
+		return false;
+	end
+
+	if ActorManager.isPC(rActor) then
+		ActorManager35E.restPC(rActor, sRestType);
+	end
+	return true;
+end
+function restPC(rActor, sRestType)
+	local nodeChar = ActorManager.getCreatureNode(rActor);
+	SpellManager.resetSpells(nodeChar);
+end
+
+
+--
+--	ABILITIES / TRAITS / 
+--
+
+function getListRecordByName(nodeActor, sList, s, bStartsWith)
+	if not nodeActor or ((sList or "") == "") or ((s or "") == "") then
+		return nil;
+	end
+	local sLower = StringManager.simplify(s);
+	for _,v in ipairs(DB.getChildList(nodeActor, sList)) do
+		if bStartsWith then
+			if StringManager.simplify(DB.getValue(v, "name", "")):match("^" .. sLower) then
+				return v;
+			end
+		else
+			if StringManager.simplify(DB.getValue(v, "name", "")) == sLower then
+				return v;
+			end
+		end
+	end
+	return nil;
+end
+function hasFieldValueByName(nodeActor, sField, s, bStartsWith, sDelimiter)
+	if not nodeActor or ((sField or "") == "") or ((s or "") == "") then
+		return nil;
+	end
+	local sLower = StringManager.simplify(s);
+	for _,s in ipairs(StringManager.splitByPattern(DB.getValue(nodeActor, sField, ""), sDelimiter or ",", true)) do
+		if bStartsWith then
+			if StringManager.simplify(s):match("^" .. sLower) then
+				return s;
+			end
+		else
+			if StringManager.simplify(s) == sLower then
+				return s;
+			end
+		end
+	end
+	return nil;
+end
+
+function hasFeat(vActor, s, bStartsWith)
+	local rActor = ActorManager.resolveActor(vActor);
+	if ActorManager.isPC(rActor) then
+		return ActorManager35E.hasPCFeat(ActorManager.getCreatureNode(rActor), s, bStartsWith)
+	elseif ActorManager.isRecordType(rActor, "npc") then
+		return ActorManager35E.hasNPCFeat(ActorManager.getCreatureNode(rActor), s, bStartsWith);
+	end
+	return false;
+end
+function hasPCFeat(nodeActor, s, bStartsWith)
+	return (ActorManager35E.getListRecordByName(nodeActor, "featlist", s, bStartsWith) ~= nil);
+end
+function hasNPCFeat(nodeActor, s, bStartsWith)
+	return (ActorManager35E.hasFieldValueByName(nodeActor, "feats", s, bStartsWith) ~= nil);
+end
+function hasSpecialAbility(vActor, s, bStartsWith)
+	local rActor = ActorManager.resolveActor(vActor);
+	if ActorManager.isPC(rActor) then
+		return ActorManager35E.hasPCSpecialAbility(ActorManager.getCreatureNode(rActor), s, bStartsWith)
+	elseif ActorManager.isRecordType(rActor, "npc") then
+		return ActorManager35E.hasNPCSpecialAbility(ActorManager.getCreatureNode(rActor), s, bStartsWith);
+	end
+	return false;
+end
+function hasPCSpecialAbility(nodeActor, s, bStartsWith)
+	return (ActorManager35E.getListRecordByName(nodeActor, "specialabilitylist", s, bStartsWith) ~= nil);
+end
+function hasNPCSpecialAbility(nodeActor, s, bStartsWith)
+	return (ActorManager35E.hasFieldValueByName(nodeActor, "specialqualities", s, bStartsWith, ";") ~= nil);
+end
+function hasTrait(vActor, s, bStartsWith)
+	local rActor = ActorManager.resolveActor(vActor);
+	if ActorManager.isPC(rActor) then
+		return ActorManager35E.hasPCTrait(ActorManager.getCreatureNode(rActor), s, bStartsWith)
+	elseif ActorManager.isRecordType(rActor, "npc") then
+		return ActorManager35E.hasNPCTrait(ActorManager.getCreatureNode(rActor), s, bStartsWith);
+	end
+	return false;
+end
+function hasPCTrait(nodeActor, s, bStartsWith)
+	return (ActorManager35E.getListRecordByName(nodeActor, "traitlist", s, bStartsWith) ~= nil);
+end
+function hasNPCTrait(nodeActor, s, bStartsWith)
+	return (ActorManager35E.hasFieldValueByName(nodeActor, "specialqualities", s, bStartsWith, ";") ~= nil);
+end
