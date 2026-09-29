@@ -3,10 +3,8 @@
 -- attribution and copyright information.
 --
 
--- function onInit()
-	-- local tOverlayButtons = {"", "clear_wounds", "clear_saves"};
-	-- ToolbarManager.addList(subwindow, tOverlayButtons, "right");
--- end
+-- luacheck: globals TokenManagerKel
+-- luacheck: globals clearWounds clearSaves
 
 function onTabletopInit()
     ToolbarManager.registerButton("image_clearwounds",
@@ -25,24 +23,18 @@ function onTabletopInit()
 			bHostVisibleOnly = true,
             fnActivate = clearSaves,
         });
-		
-	-- local tOverlayButtons = {"", "clear_wounds", "clear_saves"};
-	-- ToolbarManager.addList(subwindow, tOverlayButtons, "right");
 end
 
 function clearWounds(c)	
+	TokenManagerKel.clearWoundOverlays();
+	
 	local cImage = WindowManager.callOuterWindowFunction(c.window, "getImage");
-	for _,v in pairs(CombatManager.getCombatantNodes()) do	
-		TokenManager3.setDeathOverlay(v,0, true); 	
-	end
 	cImage.setFocus();
-	-- c.window.updateDisplay();
 end
 
-function clearSaves(c)	
+function clearSaves(c)
+	TokenManagerKel.clearSaveOverlays();
+
 	local cImage = WindowManager.callOuterWindowFunction(c.window, "getImage");
-	for _,v in pairs(CombatManager.getCombatantNodes()) do	
-		TokenManager3.setSaveOverlay(v,0, true); 	
-	end	
 	cImage.setFocus();
 end

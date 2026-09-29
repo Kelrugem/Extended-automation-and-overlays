@@ -1,21 +1,21 @@
--- 
--- Please see the license.html file included with this distribution for 
+--
+-- Please see the license.html file included with this distribution for
 -- attribution and copyright information.
 --
--- The idea of a save overlay is motivated by an extension from Ken L and the following is his changed and modified code basically. Thanks him for providing his ideas and extensions to the community :) 
 
+-- luacheck: globals OOB_MSGTYPE_APPLYSAVEOVERLAY clearSaveOverlay setSaveOverlay handleSaveOverlay updateSaveOverlay
+-- luacheck: globals OOB_MSGTYPE_APPLYWOUNDOVERLAY clearWoundOverlay setWoundOverlay handleWoundOverlay updateWoundOverlay
+
+-- The idea of a save overlay is motivated by an extension from Ken L and the following is his changed and modified code basically.
+-- Thanks him for providing his ideas and extensions to the community :)
 
 OOB_MSGTYPE_APPLYOVERLAY = "applyoverlay";
 OOB_MSGTYPE_APPLYWOUNDS = "applywounds";
 
 function onInit()
-	TokenManager.addEffectTagIconSimple("NIFT", "");
-	TokenManager.addEffectTagIconSimple("NIF", "");
-	TokenManager.addEffectTagIconSimple("IFTAG", "");
-	TokenManager.addEffectTagIconSimple("NIFTAG", "");
-	-- Overlay
     DB.addHandler("combattracker.list.*.saveclear", "onUpdate", updateSaveOverlay);
     DB.addHandler("combattracker.list.*.death", "onUpdate", updateDeathOverlay);
+	
 	OOBManager.registerOOBMsgHandler(OOB_MSGTYPE_APPLYOVERLAY, handleApplyOverlay);
 	OOBManager.registerOOBMsgHandler(OOB_MSGTYPE_APPLYWOUNDS, handleApplyWounds);
 end
