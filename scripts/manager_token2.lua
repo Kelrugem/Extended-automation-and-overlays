@@ -16,8 +16,18 @@ function onInit()
     DB.addHandler("combattracker.list.*.saveclear", "onUpdate", updateSaveOverlay);
     DB.addHandler("combattracker.list.*.death", "onUpdate", updateDeathOverlay);
 	
-	OOBManager.registerOOBMsgHandler(OOB_MSGTYPE_APPLYOVERLAY, handleApplyOverlay);
-	OOBManager.registerOOBMsgHandler(OOB_MSGTYPE_APPLYWOUNDS, handleApplyWounds);
+	OOBManager.registerOOBMsgHandler(OOB_MSGTYPE_APPLYOVERLAY, handleSaveOverlay);
+	OOBManager.registerOOBMsgHandler(OOB_MSGTYPE_APPLYWOUNDS, handleWoundOverlay);
+end
+
+function clearSaveOverlays()
+	if not Session.IsHost then
+		return;
+	end
+
+	for _,v in pairs(CombatManager.getCombatantNodes()) do
+		DB.setValue(v, "saveclear", "number", 0);
+	end
 end
 
 function setSaveOverlay(nodeCT, success, erase)
@@ -49,7 +59,7 @@ function setSaveOverlay(nodeCT, success, erase)
 	end
 end
 
-function handleApplyOverlay(msgOOB)
+function handleSaveOverlay(msgOOB)
 	local success = tonumber(msgOOB.savenumber);
 	local rSource = ActorManager.resolveActor(msgOOB.sSourceNode);
 	local nodeCT = ActorManager.getCTNode(rSource);
@@ -148,7 +158,7 @@ function setDeathOverlay(nodeCT, death, erase)
 	end
 end
 
-function handleApplyWounds(msgOOB)
+function handleWoundOverlay(msgOOB)
 	local death = tonumber(msgOOB.woundsnumber);
 	local rSource = ActorManager.resolveActor(msgOOB.sSourceNode);
 	local nodeCT = ActorManager.getCTNode(rSource);
