@@ -9,15 +9,15 @@
 -- The idea of a save overlay is motivated by an extension from Ken L and the following is his changed and modified code basically.
 -- Thanks him for providing his ideas and extensions to the community :)
 
-OOB_MSGTYPE_APPLYOVERLAY = "applyoverlay";
-OOB_MSGTYPE_APPLYWOUNDS = "applywounds";
+OOB_MSGTYPE_APPLYSAVEOVERLAY = "applyoverlay";
+OOB_MSGTYPE_APPLYWOUNDOVERLAY = "applywounds";
 
 function onInit()
-    DB.addHandler("combattracker.list.*.saveclear", "onUpdate", updateSaveOverlay);
-    DB.addHandler("combattracker.list.*.death", "onUpdate", updateDeathOverlay);
-	
-	OOBManager.registerOOBMsgHandler(OOB_MSGTYPE_APPLYOVERLAY, handleSaveOverlay);
-	OOBManager.registerOOBMsgHandler(OOB_MSGTYPE_APPLYWOUNDS, handleWoundOverlay);
+	CombatManager.addCombatantFieldChangeHandler("saveclear", "onUpdate", updateSaveOverlay);
+	CombatManager.addCombatantFieldChangeHandler("death", "onUpdate", updateWoundOverlay);
+
+	OOBManager.registerOOBMsgHandler(OOB_MSGTYPE_APPLYSAVEOVERLAY, handleSaveOverlay);
+	OOBManager.registerOOBMsgHandler(OOB_MSGTYPE_APPLYWOUNDOVERLAY, handleWoundOverlay);
 end
 
 function clearSaveOverlays()
@@ -30,101 +30,82 @@ function clearSaveOverlays()
 	end
 end
 
-function setSaveOverlay(nodeCT, success, erase)
-	local sOptSO = OptionsManager.getOption("SO");
-	if erase then
-		local saveclearNode = DB.createChild(nodeCT, "saveclear","number"); 
-		if saveclearNode then
-			saveclearNode.setValue(success);
-		end
-	elseif sOptSO == "on" then
-		if nodeCT then
-			if Session.IsHost then
-				local saveclearNode = DB.createChild(nodeCT, "saveclear","number"); 
-				if saveclearNode then
-					if success < getSaveOverlay(nodeCT) then
-						saveclearNode.setValue(success); 
-					end
-				end
-			else
-				local msgOOB = {};
-				msgOOB.type = OOB_MSGTYPE_APPLYOVERLAY;
-				local rSource = ActorManager.resolveActor(nodeCT);
-				msgOOB.sSourceNode = ActorManager.getCreatureNodeName(rSource);
-				
-				msgOOB.savenumber = success;
-				Comm.deliverOOBMessage(msgOOB, "");
-			end
-		end
+function setSaveOverlay(vActor, nSaveOverlay)
+	if not OptionsManager.isOption("SO", "on") then
+		return;
 	end
+	local rActor = ActorManager.resolveActor(vActor);
+	if not rActor then
+		return;
+	end
+
+	-- Build OOB message to pass to host
+	local msgOOB = {
+		type = OOB_MSGTYPE_APPLYSAVEOVERLAY,
+		sActorPath = ActorManager.getCTNodeName(rActor),
+		nSaveOverlay = nSaveOverlay,
+	};
+	Comm.deliverOOBMessage(msgOOB, "");
 end
 
 function handleSaveOverlay(msgOOB)
-	local success = tonumber(msgOOB.savenumber);
-	local rSource = ActorManager.resolveActor(msgOOB.sSourceNode);
-	local nodeCT = ActorManager.getCTNode(rSource);
-	
-	if nodeCT then
-		local saveclearNode = DB.createChild(nodeCT, "saveclear","number"); 
-		if saveclearNode then
-			if success < getSaveOverlay(nodeCT) then
-				saveclearNode.setValue(success); 
-			end
-		end
+	local rActor = ActorManager.resolveActor(msgOOB.sActorPath);
+	if not rActor then
+		return;
 	end
-end
-
-function getSaveOverlay(nodeCT)
-	if nodeCT then
-		local saveoverlayNode = DB.getChild(nodeCT, "saveclear","number"); 
-		if saveoverlayNode then
-			return DB.getValue(saveoverlayNode); 
-		end
+	local nodeCT = ActorManager.getCTNode(rActor);
+	if not nodeCT then
+		return;
+	end
+	local nSaveOverlay = tonumber(msgOOB.nSaveOverlay) or 0;
+	if nSaveOverlay < DB.getValue(nodeCT, "saveclear", 0) then
+		DB.setValue(nodeCT, "saveclear", "number", nSaveOverlay);
 	end
 end
 
 function updateSaveOverlay(nodeField)
 	local nodeCT = DB.getParent(nodeField);
 	local tokenCT = CombatManager.getTokenFromCT(nodeCT);
-	local success = DB.getValue(nodeField); 
-	local widgetSuccess;
+	if not tokenCT then
+		return;
+	end
 
-	if tokenCT then
-		local wToken, hToken = tokenCT.getSize();
-		local vImage = ImageManager.getImageControl(tokenCT, false);
-		if vImage then
-			local gridlength = vImage.getGridSize();
-			wToken = (wToken/gridlength)*100;
-			hToken = (hToken/gridlength)*100;
-		else
-			local nDU = GameSystem.getDistanceUnitsPerGrid();
-			local nSpace = math.ceil(DB.getValue(nodeCT, "space", nDU) / nDU)*100;
-			wToken = nSpace;
-			hToken = nSpace;
-		end
-		widgetSuccess = tokenCT.findWidget("success1");
-		if widgetSuccess then widgetSuccess.destroy() end
-		if success == -3 then 
-			widgetSuccess = tokenCT.addBitmapWidget(); 
-			widgetSuccess.setName("success1"); 
-			widgetSuccess.bringToFront(); 
-			widgetSuccess.setBitmap("overlay_save_success"); 
-			widgetSuccess.setSize(math.floor(wToken*1), math.floor(hToken*1)); 
-		elseif success == -2 then
-			widgetSuccess = tokenCT.addBitmapWidget(); 
-			widgetSuccess.setName("success1"); 
-			widgetSuccess.bringToFront(); 
-			widgetSuccess.setBitmap("overlay_save_partial"); 
-			widgetSuccess.setSize(math.floor(wToken*1), math.floor(hToken*1)); 
-		elseif success == -1 then
-			widgetSuccess = tokenCT.addBitmapWidget(); 
-			widgetSuccess.setName("success1"); 
-			widgetSuccess.bringToFront(); 
-			widgetSuccess.setBitmap("overlay_save_failure"); 
-			widgetSuccess.setSize(math.floor(wToken*1), math.floor(hToken*1)); 
-		else
-			-- No overlay
-		end
+	local nSaveOverlay = DB.getValue(nodeField, ".", 0);
+
+	local wgt = tokenCT.findWidget("success_kel");
+	if wgt then
+		wgt.destroy();
+	end
+	
+	local wToken, hToken = tokenCT.getSize();
+	local vImage = ImageManager.getImageControl(tokenCT, false);
+	if vImage then
+		local gridlength = vImage.getGridSize();
+		wToken = (wToken/gridlength)*100;
+		hToken = (hToken/gridlength)*100;
+	else
+		local nDU = GameSystem.getDistanceUnitsPerGrid();
+		local nSpace = math.ceil(DB.getValue(nodeCT, "space", nDU) / nDU)*100;
+		wToken = nSpace;
+		hToken = nSpace;
+	end
+	
+	local sIcon;
+	if nSaveOverlay == -3 then
+		sIcon = "overlay_save_success";
+	elseif nSaveOverlay == -2 then
+		sIcon = "overlay_save_partial";
+	elseif nSaveOverlay == -1 then
+		sIcon = "overlay_save_failure";
+	else
+		-- No overlay
+	end
+	if sIcon then
+		tokenCT.addBitmapWidget({
+			name = "success_kel",
+			icon = sIcon,
+			w = wToken, h = hToken,
+		}).bringToFront();
 	end
 end
 
@@ -171,7 +152,7 @@ function handleWoundOverlay(msgOOB)
 	end
 end
 
-function updateDeathOverlay(nodeField)
+function updateWoundOverlay(nodeField)
 	local nodeCT = DB.getParent(nodeField);
 	local tokenCT = CombatManager.getTokenFromCT(nodeCT);
 	local deathvalue = DB.getValue(nodeField); 

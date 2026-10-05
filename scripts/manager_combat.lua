@@ -20,9 +20,7 @@ function nextActor(bSkipBell, bNoRoundAdvance)
 	
 	OldnextActor(bSkipBell, bNoRoundAdvance);
 	-- KEL Clear saves
-	for _,v in pairs(CombatManager.getCombatantNodes()) do
-		TokenManager3.setSaveOverlay(v,0, true);
-	end
+	TokenManagerKel.clearSaveOverlays();
 	-- END
 end
 
@@ -33,9 +31,7 @@ function nextRound(nRounds)
 	
 	OldnextRound(nRounds);
 	-- KEL Clear saves
-	for _,v in pairs(CombatManager.getCombatantNodes()) do
-		TokenManager3.setSaveOverlay(v,0,true); 
-	end
+	TokenManagerKel.clearSaveOverlays();
 	-- END
 end
 
