@@ -109,133 +109,107 @@ function updateSaveOverlay(nodeField)
 	end
 end
 
-function setDeathOverlay(nodeCT, death, erase)
-	local sOptWO = OptionsManager.getOption("WO");
-	if erase then
-		local deathNode = DB.createChild(nodeCT, "death","number"); 
-		if deathNode then
-			deathNode.setValue(death);
-		end
-	elseif sOptWO == "on" then
-		if nodeCT then
-			local rSource = ActorManager.resolveActor(nodeCT);
-			-- KEL we have to stop the loop via manager-actor -> Overlay -> EffectManager (bloodied...)
-			if not EffectManager35E.hasEffectCondition(rSource, "noblood", "", true) then
-				if Session.IsHost then
-					local deathNode = DB.createChild(nodeCT, "death","number"); 
-					if deathNode then
-						deathNode.setValue(death);
-					end
-				else
-					local msgOOB = {};
-					msgOOB.type = OOB_MSGTYPE_APPLYWOUNDS;
-					msgOOB.sSourceNode = ActorManager.getCreatureNodeName(rSource);
-					
-					msgOOB.woundsnumber = death;
-					Comm.deliverOOBMessage(msgOOB, "");
-				end
-			end
-		end
+function clearWoundOverlays()
+	if not Session.IsHost then
+		return;
+	end
+
+	for _,v in pairs(CombatManager.getCombatantNodes()) do
+		DB.setValue(v, "death", "number", 0);
 	end
 end
 
-function handleWoundOverlay(msgOOB)
-	local death = tonumber(msgOOB.woundsnumber);
-	local rSource = ActorManager.resolveActor(msgOOB.sSourceNode);
-	local nodeCT = ActorManager.getCTNode(rSource);
-	
-	if nodeCT then
-		local deathNode = DB.createChild(nodeCT, "death","number"); 
-		if deathNode then
-			deathNode.setValue(death);
-		end
+function setWoundOverlay(vActor, nWoundOverlay)
+	if not OptionsManager.isOption("WO", "on") then
+		return;
 	end
+	local rActor = ActorManager.resolveActor(vActor);
+	if not rActor then
+		return;
+	end
+	if EffectManager.hasText(rActor, "noblood", { bSkipConditionals = true, }) then
+		return;
+	end
+
+	-- Build OOB message to pass to host
+	local msgOOB = {
+		type = OOB_MSGTYPE_APPLYWOUNDOVERLAY,
+		sActorPath = ActorManager.getCTNodeName(rActor),
+		nWoundOverlay = nWoundOverlay,
+	};
+	Comm.deliverOOBMessage(msgOOB, "");
+end
+
+function handleWoundOverlay(msgOOB)
+	local rActor = ActorManager.resolveActor(msgOOB.sActorPath);
+	if not rActor then
+		return;
+	end
+	local nodeCT = ActorManager.getCTNode(rActor);
+	if not nodeCT then
+		return;
+	end
+
+	local nWoundOverlay = tonumber(msgOOB.nWoundOverlay) or 0;
+	DB.setValue(nodeCT, "death", "number", nWoundOverlay);
 end
 
 function updateWoundOverlay(nodeField)
 	local nodeCT = DB.getParent(nodeField);
 	local tokenCT = CombatManager.getTokenFromCT(nodeCT);
-	local deathvalue = DB.getValue(nodeField); 
-	local widgetDeath;
+	if not tokenCT then
+		return;
+	end
 
-	if tokenCT then
-		local wToken, hToken = tokenCT.getSize();
-		local vImage = ImageManager.getImageControl(tokenCT, false);
-		if vImage then
-			local gridlength = vImage.getGridSize();
-			wToken = (wToken/gridlength)*100;
-			hToken = (hToken/gridlength)*100;
-		else
-			local nDU = GameSystem.getDistanceUnitsPerGrid();
-			local nSpace = math.ceil(DB.getValue(nodeCT, "space", nDU) / nDU)*100;
-			wToken = nSpace;
-			hToken = nSpace;
-		end
-		widgetDeath = tokenCT.findWidget("death1");
-		if widgetDeath then widgetDeath.destroy() end
+	local nWoundOverlay = DB.getValue(nodeField, ".", 0);
 
-		if deathvalue == 1 then 
-			widgetDeath = tokenCT.addBitmapWidget(); 
-			widgetDeath.setName("death1"); 
-			widgetDeath.bringToFront(); 
-			widgetDeath.setBitmap("overlay_death"); 
-			widgetDeath.setSize(math.floor(wToken*1), math.floor(hToken*1)); 
-		elseif deathvalue == 2 then 
-			widgetDeath = tokenCT.addBitmapWidget(); 
-			widgetDeath.setName("death1"); 
-			widgetDeath.bringToFront(); 
-			widgetDeath.setBitmap("overlay_dying"); 
-			widgetDeath.setSize(math.floor(wToken*1), math.floor(hToken*1));
-		elseif deathvalue == 3 then 
-			widgetDeath = tokenCT.addBitmapWidget(); 
-			widgetDeath.setName("death1"); 
-			widgetDeath.bringToFront(); 
-			widgetDeath.setBitmap("overlay_dying_stable"); 
-			widgetDeath.setSize(math.floor(wToken*1), math.floor(hToken*1));
-		elseif deathvalue == 4 then 
-			widgetDeath = tokenCT.addBitmapWidget(); 
-			widgetDeath.setName("death1"); 
-			widgetDeath.bringToFront(); 
-			widgetDeath.setBitmap("overlay_critical"); 
-			widgetDeath.setSize(math.floor(wToken*1), math.floor(hToken*1));
-		elseif deathvalue == 5 then 
-			widgetDeath = tokenCT.addBitmapWidget(); 
-			widgetDeath.setName("death1"); 
-			widgetDeath.bringToFront(); 
-			widgetDeath.setBitmap("overlay_heavy"); 
-			widgetDeath.setSize(math.floor(wToken*1), math.floor(hToken*1));
-		elseif deathvalue == 6 then 
-			widgetDeath = tokenCT.addBitmapWidget(); 
-			widgetDeath.setName("death1"); 
-			widgetDeath.bringToFront(); 
-			widgetDeath.setBitmap("overlay_moderate"); 
-			widgetDeath.setSize(math.floor(wToken*1), math.floor(hToken*1));
-		elseif deathvalue == 7 then 
-			widgetDeath = tokenCT.addBitmapWidget(); 
-			widgetDeath.setName("death1"); 
-			widgetDeath.bringToFront(); 
-			widgetDeath.setBitmap("overlay_wounded"); 
-			widgetDeath.setSize(math.floor(wToken*1), math.floor(hToken*1));
-		elseif deathvalue == 8 then 
-			widgetDeath = tokenCT.addBitmapWidget(); 
-			widgetDeath.setName("death1"); 
-			widgetDeath.bringToFront(); 
-			widgetDeath.setBitmap("overlay_disabled"); 
-			widgetDeath.setSize(math.floor(wToken*1), math.floor(hToken*1));
-		elseif deathvalue == 9 then 
-			widgetDeath = tokenCT.addBitmapWidget(); 
-			widgetDeath.setName("death1"); 
-			widgetDeath.bringToFront(); 
-			widgetDeath.setBitmap("overlay_ko"); 
-			widgetDeath.setSize(math.floor(wToken*1), math.floor(hToken*1));
-		elseif deathvalue == 10 then 
-			widgetDeath = tokenCT.addBitmapWidget(); 
-			widgetDeath.setName("death1"); 
-			widgetDeath.bringToFront(); 
-			widgetDeath.setBitmap("overlay_staggered"); 
-			widgetDeath.setSize(math.floor(wToken*1), math.floor(hToken*1));
-		else
-			-- No overlay
-		end
+	local wgt = tokenCT.findWidget("wound_kel");
+	if wgt then
+		wgt.destroy();
+	end
+
+	local wToken, hToken = tokenCT.getSize();
+	local vImage = ImageManager.getImageControl(tokenCT, false);
+	if vImage then
+		local gridlength = vImage.getGridSize();
+		wToken = (wToken/gridlength)*100;
+		hToken = (hToken/gridlength)*100;
+	else
+		local nDU = GameSystem.getDistanceUnitsPerGrid();
+		local nSpace = math.ceil(DB.getValue(nodeCT, "space", nDU) / nDU)*100;
+		wToken = nSpace;
+		hToken = nSpace;
+	end
+
+	local sIcon;
+	if nWoundOverlay == 1 then
+		sIcon = "overlay_death";
+	elseif nWoundOverlay == 2 then
+		sIcon = "overlay_dying";
+	elseif nWoundOverlay == 3 then
+		sIcon = "overlay_dying_stable";
+	elseif nWoundOverlay == 4 then
+		sIcon = "overlay_critical";
+	elseif nWoundOverlay == 5 then
+		sIcon = "overlay_heavy";
+	elseif nWoundOverlay == 6 then
+		sIcon = "overlay_moderate";
+	elseif nWoundOverlay == 7 then
+		sIcon = "overlay_wounded";
+	elseif nWoundOverlay == 8 then
+		sIcon = "overlay_disabled";
+	elseif nWoundOverlay == 9 then
+		sIcon = "overlay_ko";
+	elseif nWoundOverlay == 10 then
+		sIcon = "overlay_staggered";
+	else
+		-- No overlay
+	end
+	if sIcon then
+		tokenCT.addBitmapWidget({
+			name = "wound_kel",
+			icon = sIcon,
+			w = wToken, h = hToken,
+		}).bringToFront();
 	end
 end
