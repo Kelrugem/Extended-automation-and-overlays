@@ -41,7 +41,7 @@
     <script name="CombatRecordManagerKel" file="scripts/manager_combat_record.lua" />
     <script name="OptionsInit" file="scripts/data_options_init.lua" />
     <script name="DataCommon2" file="scripts/data_common2.lua" />
-    <script name="GameSystem2" file="scripts/manager_gamesystem2.lua" />
+    <script name="GameSystem2" file="scripts/manager_gamesystem_kel.lua" />
     <script name="CombatManager2" file="scripts/manager_combat2.lua" />
     <script name="ActionInit" file="scripts/manager_action_init.lua" />
     <script name="ActorManager35E" file="scripts/manager_actor_35E.lua" />
@@ -50,7 +50,7 @@
     <script name="ActionDamage" file="scripts/manager_action_damage.lua" />
     <script name="ActionHeal" file="scripts/manager_action_heal.lua" />
     <script name="EffectManager35E" file="scripts/manager_effect_35E.lua" />
-    <script name="SpellManager" file="scripts/manager_spell.lua" />
+    <script name="SpellManager" file="scripts/manager_spell_kel.lua" />
     <script name="ActionSave" file="scripts/manager_action_save.lua" />
     <script name="ActionSpell" file="scripts/manager_action_spell.lua" />
     <script name="ActionSkill2" file="scripts/manager_action_skill.lua" />
