@@ -49,7 +49,6 @@
     <script name="ActionAttack" file="scripts/manager_action_attack.lua" />
     <script name="ActionDamage" file="scripts/manager_action_damage.lua" />
     <script name="ActionHeal" file="scripts/manager_action_heal.lua" />
-    <script name="EffectManager35E" file="scripts/manager_effect_35E.lua" />
     <script name="SpellManager" file="scripts/manager_spell_kel.lua" />
     <script name="ActionSave" file="scripts/manager_action_save.lua" />
     <script name="ActionSpell" file="scripts/manager_action_spell.lua" />
