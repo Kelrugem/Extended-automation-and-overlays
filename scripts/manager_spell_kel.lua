@@ -105,27 +105,27 @@ function resetPrepared(nodeCaster)
 end
 
 -- KEL Adding extra tags
-function getPowerTags(nodePower)
-	if not nodePower then
+function getPowerTags(tPowerData)
+	if not tPowerData or not tPowerData.nodePower then
 		return {};
 	end
 	
-	local tPowerTags = _fnOrigGetPowerTags(nodePower);
+	local aPowerTags = _fnOrigGetPowerTags(tPowerData);
 	
-	local sSave = DB.getValue(nodePower, "save", ""):lower();
-	local sSR = DB.getValue(nodePower, "sr", ""):lower();
+	local sSave = DB.getValue(tPowerData.nodePower, "save", ""):lower();
+	local sSR = DB.getValue(tPowerData.nodePower, "sr", ""):lower();
 	
 	if sSave:match("harmless") or sSR:match("harmless") then
-		table.insert(tPowerTags, "harmless");
+		table.insert(aPowerTags, "harmless");
 	end
 	if sSave:match("object") or sSR:match("object") then
-		table.insert(tPowerTags, "object");
+		table.insert(aPowerTags, "object");
 	end
 	if sSave:match("disbelief") then
-		table.insert(tPowerTags, "disbelief");
+		table.insert(aPowerTags, "disbelief");
 	end
 	
-	return tPowerTags;
+	return aPowerTags;
 end
 
 function getActionAbilityBonus(nodeAction)
@@ -184,8 +184,8 @@ function getSpellAction(rActor, nodeAction, sSubRoll)
 		return;
 	end
 	
-	-- Save overlay for miss chances
-	rAction.spell = true;
+	-- Save overlay for miss chances; not needed anymore, rAction.bSpell and .bWeapon for this
+	-- rAction.spell = true;
 	
 	if rAction.type == "cast" then
 		local sReplace = DB.getValue(nodeAction, "replacedc.ability", "");
@@ -195,27 +195,26 @@ function getSpellAction(rActor, nodeAction, sSubRoll)
 	end
 	
 	-- KEL adding ranged descriptors of the cast action
-	if rAction.type == "damage" then
-		local rFirstCastAction = SpellManager.getFirstCastAction(nodeAction);
-		if rFirstCastAction.range and not rAction.range then
-			rAction.range = rCastAction.range;
-		end
-	end
+	-- if rAction.type == "damage" then
+		-- local rFirstCastAction = SpellManager.getFirstCastAction(nodeAction);
+		-- if rFirstCastAction.range and not rAction.range then
+			-- rAction.range = rCastAction.range;
+		-- end
+	-- end
 
 	return rAction;
 end
 
--- KEL get first cast action to extract range, etc
-function getFirstCastAction(nodeAction)
-	local rCastAction = {};
-	-- KEL If multiple cast actions: Important that all cast actions have the same tags? Also adding ranges
-	local nodeSpellActions = DB.getChildList(nodeAction, "..")	
-	for _, v in ipairs(nodeSpellActions) do
-		if DB.getValue(v, "type") == "cast" then
-			rCastAction = SpellManager.getSpellAction(rActor, v);
-			break;
-		end
-	end
-	return rCastAction;
-end
+-- KEL get first cast action to extract range, etc. But there is now also getFirstActionOfType in spell manager
+-- function getFirstCastAction(nodeAction)
+	-- local rCastAction = {};
+	-- local nodeSpellActions = DB.getChildList(nodeAction, "..")	
+	-- for _, v in ipairs(nodeSpellActions) do
+		-- if DB.getValue(v, "type") == "cast" then
+			-- rCastAction = SpellManager.getSpellAction(rActor, v);
+			-- break;
+		-- end
+	-- end
+	-- return rCastAction;
+-- end
 -- END
