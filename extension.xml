@@ -35,7 +35,7 @@
     <includefile source="campaign/record_image.xml" />
 
       <!-- High-level scripts -->
-    <script name="ActionsManagerKel" file="scripts/manager_actions.lua" />
+    <script name="ActionsManagerKel" file="scripts/manager_actions_kel.lua" />
     <script name="CharManagerKel" file="scripts/manager_char.lua" />
 	<!-- The following script also contains stuff from Combat2 and action_init -->
     <script name="CombatManagerKel" file="scripts/manager_combat_kel.lua" />
