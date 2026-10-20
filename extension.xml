@@ -37,13 +37,12 @@
       <!-- High-level scripts -->
     <script name="ActionsManagerKel" file="scripts/manager_actions.lua" />
     <script name="CharManagerKel" file="scripts/manager_char.lua" />
-    <script name="CombatManagerKel" file="scripts/manager_combat.lua" />
+	<!-- The following script also contains stuff from Combat2 and action_init -->
+    <script name="CombatManagerKel" file="scripts/manager_combat_kel.lua" />
     <script name="CombatRecordManagerKel" file="scripts/manager_combat_record.lua" />
     <script name="OptionsInit" file="scripts/data_options_init.lua" />
     <script name="DataCommon2" file="scripts/data_common2.lua" />
     <script name="GameSystem2" file="scripts/manager_gamesystem_kel.lua" />
-    <script name="CombatManager2" file="scripts/manager_combat2.lua" />
-    <script name="ActionInit" file="scripts/manager_action_init.lua" />
     <script name="ActorManager35E" file="scripts/manager_actor_35E.lua" />
     <script name="TokenManager3" file="scripts/manager_token_kel.lua" />
     <script name="ActionAttack" file="scripts/manager_action_attack.lua" />
