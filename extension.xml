@@ -39,7 +39,6 @@
     <script name="CharManagerKel" file="scripts/manager_char.lua" />
 	<!-- The following script also contains stuff from Combat2 and action_init -->
     <script name="CombatManagerKel" file="scripts/manager_combat_kel.lua" />
-    <script name="CombatRecordManagerKel" file="scripts/manager_combat_record.lua" />
     <script name="OptionsInit" file="scripts/data_options_init.lua" />
     <script name="DataCommon2" file="scripts/data_common2.lua" />
     <script name="GameSystem2" file="scripts/manager_gamesystem_kel.lua" />
