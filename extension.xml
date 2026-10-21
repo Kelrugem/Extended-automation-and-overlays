@@ -40,18 +40,15 @@
     <script name="CombatManagerKel" file="scripts/manager_combat_kel.lua" />
     <script name="OptionsInit" file="scripts/data_options_init.lua" />
     <script name="DataCommon2" file="scripts/data_common2.lua" />
-    <script name="GameSystem2" file="scripts/manager_gamesystem_kel.lua" />
+    <script name="GameSystemKel" file="scripts/manager_gamesystem_kel.lua" />
     <script name="ActorManager35E" file="scripts/manager_actor_35E.lua" />
-    <script name="TokenManager3" file="scripts/manager_token_kel.lua" />
+    <script name="TokenManagerKel" file="scripts/manager_token_kel.lua" />
     <script name="ActionAttack" file="scripts/manager_action_attack.lua" />
     <script name="ActionDamage" file="scripts/manager_action_damage.lua" />
-    <script name="ActionHeal" file="scripts/manager_action_heal_kel.lua" />
-    <script name="SpellManager" file="scripts/manager_spell_kel.lua" />
+    <script name="ActionHealKel" file="scripts/manager_action_heal_kel.lua" />
+    <script name="SpellManagerKel" file="scripts/manager_spell_kel.lua" />
     <script name="ActionSave" file="scripts/manager_action_save.lua" />
     <script name="ActionSpell" file="scripts/manager_action_spell.lua" />
-    <script name="KelToolbar" file="scripts/manager_toolbar_kel.lua" />
-
-    <!-- Effect Builder -->
-    <includefile source="effect_builder/editor_loader.xml" />
+    <script name="ToolbarManagerKel" file="scripts/manager_toolbar_kel.lua" />
   </base>
 </root>
