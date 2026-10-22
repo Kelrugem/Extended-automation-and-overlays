@@ -166,7 +166,26 @@ function addSpellCastAction(nodeSpell)
 end
 -- KEL CL and replace DC
 function getSpellAction(rActor, nodeAction, sSubRoll)
-	local tPowerTags = SpellManager.getPowerTags(DB.getChild(nodeAction, "..."));
+	if not nodeAction then
+		return;
+	end
+	
+	local nodeSpellClass = DB.getChild(nodeAction, ".......");
+	
+	local bSpell = (DB.getValue(nodeSpellClass, "castertype", "") ~= "ability");
+	-- Review this part after new "non-spell"class
+	local bWeapon = false;
+	if not bSpell then
+		bWeapon = true;
+	end
+	
+	local tPowerData = {
+		nodePower = DB.getChild(nodeAction, "..."),
+		bSpell = bSpell,
+		bWeapon = bWeapon,
+	};
+
+	local tPowerTags = SpellManager.getPowerTags(tPowerData);
 
 	local nCLMod = EffectManager.getBonusMod(rActor, "CL", { tActionTags = tPowerTags });
 	local nOrigCL = DB.getValue(nodeAction, ".......cl", 0)
